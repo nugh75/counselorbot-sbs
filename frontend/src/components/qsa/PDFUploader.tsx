@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { BackButton } from '@/components/ui/BackButton';
+import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 interface PDFUploaderProps {
@@ -119,25 +120,25 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
                 className={cn(
-                    "relative flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-card transition-colors bg-white",
-                    isDragging ? "border-indigo-400 bg-indigo-50" : "border-slate-300 hover:border-indigo-300",
+                    "relative flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-card transition-colors bg-surface",
+                    isDragging ? "border-brand bg-brand-soft" : "border-line-strong hover:border-brand-line",
                     isUploading ? "pointer-events-none opacity-50" : ""
                 )}
             >
                 {isUploading ? (
                     <div className="flex flex-col items-center animate-pulse">
-                        <p className="text-lg font-medium text-slate-900">{t('pdf.analyzing.title')}</p>
-                        <p className="text-sm text-slate-500 mt-2">
+                        <p className="text-lg font-semibold text-ink">{t('pdf.analyzing.title')}</p>
+                        <p className="text-sm text-ink-muted mt-2">
                             {t('pdf.analyzing.sub')} ({questionnaire.factors.length})
                         </p>
                     </div>
                 ) : (
                     <>
-                        <div className="p-4 rounded-control bg-indigo-50 mb-4">
-                            <FileType className="w-8 h-8 text-indigo-600" />
+                        <div className="p-4 rounded-control bg-brand-soft mb-4">
+                            <FileType className="w-8 h-8 text-link" />
                         </div>
-                        <p className="text-lg font-medium text-slate-900 mb-1">{t('pdf.drop')}</p>
-                        <p className="text-sm text-slate-500 mb-6">{t('pdf.or')}</p>
+                        <p className="text-lg font-semibold text-ink mb-1">{t('pdf.drop')}</p>
+                        <p className="text-sm text-ink-muted mb-6">{t('pdf.or')}</p>
                         <input
                             type="file"
                             className="hidden"
@@ -145,16 +146,13 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
                             ref={setFileInputRef}
                             onChange={handleFileSelect}
                         />
-                        <button
-                            onClick={triggerFileSelect}
-                            className="inline-flex min-h-11 items-center justify-center rounded-control bg-indigo-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
-                        >
+                        <Button size="lg" onClick={triggerFileSelect}>
                             {t('pdf.select')}
-                        </button>
+                        </Button>
                     </>
                 )}
             </div>
-            <p className="text-center text-xs text-slate-500 mt-4">
+            <p className="text-center text-xs text-ink-muted mt-4">
                 {t('pdf.support')}
             </p>
             </div>

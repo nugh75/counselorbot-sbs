@@ -28,6 +28,7 @@ import type {
 } from '@/lib/recommendations';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Field';
 
 type Tab = RecommendationType | 'diagram';
 
@@ -167,12 +168,12 @@ export function RecommendationsPanel({
                 aria-controls="guided-recommendations-panel"
                 className={cn('flex w-full items-center gap-2 p-4 text-left lg:hidden', expanded && 'hidden')}
             >
-                <BookOpen className="h-4 w-4 text-indigo-600" />
-                <span id="recommendations-title" className="min-w-0 flex-1 text-sm font-semibold text-slate-700">
+                <BookOpen className="h-4 w-4 text-link" />
+                <span id="recommendations-title" className="min-w-0 flex-1 text-sm font-semibold text-ink-body">
                     {t('recommendations.title')}
                 </span>
-                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">{proposedCount}</span>
-                <ChevronRight className={cn('h-4 w-4 text-slate-500 transition-transform', isOpen && 'rotate-90')} />
+                <span className="text-xs tabular-nums text-ink-muted">{proposedCount}</span>
+                <ChevronRight className={cn('h-4 w-4 text-ink-muted transition-transform', isOpen && 'rotate-90')} />
             </button>
 
             <div
@@ -181,14 +182,14 @@ export function RecommendationsPanel({
                 className={cn('space-y-3 px-4 pb-4 lg:block lg:p-4', expanded ? 'pt-4' : !isOpen && 'hidden lg:block')}
             >
                 <div className="hidden items-center gap-2 lg:flex">
-                    <BookOpen className="h-4 w-4 text-indigo-600" />
-                    <h3 id="recommendations-title-desktop" className="text-sm font-semibold text-slate-700">
+                    <BookOpen className="h-4 w-4 text-link" />
+                    <h3 id="recommendations-title-desktop" className="text-sm font-semibold text-ink-body">
                         {t('recommendations.title')}
                     </h3>
-                    <span className="ml-auto rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">{proposedCount}</span>
+                    <span className="ml-auto text-xs tabular-nums text-ink-muted">{proposedCount}</span>
                 </div>
 
-                <div className="grid grid-cols-4 gap-1 rounded-card bg-slate-100 p-1" role="tablist">
+                <div className="grid grid-cols-4 gap-1 rounded-card bg-surface-raised p-1" role="tablist">
                     <TabButton
                         ref={(node) => { tabRefs.current.reading = node; }}
                         active={visibleTab === 'reading'}
@@ -239,7 +240,7 @@ export function RecommendationsPanel({
 
                 {visibleTab === 'diagram' ? (
                     <div className="space-y-2" role="tabpanel" id={panelId('diagram')} aria-labelledby={tabId('diagram')} tabIndex={0}>
-                        <h4 className="text-sm font-semibold text-slate-700">{rec('diagram.tab')}</h4>
+                        <h4 className="text-sm font-semibold text-ink-body">{rec('diagram.tab')}</h4>
                         {diagrams.length ? (
                             <ol className="space-y-1">
                                 {diagrams.map((item) => (
@@ -249,7 +250,7 @@ export function RecommendationsPanel({
                                             onClick={() => onOpenDiagram?.(item.id)}
                                             disabled={!onOpenDiagram}
                                             aria-label={rec('diagram.open', { title: item.title })}
-                                            className="flex min-h-control w-full items-center gap-2 rounded-control px-3 py-2 text-left text-sm text-ink-body transition-colors hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                            className="flex min-h-control w-full items-center gap-2 rounded-control px-3 py-2 text-left text-sm text-ink-body transition-colors hover:bg-surface-sunken focus-visible:ring-2 focus-visible:ring-focus"
                                         >
                                             <GitBranch className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden="true" />
                                             <span className="min-w-0 flex-1 truncate">{item.title}</span>
@@ -261,8 +262,8 @@ export function RecommendationsPanel({
                     </div>
                 ) : visibleTab === 'request' ? (
                     <div className="space-y-2" role="tabpanel" id={panelId('request')} aria-labelledby={tabId('request')} tabIndex={0}>
-                        <h4 className="text-sm font-semibold text-slate-700">{rec('request.tab')}</h4>
-                        <p className="text-xs text-slate-600">{rec('request.help')}</p>
+                        <h4 className="text-sm font-semibold text-ink-body">{rec('request.tab')}</h4>
+                        <p className="text-xs text-ink-muted">{rec('request.help')}</p>
                         {catalog.request.length ? (
                             <ul className="space-y-2">
                                 {catalog.request.map((item) => (
@@ -284,7 +285,7 @@ export function RecommendationsPanel({
                         aria-labelledby={tabId('reading')}
                         tabIndex={0}
                     >
-                        <h4 className="text-sm font-semibold text-slate-700">{t('recommendations.reading')}</h4>
+                        <h4 className="text-sm font-semibold text-ink-body">{t('recommendations.reading')}</h4>
                         {readings.open.map((item) => (
                             <ReadingCard
                                 key={item.slug}
@@ -314,7 +315,7 @@ export function RecommendationsPanel({
                         aria-labelledby={tabId('strategy')}
                         tabIndex={0}
                     >
-                        <h4 className="text-sm font-semibold text-slate-700">{t('recommendations.strategy')}</h4>
+                        <h4 className="text-sm font-semibold text-ink-body">{t('recommendations.strategy')}</h4>
                         {strategies.open.map((item) => (
                             <StrategyCard
                                 key={item.slug}
@@ -338,7 +339,7 @@ export function RecommendationsPanel({
                     </div>
                 ) : (
                     <div className="space-y-2" role="tabpanel" id={panelId('advice')} aria-labelledby={tabId('advice')} tabIndex={0}>
-                        <h4 className="text-sm font-semibold text-slate-700">{rec('advice.tab')}</h4>
+                        <h4 className="text-sm font-semibold text-ink-body">{rec('advice.tab')}</h4>
                         {advice.open.map((item) => (
                             <AdviceCard key={item.slug} item={item} canAct={canAct}
                                 onPatch={(patch) => void sendPatch('advice', item.slug, patch)}
@@ -364,24 +365,24 @@ function RequestCard({ item, canAct, pending, failed, onRetry, onPatch, onRemove
         : item.closed_by === 'conversation' ? 'request.discussedInTalk' : 'request.discussed';
     const phase = typeof item.step_order === 'number' ? ` \u00b7 ${item.step_order}` : '';
     return (
-        <li className="rounded-card border border-slate-200 bg-white p-3">
-            <p className={`text-2xs font-semibold ${open ? 'text-indigo-700' : 'text-slate-500'}`}>
+        <li className="rounded-card border border-line bg-surface p-3">
+            <p className={`text-2xs font-semibold ${open ? 'text-link' : 'text-ink-muted'}`}>
                 {rec(label)}{phase}{item.source === 'student' ? ` \u00b7 ${rec('request.byStudent')}` : ''}
             </p>
-            <p className="mt-1 break-words text-xs leading-relaxed text-slate-700">{item.name || item.slug}</p>
+            <p className="mt-1 break-words text-xs leading-relaxed text-ink-body">{item.name || item.slug}</p>
             {canAct ? (
                 <div className="mt-2 flex flex-wrap gap-2">
                     <button type="button" disabled={pending} onClick={() => onPatch({ status: open ? 'closed' : 'proposed' })}
-                        className="min-h-9 rounded-control border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                        className="min-h-control rounded-control border border-line px-2.5 text-xs font-semibold text-link disabled:opacity-60">
                         {rec(open ? 'request.close' : 'request.reopen')}
                     </button>
                     <button type="button" disabled={pending} onClick={onRemove}
-                        className="inline-flex min-h-9 items-center gap-1 rounded-control px-2.5 text-xs font-semibold text-slate-600 disabled:opacity-60">
+                        className="inline-flex min-h-control items-center gap-1 rounded-control px-2.5 text-xs font-semibold text-ink-muted disabled:opacity-60">
                         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />{rec('request.remove')}
                     </button>
                 </div>
             ) : null}
-            {failed ? <p role="alert" className="text-xs text-red-700">{rec('error')} <button type="button" onClick={onRetry} className="min-h-9 underline">{rec('retry')}</button></p> : null}
+            {failed ? <p role="alert" className="text-xs text-danger-ink">{rec('error')} <button type="button" onClick={onRetry} className="min-h-control underline">{rec('retry')}</button></p> : null}
         </li>
     );
 }
@@ -401,17 +402,17 @@ function AddRequest({ pending, onAdd }: { pending: boolean; onAdd: (text: string
             setFailed(!saved);
             if (saved) setValue('');
         }}>
-            <label htmlFor={inputId} className="block text-xs font-semibold text-slate-700">{rec('request.add.label')}</label>
+            <label htmlFor={inputId} className="block text-xs font-semibold text-ink-body">{rec('request.add.label')}</label>
             <div className="flex gap-2">
-                <input id={inputId} value={value} maxLength={300} onChange={(event) => setValue(event.target.value)}
+                <Input id={inputId} value={value} maxLength={300} onChange={(event) => setValue(event.target.value)}
                     placeholder={rec('request.add.placeholder')}
-                    className="min-h-9 min-w-0 flex-1 rounded-control border border-slate-200 px-2 text-xs text-slate-700" />
+                    className="flex-1 text-xs" />
                 <button type="submit" disabled={pending || !text}
-                    className="min-h-9 shrink-0 rounded-control border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                    className="min-h-control shrink-0 rounded-control border border-line px-2.5 text-xs font-semibold text-link disabled:opacity-60">
                     {rec('request.add.submit')}
                 </button>
             </div>
-            {failed ? <p role="alert" className="text-xs text-red-700">{rec('error')}</p> : null}
+            {failed ? <p role="alert" className="text-xs text-danger-ink">{rec('error')}</p> : null}
         </form>
     );
 }
@@ -442,13 +443,13 @@ function ReadingCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscus
     const details = [item.summary, item.synopsis].filter(Boolean) as string[];
 
     return (
-        <article className="rounded-card border border-slate-200 bg-indigo-50 p-3">
-            <div className="text-2xs font-semibold uppercase tracking-wide text-indigo-700">
+        <article className="rounded-card border border-line bg-brand-soft p-3">
+            <div className="text-xs text-ink-muted">
                 {item.kind_label || item.kind}
             </div>
-            <h4 className="mt-0.5 text-sm font-semibold leading-snug text-slate-800">{title}</h4>
+            <h4 className="mt-0.5 text-sm font-semibold leading-snug text-ink">{title}</h4>
             {(item.creators || item.year || item.publisher) && (
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs text-ink-muted">
                     {[item.creators, item.year, item.publisher].filter(Boolean).join(' · ')}
                 </p>
             )}
@@ -462,14 +463,14 @@ function ReadingCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscus
                         onClick={() => setExpanded((open) => !open)}
                         aria-expanded={expanded}
                         aria-controls={detailsId}
-                        className="mt-2 inline-flex min-h-9 items-center gap-1 rounded-control text-xs font-semibold text-indigo-700 hover:text-indigo-600"
+                        className="mt-2 inline-flex min-h-control items-center gap-1 rounded-control text-xs font-semibold text-link hover:text-link"
                     >
                         <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', expanded && 'rotate-180')} />
                         {expanded ? rec('synopsis.hide') : rec('synopsis.show')}
                     </button>
                     <div id={detailsId} hidden={!expanded}>
                         {item.summary ? <LabeledText label={rec('summary')} text={item.summary} /> : null}
-                        {item.synopsis ? <p className="mt-2 text-xs leading-relaxed text-slate-600">{item.synopsis}</p> : null}
+                        {item.synopsis ? <p className="mt-2 text-xs leading-relaxed text-ink-muted">{item.synopsis}</p> : null}
                     </div>
                 </>
             ) : null}
@@ -508,15 +509,15 @@ function StrategyCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscu
     const name = item.name || item.slug;
 
     return (
-        <article className="rounded-card border border-slate-200 bg-indigo-50 p-3">
+        <article className="rounded-card border border-line bg-brand-soft p-3">
             <div className="flex items-start gap-2">
-                <Target className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
-                <h4 className="text-sm font-semibold leading-snug text-slate-800">{name}</h4>
+                <Target className="mt-0.5 h-4 w-4 shrink-0 text-link" />
+                <h4 className="text-sm font-semibold leading-snug text-ink">{name}</h4>
             </div>
             {item.recommended_when ? (
                 <LabeledText label={t('recommendations.recommendedWhen')} text={item.recommended_when} />
             ) : null}
-            {item.description ? <p className="mt-2 text-xs leading-relaxed text-slate-600">{item.description}</p> : null}
+            {item.description ? <p className="mt-2 text-xs leading-relaxed text-ink-muted">{item.description}</p> : null}
 
             <Provenance item={item} />
 
@@ -562,18 +563,18 @@ function AdviceCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscuss
             : 'question.open';
     const phase = typeof item.step_order === 'number' ? ` \u00b7 ${item.step_order}` : '';
     return (
-        <article className="rounded-card border border-slate-200 bg-white p-3">
-            <p className={`text-2xs font-semibold ${question && !open ? 'text-slate-500' : 'text-indigo-700'}`}>
+        <article className="rounded-card border border-line bg-surface p-3">
+            <p className={`text-2xs font-semibold ${question && !open ? 'text-ink-muted' : 'text-link'}`}>
                 {question ? `${rec(questionLabel)}${phase}` : rec('advice.label')}
             </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-700">{name}</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-body">{name}</p>
             {question && canAct ? (
                 <button type="button" disabled={pending} onClick={() => onPatch({ status: open ? 'closed' : 'proposed' })}
-                    className="mt-2 min-h-9 rounded-control border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                    className="mt-2 min-h-control rounded-control border border-line px-2.5 text-xs font-semibold text-link disabled:opacity-60">
                     {rec(open ? 'question.close' : 'question.reopen')}
                 </button>
             ) : null}
-            {question && failed ? <p role="alert" className="text-xs text-red-700">{rec('error')} <button type="button" onClick={onRetry} className="min-h-9 underline">{rec('retry')}</button></p> : null}
+            {question && failed ? <p role="alert" className="text-xs text-danger-ink">{rec('error')} <button type="button" onClick={onRetry} className="min-h-control underline">{rec('retry')}</button></p> : null}
             <CardActions pending={pending} failed={question ? undefined : failed} onRetry={onRetry} status={item.status}
                 canAct={canAct && !question} onPatch={onPatch} selectLabel={rec('advice.select')} triedLabel={rec('advice.tried')}
                 discuss={onDiscuss ? () => onDiscuss(rec('discuss.advice.prompt', { name })) : undefined}
@@ -608,7 +609,7 @@ function CardActions({
     if (!canAct && !discuss) return null;
 
     return (
-        <div className="mt-3 space-y-2 border-t border-slate-200 pt-2">
+        <div className="mt-3 space-y-2 border-t border-line pt-2">
             <div className="flex flex-wrap items-center gap-1.5">
                 {canAct ? (
                     <>
@@ -630,7 +631,7 @@ function CardActions({
                     <button
                         type="button"
                         onClick={discuss}
-                        className="inline-flex min-h-9 items-center gap-1.5 rounded-control border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        className="inline-flex min-h-control items-center gap-1.5 rounded-control border border-line bg-surface px-2.5 text-xs font-semibold text-ink-body hover:bg-surface-sunken"
                     >
                         <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
                         {discussLabel}
@@ -641,7 +642,7 @@ function CardActions({
                         type="button"
                         onClick={() => onPatch({ status: 'dismissed' })}
                         disabled={pending}
-                        className="inline-flex min-h-9 items-center gap-1.5 rounded-control px-2.5 text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-60"
+                        className="inline-flex min-h-control items-center gap-1.5 rounded-control px-2.5 text-xs font-semibold text-ink-muted hover:text-ink-body disabled:opacity-60"
                     >
                         <Archive className="h-3.5 w-3.5" aria-hidden="true" />
                         {dismissLabel}
@@ -652,9 +653,9 @@ function CardActions({
             {children}
 
             {failed ? (
-                <p className="flex flex-wrap items-center gap-2 text-2xs text-red-700" role="alert">
+                <p className="flex flex-wrap items-center gap-2 text-2xs text-danger-ink" role="alert">
                     {rec('error')}
-                    <button type="button" onClick={onRetry} className="min-h-9 font-semibold underline">
+                    <button type="button" onClick={onRetry} className="min-h-control font-semibold underline">
                         {rec('retry')}
                     </button>
                 </p>
@@ -671,10 +672,10 @@ function ToggleAction({ label, pressed, disabled, onClick }: { label: string; pr
             disabled={disabled}
             onClick={onClick}
             className={cn(
-                'inline-flex min-h-9 items-center rounded-control border px-2.5 text-xs font-semibold transition-colors disabled:opacity-60',
+                'inline-flex min-h-control items-center rounded-control border px-2.5 text-xs font-semibold transition-colors disabled:opacity-60',
                 pressed
-                    ? 'border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700'
-                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+                    ? 'border-brand bg-brand text-ink-on-brand hover:bg-brand-hover'
+                    : 'border-line bg-surface text-ink-body hover:bg-surface-sunken',
             )}
         >
             {label}
@@ -687,7 +688,7 @@ function HelpfulRow({ helpful, pending, onPatch }: { helpful: boolean | null; pe
     const rec = (key: RecommendationTextKey) => recommendationText(key, lang);
 
     return (
-        <div className="flex items-center gap-1 text-2xs text-slate-500">
+        <div className="flex items-center gap-1 text-2xs text-ink-muted">
             <span>{rec('helpful.question')}</span>
             <button
                 type="button"
@@ -695,7 +696,7 @@ function HelpfulRow({ helpful, pending, onPatch }: { helpful: boolean | null; pe
                 aria-pressed={helpful === true}
                 disabled={pending}
                 onClick={() => onPatch({ helpful: helpful === true ? null : true })}
-                className={cn('tap-icon rounded-control text-slate-500 hover:text-emerald-600 disabled:opacity-60', helpful === true && 'text-emerald-600')}
+                className={cn('tap-icon rounded-control text-ink-muted hover:text-success disabled:opacity-60', helpful === true && 'text-success')}
             >
                 <ThumbsUp className="h-3.5 w-3.5" />
             </button>
@@ -705,7 +706,7 @@ function HelpfulRow({ helpful, pending, onPatch }: { helpful: boolean | null; pe
                 aria-pressed={helpful === false}
                 disabled={pending}
                 onClick={() => onPatch({ helpful: helpful === false ? null : false })}
-                className={cn('tap-icon rounded-control text-slate-500 hover:text-red-600 disabled:opacity-60', helpful === false && 'text-red-600')}
+                className={cn('tap-icon rounded-control text-ink-muted hover:text-danger disabled:opacity-60', helpful === false && 'text-danger')}
             >
                 <ThumbsDown className="h-3.5 w-3.5" />
             </button>
@@ -733,13 +734,13 @@ function ArchivedList({ items, open, onToggle, onRestore, canAct, pending, type 
     if (!items.length) return null;
 
     return (
-        <div className="rounded-card border border-dashed border-slate-200 p-2">
+        <div className="rounded-card border border-dashed border-line p-2">
             <button
                 type="button"
                 onClick={onToggle}
                 aria-expanded={open}
                 aria-controls={listId}
-                className="flex min-h-9 w-full items-center gap-1 text-left text-2xs font-semibold text-slate-500 hover:text-slate-700"
+                className="flex min-h-control w-full items-center gap-1 text-left text-2xs font-semibold text-ink-muted hover:text-ink-body"
             >
                 <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} />
                 {open ? rec('archived.hide') : rec('archived.show', { count: items.length })}
@@ -747,13 +748,13 @@ function ArchivedList({ items, open, onToggle, onRestore, canAct, pending, type 
             <ul id={listId} hidden={!open} className="mt-1 space-y-1">
                 {items.map((item) => (
                     <li key={item.slug} className="flex items-center gap-2">
-                        <span className="min-w-0 flex-1 truncate text-xs text-slate-600">{item.label}</span>
+                        <span className="min-w-0 flex-1 truncate text-xs text-ink-muted">{item.label}</span>
                         {canAct ? (
                             <button
                                 type="button"
                                 onClick={() => onRestore(item.slug)}
                                 disabled={Boolean(pending[cardKey(type, item.slug)])}
-                                className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-control px-2 text-2xs font-semibold text-indigo-700 hover:text-indigo-600 disabled:opacity-60"
+                                className="inline-flex min-h-control shrink-0 items-center gap-1 rounded-control px-2 text-2xs font-semibold text-link hover:underline disabled:opacity-60"
                             >
                                 <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                                 {rec('restore')}
@@ -780,7 +781,7 @@ function Provenance({ item }: { item: { matched_on?: string[] } }) {
     const kind = provenanceKind(item);
     if (!kind) return null;
     return (
-        <p className="mt-2 text-2xs italic text-slate-500">
+        <p className="mt-2 text-2xs italic text-ink-muted">
             {recommendationText(PROVENANCE_KEYS[kind], lang)}
         </p>
     );
@@ -813,8 +814,8 @@ function TabButton({ active, count, id, controls, label, icon, onClick, onKeyDow
                 onClick={onClick}
                 onKeyDown={onKeyDown}
                 className={cn(
-                    'flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-control px-1 py-1.5 text-xs font-medium transition-colors',
-                    active ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+                    'flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-control px-1 py-1.5 text-xs font-semibold transition-colors',
+                    active ? 'bg-surface text-link shadow-card' : 'text-ink-muted hover:text-ink-body',
                 )}
             >
                 <span className="flex items-center gap-1.5">
@@ -831,7 +832,7 @@ function TabButton({ active, count, id, controls, label, icon, onClick, onKeyDow
 
 function LabeledText({ label, text, warning = false }: { label: string; text: string; warning?: boolean }) {
     return (
-        <p className={cn('mt-2 text-xs leading-relaxed text-slate-600', warning && 'text-amber-800')}>
+        <p className={cn('mt-2 text-xs leading-relaxed text-ink-muted', warning && 'text-warning-ink')}>
             <span className="font-semibold">{label}:</span> {text}
         </p>
     );
@@ -841,7 +842,7 @@ function LabeledText({ label, text, warning = false }: { label: string; text: st
 // http(s), il resto della frase resta testo.
 function LinkedText({ label, text }: { label: string; text: string }) {
     return (
-        <p className="mt-2 text-xs leading-relaxed text-slate-600">
+        <p className="mt-2 text-xs leading-relaxed text-ink-muted">
             <span className="font-semibold">{label}:</span>{' '}
             {linkedSegments(text).map((segment, index) => (
                 segment.href ? (
@@ -850,7 +851,7 @@ function LinkedText({ label, text }: { label: string; text: string }) {
                         href={segment.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="break-all font-mono text-indigo-700 underline hover:text-indigo-600"
+                        className="break-all font-mono text-link underline hover:text-link"
                     >
                         {segment.text}
                     </a>
@@ -863,7 +864,7 @@ function LinkedText({ label, text }: { label: string; text: string }) {
 }
 
 function EmptyState({ text }: { text: string }) {
-    return <p className="rounded-card border border-dashed border-slate-200 p-3 text-xs text-slate-500">{text}</p>;
+    return <p className="rounded-card border border-dashed border-line p-3 text-xs text-ink-muted">{text}</p>;
 }
 
 // Le lingue arrivano come codici ("it", "en"): al lettore si mostra il nome

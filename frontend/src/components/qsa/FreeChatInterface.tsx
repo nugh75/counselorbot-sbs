@@ -260,14 +260,14 @@ export function FreeChatInterface({
     };
 
     const stepButtonClass = 'h-control w-[44px] shrink-0 p-0';
-    const messageActionClass = 'chat-action-item flex min-h-control w-full items-center gap-2 rounded-control px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
+    const messageActionClass = 'chat-action-item flex min-h-control w-full items-center gap-2 rounded-control px-2 text-left text-sm text-ink-muted hover:bg-surface-sunken disabled:opacity-50';
     const lastMessage = messages[messages.length - 1];
     const awaitingAssistantBubble = lastMessage?.role === 'assistant' && !lastMessage.content.trim();
     const liveAnnouncement = isLoading ? t('guided.processing') : lastMessage?.role === 'assistant' ? lastMessage.content : '';
 
     const options = (openPanel: (panel?: 'scores' | 'resources') => void) => (
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
-            {close => <div className="divide-y divide-slate-200">
+            {close => <div className="divide-y divide-line">
                 <ChatMenuSection title={chatLayoutLabel(activeLocale, 'menuActions')}>
                     <div ref={setVoiceOptionsContainer} />
                     {!voiceMode && <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(true); }}>
@@ -304,16 +304,16 @@ export function FreeChatInterface({
             <ChatGPTUsageBadge />
             <ChatWorkspace locale={activeLocale} subtitle={t('guided.mode.sandbox')} onBack={onBack}
                 advancement={
-                    <nav className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-slate-600" aria-label={t('guided.mode.sandbox')}>
+                    <nav className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-ink-muted" aria-label={t('guided.mode.sandbox')}>
                         <span className="flex min-w-0 items-center gap-2">
                             {sessionId && <Tooltip content={t('frozen.freeze')}>
                                 <button type="button" onClick={() => void handleFreeze()} disabled={isLoading}
                                     aria-label={t('frozen.freeze')}
-                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control border border-slate-200 bg-white text-slate-500 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50">
+                                    className="flex h-control w-control shrink-0 items-center justify-center rounded-control border border-line bg-surface text-ink-muted transition-colors hover:border-brand-line hover:bg-brand-soft hover:text-link disabled:cursor-not-allowed disabled:opacity-50">
                                     <Snowflake className="h-3.5 w-3.5" aria-hidden="true" />
                                 </button>
                             </Tooltip>}
-                            <span className="truncate font-semibold text-slate-800">{t('guided.mode.sandbox')}</span>
+                            <span className="truncate font-semibold text-ink">{t('guided.mode.sandbox')}</span>
                         </span>
                         <Button type="button" variant="secondary" disabled={isLoading} onClick={() => { completedRef.current = true; pendingSnapshotRef.current = null; onComplete(); }}>
                             {t('guided.concludeSession')}
@@ -351,13 +351,13 @@ export function FreeChatInterface({
                         aria-label={t('guided.mode.sandbox')}
                         className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4 space-y-4 lg:space-y-6"
                     >
-                        {messages.length === 0 && <p className="text-sm text-slate-500">{t('experience.choose.sub')}</p>}
+                        {messages.length === 0 && <p className="text-sm text-ink-muted">{t('experience.choose.sub')}</p>}
                         {messages.map((msg, idx) => (
                             <ChatRow key={idx} role={msg.role === 'user' ? 'user' : 'assistant'} className="animate-fade-in-up">
                                 <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'} className="px-3 py-2 sm:px-3 sm:py-2 lg:px-5 lg:py-3.5">
                                     {msg.role === 'assistant' ? (
                                         msg.content.trim() ? (
-                                            <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-card lg:border lg:border-slate-200/80"
+                                            <div className="min-w-0 max-w-full overflow-hidden bg-surface lg:rounded-card lg:border lg:border-line"
                                                 data-voice-source={`free-${sessionId}-${idx}`} data-voice-language={activeLocale} data-voice-counselor={counselorId ?? undefined}>
                                                 <ChatMarkdown content={msg.content} locale={activeLocale} errorMessage={t('guided.stepConnError')} />
                                             </div>
@@ -392,7 +392,7 @@ export function FreeChatInterface({
                         {isLoading && !continuation.pending && !awaitingAssistantBubble && <ChatPending label={t('guided.processing')} />}
                     </ChatTranscript>
                     <ChatContinuation locale={activeLocale} {...continuation} />
-                    <form onSubmit={handleSend} className="border-t border-slate-100 bg-white">
+                    <form onSubmit={handleSend} className="border-t border-line bg-surface">
                         <div className="p-3 sm:p-4">
                             <div className="relative flex items-end gap-2">
                                 {options(openPanel)}

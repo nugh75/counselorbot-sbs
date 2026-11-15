@@ -6,6 +6,7 @@
 // sparisce mai: se il counselor scelto non lo supporta la riga resta con la
 // spiegazione, invece di farsi mancare senza spiegazioni.
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
@@ -61,16 +62,16 @@ export function ChatSettingsCard({
     return (
         <div className="mx-auto w-full max-w-md space-y-4">
             <ChatGPTUsageBadge />
-            {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
+            {onBack && <button type="button" onClick={onBack} className="min-h-control text-sm text-ink-muted">{t('nav.back')}</button>}
             <Card variant="flat">
             <fieldset className="space-y-4" data-testid="chat-settings">
-                <legend className="px-1 font-semibold text-slate-800">{t('chatSettings.title')}</legend>
+                <legend className="px-1 font-semibold text-ink">{t('chatSettings.title')}</legend>
 
                 {showModeChoice && (
                     <div className="space-y-2">
                         <div>
-                            <p className="text-sm font-semibold text-slate-800">{t('experience.choose.title')}</p>
-                            <p className="text-xs text-slate-500">{t('experience.choose.sub')}</p>
+                            <p className="text-sm font-semibold text-ink">{t('experience.choose.title')}</p>
+                            <p className="text-xs text-ink-muted">{t('experience.choose.sub')}</p>
                         </div>
                         <div className="grid sm:grid-cols-2 gap-2.5">
                             <Button
@@ -91,8 +92,8 @@ export function ChatSettingsCard({
                             </Button>
                         </div>
                         {onRememberChange && (
-                            <label className="flex min-h-11 items-center gap-3 text-left text-sm text-slate-600">
-                                <input type="checkbox" checked={rememberExperience} onChange={event => onRememberChange(event.target.checked)} className="h-4 w-4 accent-indigo-600" />
+                            <label className="flex min-h-control items-center gap-3 text-left text-sm text-ink-muted">
+                                <input type="checkbox" checked={rememberExperience} onChange={event => onRememberChange(event.target.checked)} className="h-4 w-4 accent-brand" />
                                 {t('experience.remember')}
                             </label>
                         )}
@@ -100,36 +101,34 @@ export function ChatSettingsCard({
                 )}
 
                 <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-500">{chatPreferenceLabel(lang, 'format')}</p>
+                    <p className="text-xs font-semibold text-ink-muted">{chatPreferenceLabel(lang, 'format')}</p>
                     <ResponseFormatSelector value={responseFormat} onChange={onResponseFormatChange} />
                 </div>
 
                 <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-500">{t('responseLength.label')}</p>
+                    <p className="text-xs font-semibold text-ink-muted">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={onResponseLengthChange} />
                 </div>
 
                 {reasoningCapable ? (
                     <div className="space-y-1">
-                        <p className="text-xs font-semibold text-slate-500">{t('reasoning.label')}</p>
+                        <p className="text-xs font-semibold text-ink-muted">{t('reasoning.label')}</p>
                         <ReasoningSelector value={reasoningEffort} onChange={onReasoningChange} mandatory={reasoningMandatory} />
                         {reasoningMandatory && (
-                            <p className="rounded-control border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                                {t('reasoning.mandatory')}
-                            </p>
+                            <Callout variant="warning">{t('reasoning.mandatory')}</Callout>
                         )}
                     </div>
                 ) : (
                     // Il Ragionamento non sparisce: la riga resta, spiegata, così
                     // l'assenza dipende dal counselor e non sembra un difetto.
                     <div className="space-y-1" aria-disabled="true" data-testid="reasoning-unavailable">
-                        <p className="text-xs font-semibold text-slate-500">{t('reasoning.label')}</p>
-                        <p className="rounded-control border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">{t('reasoning.unavailable')}</p>
+                        <p className="text-xs font-semibold text-ink-muted">{t('reasoning.label')}</p>
+                        <p className="text-sm text-ink-muted">{t('reasoning.unavailable')}</p>
                     </div>
                 )}
 
-                <div className="space-y-1 border-t border-slate-100 pt-3">
-                    <p className="text-xs font-semibold text-slate-500">{t('audio.voice.title')}</p>
+                <div className="space-y-1 border-t border-line pt-3">
+                    <p className="text-xs font-semibold text-ink-muted">{t('audio.voice.title')}</p>
                     <AudioSendOption />
                     <AudioLanguageOption />
                 </div>

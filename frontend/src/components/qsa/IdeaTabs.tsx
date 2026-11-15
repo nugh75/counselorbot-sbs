@@ -53,10 +53,10 @@ export function IdeaTabs({ chat, map, branches, sources }: IdeaTabsProps) {
                         aria-controls={`idea-tab-${key}`}
                         onClick={() => setActive(key)}
                         className={cn(
-                            'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-control px-2 text-xs font-medium transition-colors',
+                            'flex min-h-control flex-1 items-center justify-center gap-1.5 rounded-control px-2 text-xs font-semibold transition-colors',
                             active === key
-                                ? 'bg-teal-700 text-white'
-                                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
+                                ? 'bg-brand text-ink-on-brand'
+                                : 'border border-line bg-surface text-ink-muted hover:bg-surface-sunken',
                         )}
                     >
                         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />

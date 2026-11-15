@@ -95,8 +95,8 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, 
     };
     const panelContent = <aside id={id} tabIndex={-1} aria-label={l('panelTitle')} hidden={!desktop || !visible} className="min-h-0 min-w-0 overflow-y-auto pr-1">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-1">
-            <h2 className="text-sm font-semibold text-slate-700">{l('panelTitle')}</h2>
-            <Tooltip content={l('hide')}><button type="button" className="inline-flex h-control w-[44px] items-center justify-center rounded-control text-slate-600 hover:bg-slate-100" aria-label={l('hide')} aria-controls={id} aria-expanded={true} onClick={() => setPreferences(previous => ({ ...previous, open: false }))}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button></Tooltip>
+            <h2 className="text-sm font-semibold text-ink-body">{l('panelTitle')}</h2>
+            <Tooltip content={l('hide')}><button type="button" className="inline-flex h-control w-control items-center justify-center rounded-control text-ink-muted hover:bg-surface-raised" aria-label={l('hide')} aria-controls={id} aria-expanded={true} onClick={() => setPreferences(previous => ({ ...previous, open: false }))}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button></Tooltip>
         </div>
         <div id={`${id}-content`} className="space-y-4">{desktop && sidebar(() => {}, null)}</div>
     </aside>;
@@ -113,16 +113,16 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, 
                     event.preventDefault(); (event.shiftKey ? last : first).focus();
                 }
             }}
-            className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg flex-col overflow-hidden rounded-card border border-slate-200 bg-white p-0 text-slate-700 shadow-card backdrop:bg-slate-950/60 open:flex">
-            <header className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-4 py-2">
+            className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg flex-col overflow-hidden rounded-card border border-line bg-surface p-0 text-ink-body shadow-card backdrop:bg-backdrop open:flex">
+            <header className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-4 py-2">
                 <h2 id={`${id}-title`} className="text-base font-semibold">{t(mobilePanel === 'resources' ? 'recommendations.title' : `guided.${mobilePanel}`)}</h2>
-                <button type="button" autoFocus aria-label={l('close')} onClick={() => setMobileOpen(false)} className="inline-flex h-control w-[44px] shrink-0 items-center justify-center rounded-control hover:bg-slate-100"><X className="h-5 w-5" aria-hidden="true" /></button>
+                <button type="button" autoFocus aria-label={l('close')} onClick={() => setMobileOpen(false)} className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control hover:bg-surface-raised"><X className="h-5 w-5" aria-hidden="true" /></button>
             </header>
             <div className="min-h-0 overflow-y-auto overscroll-contain p-3">{sidebar(() => setMobileOpen(false), mobilePanel)}</div>
         </dialog>}
-        {desktop && !visible && <div><Tooltip content={l('show')}><button type="button" className="inline-flex h-control w-[44px] items-center justify-center rounded-control text-slate-600 hover:bg-slate-100" aria-label={l('show')} aria-controls={id} aria-expanded={false} onClick={() => setPreferences(previous => ({ ...previous, open: true }))}><ChevronRight className="h-4 w-4" aria-hidden="true" /></button></Tooltip></div>}
+        {desktop && !visible && <div><Tooltip content={l('show')}><button type="button" className="inline-flex h-control w-control items-center justify-center rounded-control text-ink-muted hover:bg-surface-raised" aria-label={l('show')} aria-controls={id} aria-expanded={false} onClick={() => setPreferences(previous => ({ ...previous, open: true }))}><ChevronRight className="h-4 w-4" aria-hidden="true" /></button></Tooltip></div>}
         {desktop && visible && <div role="separator" tabIndex={0} aria-label={l('resize')} aria-orientation="vertical" aria-controls={id} aria-valuemin={minWidth} aria-valuemax={limit} aria-valuenow={Math.round(actualWidth)}
-            className="group flex cursor-col-resize touch-none items-stretch justify-center rounded-control focus-visible:outline-2 focus-visible:outline-indigo-500"
+            className="group flex cursor-col-resize touch-none items-stretch justify-center rounded-control focus-visible:outline-2 focus-visible:outline-focus"
             onPointerDown={event => { if (event.button !== 0) return; drag.current = { x: event.clientX, width: actualWidth }; event.currentTarget.setPointerCapture(event.pointerId); event.currentTarget.focus(); event.preventDefault(); }}
             onPointerMove={event => { if (drag.current) resize(drag.current.width + event.clientX - drag.current.x); }}
             onPointerUp={event => { drag.current = null; if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }}
@@ -130,12 +130,12 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, 
             onKeyDown={event => {
                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                 event.preventDefault(); resize(event.key === 'Home' ? minWidth : event.key === 'End' ? limit : actualWidth + (event.key === 'ArrowLeft' ? -20 : 20));
-            }}><span className="w-px bg-slate-200 group-hover:bg-indigo-400" /></div>}
+            }}><span className="w-px bg-line group-hover:bg-brand-line" /></div>}
         <div className="guided-chat-column order-1 flex h-chat min-h-0 min-w-0 flex-col lg:order-none lg:h-full lg:gap-2">
-        <section aria-labelledby="guided-chat-title" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
-            <header className={`flex shrink-0 items-center gap-3 border-b border-slate-100 px-3 py-2 ${headerClassName}`}>
+        <section aria-labelledby="guided-chat-title" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card">
+            <header className={`flex shrink-0 items-center gap-3 border-b border-line px-3 py-2 ${headerClassName}`}>
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
-                <div className="min-w-0"><h3 id="guided-chat-title" className="font-bold text-slate-800">CounselorBot AI</h3><p className={`text-xs font-medium text-slate-500 ${advancement ? 'lg:hidden' : ''}`}>{subtitle}</p></div>
+                <div className="min-w-0"><h3 id="guided-chat-title" className="font-semibold text-ink">CounselorBot AI</h3><p className={`text-xs font-semibold text-ink-muted ${advancement ? 'lg:hidden' : ''}`}>{subtitle}</p></div>
             </header>
             {children(openPanel)}
         </section>

@@ -11,21 +11,16 @@ import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
+import { Input } from '@/components/ui/Field';
 import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { clearScoreDraft, loadScoreDraft, saveScoreDraft } from '@/lib/compilation-draft';
 
 type FormData = { scores: Record<string, string | number> };
 
-// Color per prefix (label tradotta via i18n: score.prefix.<X>)
-const PREFIX_COLOR: Record<string, string> = {
-    C: 'text-indigo-700',
-    A: 'text-indigo-700',
-    T: 'text-indigo-700',
-    P: 'text-indigo-700',
-    S: 'text-purple-700',
-    K: 'text-cyan-700',
-    AD: 'text-green-700',
-};
+// Prefixes with a translated group label (score.prefix.<X>). One colour for every
+// group: the label names it, no rainbow (#962).
+const PREFIX_LABELS = new Set(['C', 'A', 'T', 'P', 'S', 'K', 'AD']);
 
 // La riga sta fuori dal componente: definita dentro, veniva ricreata a ogni
 // render e React la trattava come un tipo nuovo, smontando e rimontando tutti i
@@ -76,22 +71,22 @@ function InputRow({
         // Label esplicita: prima il codice e il nome stavano in un div fratello,
         // invisibile all'associazione, e i venticinque campi si annunciavano tutti
         // come "campo di testo, vuoto". Avvolgere evita di generare id.
-        <label className="flex items-center justify-between gap-3 p-2 rounded-control bg-white border border-slate-200 hover:border-indigo-200 transition-colors">
+        <label className="flex items-center justify-between gap-3 border-b border-line py-2">
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                    <span className="font-mono text-indigo-600 font-bold text-sm">{factor.code}</span>
-                    <span className="font-medium text-slate-700 text-sm">{tf(factorTranslationKey(questionnaireId, factor.code, 'name'), factor.name)}</span>
+                    <span className="font-mono text-link font-semibold text-sm">{factor.code}</span>
+                    <span className="font-semibold text-ink-body text-sm">{tf(factorTranslationKey(questionnaireId, factor.code, 'name'), factor.name)}</span>
                 </div>
-                <div className="text-xs leading-tight text-slate-500 ml-8 flex items-center gap-1">
+                <div className="text-xs leading-tight text-ink-muted ml-8 flex items-center gap-1">
                     {tf(factorTranslationKey(questionnaireId, factor.code, 'desc'), factor.description)}
                 </div>
                 {hasError && (
-                    <p id={errorId} className="ml-8 mt-1 text-xs font-medium text-red-700">
+                    <p id={errorId} className="ml-8 mt-1 text-xs font-semibold text-danger-ink">
                         {t('score.error.required')}
                     </p>
                 )}
             </div>
-            <input
+            <Input
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
@@ -100,10 +95,7 @@ function InputRow({
                 {...register(`scores.${factor.code}`, { required: true, min: 1, max: 9 })}
                 onKeyDown={handleKeyDown}
                 onInput={handleInput}
-                className={cn(
-                    "w-14 h-11 bg-white border rounded-control text-center font-bold text-base text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all",
-                    hasError ? "border-red-600" : "border-slate-300"
-                )}
+                className="w-14 shrink-0 text-center text-base font-semibold"
             />
         </label>
     );
@@ -220,19 +212,18 @@ export function ScoreInputForm({
             <GuideHelpLink task="questionnaires" />
             {actionsPosition === 'both' && actionButtons}
             {missingCount > 0 && (
-                <p role="alert" className="max-w-4xl mx-auto rounded-control border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                <Callout variant="danger" className="max-w-4xl mx-auto">
                     {t('score.error.summary', { count: missingCount })}
-                </p>
+                </Callout>
             )}
             <form id={formId} onChange={rememberDraft} onSubmit={handleSubmit(onFormSubmit)} className="max-w-4xl mx-auto space-y-4">
                 <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
                     {groupedFactors.map(({ prefix, factors }) => {
-                        const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
-                        const label = questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_COLOR[prefix] ? t(`score.prefix.${prefix}`) : `${prefix}`;
+                        const label = questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_LABELS.has(prefix) ? t(`score.prefix.${prefix}`) : `${prefix}`;
                         return (
                             <div key={prefix} className="space-y-1.5">
-                                <div className="flex items-center gap-2 mb-2 pb-1 border-b border-slate-200">
-                                    <h3 className={cn("text-lg font-bold", colorClass)}>{label}</h3>
+                                <div className="flex items-center gap-2 pb-2 border-b border-line-strong">
+                                    <h3 className="text-lg font-semibold text-ink">{label}</h3>
                                 </div>
                                 {factors.map(f => (
                                     <InputRow key={f.code} questionnaireId={questionnaire.id} factor={f} register={register} errors={errors} t={t} tf={tf} />
@@ -241,7 +232,7 @@ export function ScoreInputForm({
                         );
                     })}
                 </div>
-                <div className="border-t border-slate-200 pt-4">
+                <div className="border-t border-line pt-4">
                     {actionButtons}
                 </div>
             </form>
