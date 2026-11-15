@@ -475,6 +475,7 @@ una pagina comune degli strumenti separata dall'Area studente: il catalogo
 l'esperienza studente; il collegamento «Vai agli strumenti» dopo un invito
 `/gruppo?g=...` apre il catalogo dell'Area studente. Chi non ha effettuato
 l'accesso vede la scheda di accesso e, dopo l'accesso, torna alla pagina richiesta.
+Le pagine raggiungibili da un invito o da un consenso (`/gruppo`, `/consiglio/<codice>`, `/privacy`) hanno lo stesso aspetto piatto delle aree: sezioni separate da un filetto, colori dai token, bottoni da 44 px, finestra dei documenti privacy con la finestra condivisa.
 Sotto la Bussola, **Consigliati per te** propone fino a tre strumenti:
 prima quelli con una chat in pausa, poi quelli indicati dall'ultima Bussola, esclusi
 gli strumenti già compilati; senza questi segnali la sezione non compare.
