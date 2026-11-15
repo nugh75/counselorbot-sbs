@@ -1,13 +1,15 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { SignInCard } from '@/components/home/SignInCard';
 import { useI18n } from '@/lib/i18n-context';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { Users } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Callout } from '@/components/ui/Callout';
+import { ButtonLink } from '@/components/ui/Button';
 
 // Local copy is complete for every supported interface language.
 const TEXTS = {
@@ -93,31 +95,18 @@ function GroupJoinInner() {
     if (code && !identity?.authenticated) return <SignInCard returnPath={`/gruppo?g=${encodeURIComponent(code)}`} />;
 
     return (
-        <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 p-6 text-center">
-            <Users className="h-10 w-10 text-slate-500" aria-hidden />
-            <h1 className="text-2xl font-bold text-slate-800">{texts.title}</h1>
-            {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-            {!error && !group && <p role="status" className="text-sm text-slate-500">{texts.joining}</p>}
+        <main className="page-narrow flex min-h-screen flex-col justify-center gap-6 py-8">
+            <PageHeader title={texts.title} icon={<Users className="h-7 w-7 text-link" aria-hidden />} />
+            {error && <Callout variant="danger">{error}</Callout>}
+            {!error && !group && <p role="status" className="text-sm text-ink-muted">{texts.joining}</p>}
             {group && (
                 <>
-                    <p role="status" className="w-full rounded-md border border-emerald-200 bg-emerald-50 p-4 text-lg font-semibold text-emerald-800">
-                        {texts.joined}: {group.name}
-                    </p>
-                    {group.already_member && <p className="text-sm text-slate-600">{texts.alreadyMember}</p>}
-                    <p className="max-w-sm text-xs text-slate-500">{learningText(lang, 'groupVisibility')}</p>
+                    <Callout variant="success" title={`${texts.joined}: ${group.name}`} />
+                    {group.already_member && <p className="text-sm text-ink-body">{texts.alreadyMember}</p>}
+                    <p className="text-xs text-ink-muted">{learningText(lang, 'groupVisibility')}</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
-                        <Link
-                            href="/profilo#profile-instrument-catalog"
-                            className="rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-700"
-                        >
-                            {texts.goTools}
-                        </Link>
-                        <Link
-                            href="/profilo"
-                            className="rounded-md border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                            {texts.goProfile}
-                        </Link>
+                        <ButtonLink variant="primary" href="/profilo#profile-instrument-catalog">{texts.goTools}</ButtonLink>
+                        <ButtonLink href="/profilo">{texts.goProfile}</ButtonLink>
                     </div>
                 </>
             )}

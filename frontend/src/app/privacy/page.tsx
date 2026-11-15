@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Loader2, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Callout } from '@/components/ui/Callout';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClasses } from '@/components/ui/Button';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ChoiceHistory } from '@/components/privacy/ChoiceHistory';
 import { ConsentToggles } from '@/components/privacy/ConsentToggles';
 import { DocumentViewer } from '@/components/privacy/DocumentViewer';
@@ -109,9 +110,9 @@ export default function PrivacyPage() {
             />
 
             <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full border border-warning-line bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">
+                <StatusBadge tone="warning">
                     {t('privacy.documents.validation')}: {t('privacy.documents.validationBadge') || validationStatus}
-                </span>
+                </StatusBadge>
                 <p className="text-xs text-ink-muted">{t('privacy.documents.validationHint')}</p>
             </div>
 
@@ -122,7 +123,7 @@ export default function PrivacyPage() {
                 </p>
             ) : loadError ? (
                 <Callout variant="danger" title={t('privacy.loadError')}>
-                    <Button variant="secondary" size="sm" onClick={() => void loadPublic()}>{t('privacy.retry')}</Button>
+                    <Button variant="secondary" onClick={() => void loadPublic()}>{t('privacy.retry')}</Button>
                 </Callout>
             ) : (
                 <>
@@ -133,7 +134,7 @@ export default function PrivacyPage() {
                             <p>{t('privacy.signInBody')}</p>
                             <a
                                 href={ai4authLoginUrl('/privacy')}
-                                className="mt-4 inline-flex min-h-control items-center rounded-control bg-brand px-4 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
+                                className={buttonClasses('primary', 'md', 'mt-4')}
                             >
                                 {t('privacy.signIn')}
                             </a>
@@ -143,7 +144,7 @@ export default function PrivacyPage() {
                     {choicesError && (
                         <Callout variant="danger" title={t('privacy.purposes.error')}>
                             <p>{t('privacy.purposes.error.generic')}</p>
-                            <Button variant="secondary" size="sm" className="mt-4" onClick={() => void loadSelf()}>{t('privacy.retry')}</Button>
+                            <Button variant="secondary" className="mt-4" onClick={() => void loadSelf()}>{t('privacy.retry')}</Button>
                         </Callout>
                     )}
 
