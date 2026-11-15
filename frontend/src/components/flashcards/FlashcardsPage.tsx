@@ -1,9 +1,11 @@
 'use client';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, FolderPlus, GraduationCap, Image as ImageIcon, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Dialog, DialogBody, DialogFooter } from '@/components/ui/Dialog';
+import { Input, Select, Textarea } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -15,7 +17,6 @@ import { InlineRename } from '@/components/ui/InlineRename';
 import { addCard, addDeck, deckProgress, emptyFlashcards, removeCard, removeDeck, renameDeck, resetDeckProgress, setCardStatus, shuffleCards, updateCard, type Flashcard, type FlashcardDeck, type FlashcardStatus, type FlashcardWorkspace, type SavedFlashcards } from '@/lib/flashcards';
 import { Callout } from '@/components/ui/Callout';
 
-const inputClass = 'w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-[15px] text-ink';
 const buttonClass = 'h-control w-control shrink-0 p-0';
 const FRONT_MAX = 300;
 const BACK_MAX = 600;
@@ -193,8 +194,8 @@ export function FlashcardsPage() {
                         edit(current => addCard(current, currentDeck.id, { front: draftFront.trim(), back: draftBack.trim(), image: draftImage || null }, crypto.randomUUID()));
                         setDraftFront(''); setDraftBack(''); setDraftImage('');
                     }}>
-                        <label className="block text-sm">{l('frontLabel')}<textarea required maxLength={FRONT_MAX} rows={2} value={draftFront} onChange={e => setDraftFront(e.target.value)} className={`${inputClass} mt-1`} /></label>
-                        <label className="block text-sm">{l('backLabel')}<textarea required maxLength={BACK_MAX} rows={3} value={draftBack} onChange={e => setDraftBack(e.target.value)} className={`${inputClass} mt-1`} /></label>
+                        <label className="block text-sm">{l('frontLabel')}<Textarea required maxLength={FRONT_MAX} rows={2} value={draftFront} onChange={e => setDraftFront(e.target.value)} className="mt-1" /></label>
+                        <label className="block text-sm">{l('backLabel')}<Textarea required maxLength={BACK_MAX} rows={3} value={draftBack} onChange={e => setDraftBack(e.target.value)} className="mt-1" /></label>
                         <div className="flex flex-wrap items-center gap-4">
                             {draftImage ? (
                                 <div className="flex items-center gap-4">
@@ -215,8 +216,9 @@ export function FlashcardsPage() {
                     <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">{currentDeck.cards.map(card => <Card as="article" variant="flat" key={card.id} className="group/card flex flex-col py-4">
                         <div className="mb-2 flex items-center justify-between gap-2">
                             <button type="button" onClick={() => edit(current => updateCard(current, currentDeck.id, card.id, { status: card.status === 'known' ? 'review' : card.status === 'review' ? null : 'known' }))} aria-label={l('statusNone')}
-                                className={`inline-flex min-h-control items-center gap-1 rounded-full px-2 py-1 text-xs ${card.status === 'known' ? 'bg-success-soft text-success-ink' : card.status === 'review' ? 'bg-warning-soft text-warning-ink' : 'bg-surface-raised text-ink-muted'}`}>
-                                {card.status === 'known' ? <><Check className="h-3 w-3" aria-hidden="true" />{l('knownLabel')}</> : card.status === 'review' ? <><RotateCcw className="h-3 w-3" aria-hidden="true" />{l('reviewLabel')}</> : l('statusNone')}
+                                className="inline-flex min-h-control items-center">
+                                <StatusBadge tone={card.status === 'known' ? 'success' : card.status === 'review' ? 'warning' : 'neutral'}>
+                                {card.status === 'known' ? <><Check className="h-3 w-3" aria-hidden="true" />{l('knownLabel')}</> : card.status === 'review' ? <><RotateCcw className="h-3 w-3" aria-hidden="true" />{l('reviewLabel')}</> : l('statusNone')}</StatusBadge>
                             </button>
                             <div className="flex items-center gap-1">
                                 <button type="button" onClick={() => setPickingImageId(card.id)} className="flex h-control w-control items-center justify-center rounded-control border border-line bg-surface-sunken text-ink-muted hover:border-brand-line hover:text-link" aria-label={card.image ? l('changeImage') : l('addImage')} title={card.image ? l('changeImage') : l('addImage')}>
@@ -225,39 +227,29 @@ export function FlashcardsPage() {
                                 {removeButton(`card:${card.id}`, card.front, () => edit(current => removeCard(current, currentDeck.id, card.id)), 'deleteCard')}
                             </div>
                         </div>
-                        <label className="block text-sm">{l('frontLabel')}<textarea maxLength={FRONT_MAX} rows={2} value={card.front} onChange={e => edit(current => updateCard(current, currentDeck.id, card.id, { front: e.target.value }))} className={`${inputClass} mt-1`} /></label>
-                        <label className="mt-2 block text-sm">{l('backLabel')}<textarea maxLength={BACK_MAX} rows={3} value={card.back} onChange={e => edit(current => updateCard(current, currentDeck.id, card.id, { back: e.target.value }))} className={`${inputClass} mt-1`} /></label>
+                        <label className="block text-sm">{l('frontLabel')}<Textarea maxLength={FRONT_MAX} rows={2} value={card.front} onChange={e => edit(current => updateCard(current, currentDeck.id, card.id, { front: e.target.value }))} className="mt-1" /></label>
+                        <label className="mt-2 block text-sm">{l('backLabel')}<Textarea maxLength={BACK_MAX} rows={3} value={card.back} onChange={e => edit(current => updateCard(current, currentDeck.id, card.id, { back: e.target.value }))} className="mt-1" /></label>
                     </Card>)}</div>
                 )}
             </>}
         </section>}
 
-        {dialogOpen && createPortal(
-            <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/50 p-4" onClick={() => setDialogOpen(false)}>
-                <div role="dialog" aria-modal="true" aria-labelledby={`${id}-new-deck`} className="w-full max-w-md rounded-card bg-surface p-6 shadow-pop" onClick={e => e.stopPropagation()}>
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 id={`${id}-new-deck`} className="text-base font-semibold text-ink">{l('newDeck')}</h2>
-                        <Button type="button" variant="ghost" className="h-control w-control p-0" aria-label={l('deckCancel')} onClick={() => setDialogOpen(false)}><X className="h-4 w-4" aria-hidden="true" /></Button>
-                    </div>
-                    <label className="block text-sm text-ink-body" htmlFor={`${id}-deck-name`}>{l('deckName')}</label>
-                    <input id={`${id}-deck-name`} type="text" maxLength={100} value={deckName} onChange={e => setDeckName(e.target.value)} onKeyDown={e => {
-                        if (e.key === 'Enter' && deckName.trim()) { edit(current => addDeck(current, crypto.randomUUID(), deckName.trim())); setDeckName(''); setDialogOpen(false); }
-                    }} className={`${inputClass} mt-1`} />
-                    <div className="mt-6 flex justify-end gap-2">
-                        <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>{l('deckCancel')}</Button>
-                        <Button type="button" disabled={!deckName.trim()} onClick={() => { edit(current => addDeck(current, crypto.randomUUID(), deckName.trim())); setDeckName(''); setDialogOpen(false); }}>{l('deckCreate')}</Button>
-                    </div>
-                </div>
-            </div>, document.body)}
+        {dialogOpen && <Dialog title={l('newDeck')} closeLabel={l('deckCancel')} onClose={() => setDialogOpen(false)}>
+            <DialogBody>
+                <label className="block text-sm font-semibold text-ink-body" htmlFor={`${id}-deck-name`}>{l('deckName')}</label>
+                <Input id={`${id}-deck-name`} type="text" maxLength={100} value={deckName} onChange={e => setDeckName(e.target.value)} onKeyDown={e => {
+                    if (e.key === 'Enter' && deckName.trim()) { edit(current => addDeck(current, crypto.randomUUID(), deckName.trim())); setDeckName(''); setDialogOpen(false); }
+                }} className="mt-1" />
+            </DialogBody>
+            <DialogFooter className="justify-end">
+                <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>{l('deckCancel')}</Button>
+                <Button type="button" disabled={!deckName.trim()} onClick={() => { edit(current => addDeck(current, crypto.randomUUID(), deckName.trim())); setDeckName(''); setDialogOpen(false); }}>{l('deckCreate')}</Button>
+            </DialogFooter>
+        </Dialog>}
 
-        {pickingImageId && createPortal(
-            <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/50 p-4" onClick={() => setPickingImageId(null)}>
-                <div role="dialog" aria-modal="true" aria-labelledby={`${id}-pick-image`} className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-card bg-surface shadow-modal" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center justify-between border-b border-line px-6 py-4">
-                        <h2 id={`${id}-pick-image`} className="text-base font-semibold text-ink">{l('selectImage')}</h2>
-                        <Button type="button" variant="ghost" className="h-control w-control p-0" aria-label={l('deckCancel')} onClick={() => setPickingImageId(null)}><X className="h-4 w-4" aria-hidden="true" /></Button>
-                    </div>
-                    <div className="grid gap-4 overflow-y-auto p-6 sm:grid-cols-3 lg:grid-cols-4">
+        {pickingImageId && <Dialog title={l('selectImage')} closeLabel={l('deckCancel')} onClose={() => setPickingImageId(null)}>
+            <DialogBody>
+                <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
                         {BUILTIN_CARD_IMAGES.map(entry => (
                             <button key={entry.id} type="button" className="rounded-card border border-line bg-surface p-2 text-left transition-colors hover:border-brand hover:bg-brand-soft/40" onClick={() => applyImage(entry.id)}>
                                 <img src={tavoloImageUrl(entry.id)} alt="" className="mx-auto h-20 w-full object-contain" />
@@ -265,9 +257,9 @@ export function FlashcardsPage() {
                                 <span className="block text-xs leading-snug text-ink-muted">{entry.usage}</span>
                             </button>
                         ))}
-                    </div>
                 </div>
-            </div>, document.body)}
+            </DialogBody>
+        </Dialog>}
     </main>;
 }
 
@@ -311,7 +303,7 @@ function StudyView({ study, deck, card, onFlip, onAnswer, onExit, onRestart }: {
         <div className="h-2 overflow-hidden rounded-full bg-surface-raised" role="progressbar" aria-valuenow={study.index} aria-valuemin={0} aria-valuemax={total}>
             <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${Math.round((study.index / total) * 100)}%` }} />
         </div>
-        <button type="button" onClick={onFlip} aria-label={l('flipHint')} className="mx-auto flex min-h-[300px] w-full max-w-xl flex-col items-center justify-center gap-4 rounded-card border-2 border-brand-line bg-surface p-6 text-center shadow-card transition-colors hover:border-brand">
+        <button type="button" onClick={onFlip} aria-label={l('flipHint')} className="mx-auto flex min-h-[300px] w-full max-w-xl flex-col items-center justify-center gap-4 rounded-card border-2 border-brand-line bg-surface p-6 text-center transition-colors hover:border-brand">
             {card.image && <img src={tavoloImageUrl(card.image)} alt="" className="max-h-40 w-auto object-contain" />}
             <p className={`text-balance text-xl ${study.flipped ? 'text-ink-body' : 'font-semibold text-ink'}`}>{study.flipped ? card.back : card.front}</p>
             {!study.flipped && <span className="text-xs text-ink-muted">{l('flipHint')}</span>}

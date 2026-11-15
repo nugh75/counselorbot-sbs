@@ -8,7 +8,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Activity, CalendarDays, Circle, CircleDot, Clock, Diamond, Flag, Plus, Square, Target, Trash2, Unlink, Users } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { Input, Select, Textarea } from '@/components/ui/Field';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { goalApi, type PersonalGoal } from '@/lib/goals';
@@ -27,7 +28,7 @@ import { TIMELINE_GLYPHS, timelineGlyph, type TimelineGlyph } from '@/lib/timeli
 import type { SavedWorkspace, TimelineEvent, VisualWorkspace } from '@/lib/visual-tools';
 import { useClientValue } from '@/lib/use-client-value';
 
-const field = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-[15px] text-ink';
+const field = 'mt-1';
 const iconButton = 'h-control w-control shrink-0 p-0';
 const FILTER_KEY = 'cb_timeline_filters';
 const KINDS: TimelineItemKind[] = ['milestone', 'action', 'goal', 'appointment', 'meeting'];
@@ -236,7 +237,7 @@ export function PersonalTimeline({ locale }: { locale: string }) {
             const event = timeline.events.find(e => e.id === item.eventId)!;
             if (isGoalReview(event.id)) {
                 const goalId = event.source.startsWith('goal:') ? event.source.slice(5) : '';
-                return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 rounded-card border border-line bg-surface p-4 ${isHighlight ? 'ring-2 ring-move' : ''}`}>
+                return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 ${isHighlight ? 'rounded-control p-4 ring-2 ring-move' : 'border-t border-line pt-4'}`}>
                     <span className="flex min-w-0 items-start gap-2">
                         <span aria-hidden="true" className="mt-1 shrink-0 text-move"><GlyphIcon glyph={timelineGlyph({ kind: 'event', id: event.id })} /></span>
                         <span className="min-w-0">
@@ -262,8 +263,8 @@ export function PersonalTimeline({ locale }: { locale: string }) {
             </span>
         </span>;
         const content = item.href
-            ? <Link href={item.href} className="block min-h-control rounded-card border border-line bg-surface p-4 text-left focus-visible:outline-2 focus-visible:outline-focus" onClick={() => openItem(item)}>{body}</Link>
-            : <div className="rounded-card border border-line bg-surface p-4">{body}</div>;
+            ? <Link href={item.href} className="block min-h-control border-t border-line pt-4 text-left focus-visible:outline-2 focus-visible:outline-focus" onClick={() => openItem(item)}>{body}</Link>
+            : <div className="border-t border-line pt-4">{body}</div>;
         return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 ${isHighlight ? 'ring-2 ring-move' : ''}`}>{content}</li>;
     });
 
@@ -277,9 +278,9 @@ export function PersonalTimeline({ locale }: { locale: string }) {
     return <fieldset disabled={pending} className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="secondary" onClick={() => { setActiveEvent('new'); setCreateDirty(false); }} aria-expanded={activeEvent === 'new'}><Plus className="h-4 w-4" aria-hidden="true" />{l('addEvent')}</Button>
-            <Link href="/profilo/azioni?new=1" className="inline-flex min-h-control items-center gap-2 rounded-control bg-surface-raised px-4 text-sm text-ink hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"><Plus className="h-4 w-4" aria-hidden="true" />{l('addActivity')}</Link>
-            <Link href="/profilo/obiettivi?new=1" className="inline-flex min-h-control items-center gap-2 rounded-control bg-surface-raised px-4 text-sm text-ink hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"><Plus className="h-4 w-4" aria-hidden="true" />{l('addGoal')}</Link>
-            <details className="ml-auto rounded-card border border-line bg-surface px-4">
+            <ButtonLink href="/profilo/azioni?new=1" variant="secondary"><Plus className="h-4 w-4" aria-hidden="true" />{l('addActivity')}</ButtonLink>
+            <ButtonLink href="/profilo/obiettivi?new=1" variant="secondary"><Plus className="h-4 w-4" aria-hidden="true" />{l('addGoal')}</ButtonLink>
+            <details className="ml-auto">
                 <summary className="min-h-control cursor-pointer text-sm text-link" aria-label={l('filtersTitle')}>{l('filtersTitle')}</summary>
                 <div className="flex flex-wrap gap-4 py-2">
                     {KINDS.map(kind => <label key={kind} className="flex min-h-control items-center gap-2 text-sm">
@@ -297,13 +298,13 @@ export function PersonalTimeline({ locale }: { locale: string }) {
         </ul>
         {issue && <p role="alert" className="text-sm text-danger-ink">{l(issue)}{(issue === 'conflict' || issue === 'saveError') && <> <Button type="button" variant="secondary" onClick={() => { if (issue === 'conflict' && window.confirm(l('reloadConfirm'))) void load(); else if (issue === 'saveError') void save(); }}>{l('retry')}</Button></>}</p>}
 
-        {activeEvent === 'new' && <details open className="rounded-card border border-brand-line bg-brand-soft p-4">
+        {activeEvent === 'new' && <details open className="border-t border-brand-line pt-4">
             <summary className="min-h-control cursor-pointer text-link">{l('addEvent')}</summary>
             <div className="mt-4 space-y-4">
-                <label className="block text-sm">{l('eventTitle')}<input required maxLength={160} className={field} value={createTitle} onChange={e => { setCreateTitle(e.target.value); setCreateDirty(true); }} /></label>
+                <label className="block text-sm">{l('eventTitle')}<Input required maxLength={160} className={field} value={createTitle} onChange={e => { setCreateTitle(e.target.value); setCreateDirty(true); }} /></label>
                 <TimelineDateFields value={createDates} onChange={value => { setCreateDates(value); setCreateDirty(true); }} locale={locale} workspace={false} />
-                <label className="block text-sm">{l('symbol')}<select className={field} value={createSymbol} onChange={e => { setCreateSymbol(e.target.value as TimelineEvent['symbol']); setCreateDirty(true); }}>{(['milestone', 'study', 'work', 'change'] as const).map(key => <option key={key} value={key}>{l(key)}</option>)}</select></label>
-                <label className="block text-sm">{l('diary')}<textarea aria-label={l('diary')} rows={2} maxLength={1000} className={field} value={createReflection} onChange={e => { setCreateReflection(e.target.value); setCreateDirty(true); }} /></label>
+                <label className="block text-sm">{l('symbol')}<Select className={field} value={createSymbol} onChange={e => { setCreateSymbol(e.target.value as TimelineEvent['symbol']); setCreateDirty(true); }}>{(['milestone', 'study', 'work', 'change'] as const).map(key => <option key={key} value={key}>{l(key)}</option>)}</Select></label>
+                <label className="block text-sm">{l('diary')}<Textarea aria-label={l('diary')} rows={2} maxLength={1000} className={field} value={createReflection} onChange={e => { setCreateReflection(e.target.value); setCreateDirty(true); }} /></label>
                 <Button type="button" onClick={() => void addMilestone()} disabled={!createTitle.trim() || !validTimelineDates(createDates)}><Plus className="h-4 w-4" aria-hidden="true" />{l('addEvent')}</Button>
             </div>
         </details>}
@@ -328,10 +329,10 @@ export function PersonalTimeline({ locale }: { locale: string }) {
             <p className="text-sm text-ink-muted">{l('selectedEvents')}: {selectedIds.length} · {l('selectEventsHelp')}</p>
             <Button type="button" variant="secondary" disabled={!selectedIds.length} onClick={() => { setCopyOpen(!copyOpen); setCopyTitle(timeline.title); setPreview(null); setSavedItem(null); }}>{l('savePortfolio')}</Button>
         </div>}
-        {copyOpen && <section aria-label={l('savePortfolio')} className="space-y-4 rounded-card border border-brand-line bg-brand-soft p-4">
+        {copyOpen && <section aria-label={l('savePortfolio')} className="space-y-4 border-t border-brand-line pt-4">
             <p className="text-sm">{l('snapshotHelp')}</p>
-            <label className="block text-sm">{l('snapshotTitle')}<input maxLength={160} className={field} value={copyTitle} onChange={e => { setCopyTitle(e.target.value); setPreview(null); }} /></label>
-            <label className="block text-sm">{l('reflection')}<textarea aria-label={l('reflection')} maxLength={1000} rows={2} className={field} value={reflection} onChange={e => { setReflection(e.target.value); setPreview(null); }} /></label>
+            <label className="block text-sm">{l('snapshotTitle')}<Input maxLength={160} className={field} value={copyTitle} onChange={e => { setCopyTitle(e.target.value); setPreview(null); }} /></label>
+            <label className="block text-sm">{l('reflection')}<Textarea aria-label={l('reflection')} maxLength={1000} rows={2} className={field} value={reflection} onChange={e => { setReflection(e.target.value); setPreview(null); }} /></label>
             <Button type="button" variant="secondary" disabled={!selectedIds.length || !copyTitle.trim()} onClick={() => void prepareCopy()}>{l('preview')}</Button>
             {preview && <><pre className="whitespace-pre-wrap break-words rounded-control bg-surface p-4 font-sans text-sm">{preview.data.title}{'\n\n'}{preview.data.description}</pre><Button type="button" onClick={() => void saveCopy()}>{l('savePortfolio')}</Button></>}
             {['snapshotTooLong', 'previewError', 'timelineSaveError'].includes(issue) && <p role="alert" className="text-sm text-danger-ink">{l(issue)}</p>}
@@ -355,23 +356,23 @@ function MilestoneEditor({ event, locale, open, onOpen, onPatch, onRemove, onSav
     selected: boolean; onSelect: (checked: boolean) => void; highlight: boolean; busy: boolean; pending: boolean;
 }) {
     const l = (key: string) => visualLabel(locale, key);
-    return <li id={`timeline-milestone-${event.id}`} tabIndex={-1} className={`relative min-w-0 rounded-card bg-surface p-4 ${highlight ? 'ring-2 ring-move' : 'border border-line'}`}>
+    return <li id={`timeline-milestone-${event.id}`} tabIndex={-1} className={`relative min-w-0 ${highlight ? 'rounded-control p-4 ring-2 ring-move' : 'border-t border-line pt-4'}`}>
         <details open={open} onToggle={e => { if (e.currentTarget.open && !open) onOpen(); }}>
             <summary className="min-h-control cursor-pointer break-words py-2 text-link">{event.title}{event.period ? ` · ${event.period}` : ''}</summary>
             <div className="mt-4 space-y-4">
                 <label className="flex min-h-control items-center gap-2 text-sm"><input type="checkbox" checked={selected} onChange={e => onSelect(e.target.checked)} aria-label={`${l('selectEvent')}: ${event.title}`} /></label>
-                <label className="block text-sm">{l('eventTitle')}<input data-workspace-field required maxLength={160} className={`${field} font-semibold`} value={event.title} onChange={e => onPatch({ title: e.target.value })} /></label>
+                <label className="block text-sm">{l('eventTitle')}<Input data-workspace-field required maxLength={160} className={`${field} font-semibold`} value={event.title} onChange={e => onPatch({ title: e.target.value })} /></label>
                 <TimelineDateFields value={event} locale={locale} legacyPeriod={event.period} onChange={value => onPatch({ ...value, period: datePeriod(value) || event.period })} />
-                <label className="block text-sm">{l('symbol')}<select className={field} value={event.symbol} onChange={e => onPatch({ symbol: e.target.value as TimelineEvent['symbol'] })}>{(['milestone', 'study', 'work', 'change'] as const).map(key => <option key={key} value={key}>{l(key)}</option>)}</select></label>
+                <label className="block text-sm">{l('symbol')}<Select className={field} value={event.symbol} onChange={e => onPatch({ symbol: e.target.value as TimelineEvent['symbol'] })}>{(['milestone', 'study', 'work', 'change'] as const).map(key => <option key={key} value={key}>{l(key)}</option>)}</Select></label>
                 {/* F22/lotto 4: le intenzioni tornano distinte dal diario, come da
                     contratto del campo `planned` — solo su tappe future o senza data. */}
                 {(() => {
                     const dates = eventDates(event);
                     const undated = !dates.date_mode || (!dates.start_date && !dates.end_date);
                     const future = undated || (dates.end_date ?? dates.start_date)! >= localToday();
-                    return future && <label className="block text-sm">{l('planned')}<textarea aria-label={l('planned')} rows={2} maxLength={1000} className={field} value={event.planned || ''} onChange={e => onPatch({ planned: e.target.value })} /></label>;
+                    return future && <label className="block text-sm">{l('planned')}<Textarea aria-label={l('planned')} rows={2} maxLength={1000} className={field} value={event.planned || ''} onChange={e => onPatch({ planned: e.target.value })} /></label>;
                 })()}
-                <label className="block text-sm">{l('diary')}<textarea aria-label={l('diary')} rows={2} maxLength={1000} className={field} value={event.reflection} onChange={e => onPatch({ reflection: e.target.value })} /></label>
+                <label className="block text-sm">{l('diary')}<Textarea aria-label={l('diary')} rows={2} maxLength={1000} className={field} value={event.reflection} onChange={e => onPatch({ reflection: e.target.value })} /></label>
                 {event.tense === 'past' && <ExperienceReview event={event} locale={locale} onPatch={review => onPatch({ review })} />}
                 <div className="flex flex-wrap gap-2">
                     <Tooltip content={l('personalSave')}><Button type="button" variant="secondary" className="min-h-control px-4" disabled={busy} onClick={onSave}>{l('personalSave')}</Button></Tooltip>
@@ -379,7 +380,7 @@ function MilestoneEditor({ event, locale, open, onOpen, onPatch, onRemove, onSav
                 </div>
                 <section aria-label={l('linkPortfolio')} className="min-w-0 space-y-2">
                     {event.portfolio.map(p => <div key={p.id} className="flex items-center justify-between gap-2 rounded-control bg-surface-sunken p-2 text-sm">{p.title ? <a className="min-w-0 break-words text-link underline" href={`/profilo/portfolio#portfolio-${p.id}`} target="_blank" rel="noopener noreferrer">{p.title}</a> : <span>{l('unavailable')}</span>}<Tooltip content={`${l('unlink')}: ${p.title || l('unavailable')}`}><Button type="button" variant="ghost" className={iconButton} aria-label={`${l('unlink')}: ${p.title || l('unavailable')}`} disabled={pending} onClick={() => onPatch({ portfolio: event.portfolio.filter(item => item.id !== p.id) })}><Unlink className="h-4 w-4" aria-hidden="true" /></Button></Tooltip></div>)}
-                    <label className="block text-sm">{l('linkPortfolio')}<select className={field} value="" disabled={portfolioIssue || event.portfolio.length >= 20} onChange={e => { const p = portfolio.find(item => item.id === Number(e.target.value)); if (p) onPatch({ portfolio: [...event.portfolio, { id: p.id, title: p.title }] }); }}><option value="">—</option>{portfolio.filter(p => !event.portfolio.some(link => link.id === p.id)).map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select></label>
+                    <label className="block text-sm">{l('linkPortfolio')}<Select className={field} value="" disabled={portfolioIssue || event.portfolio.length >= 20} onChange={e => { const p = portfolio.find(item => item.id === Number(e.target.value)); if (p) onPatch({ portfolio: [...event.portfolio, { id: p.id, title: p.title }] }); }}><option value="">—</option>{portfolio.filter(p => !event.portfolio.some(link => link.id === p.id)).map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</Select></label>
                     {portfolioIssue && <Button type="button" variant="secondary" onClick={() => void reloadPortfolio()}>{l('retry')}</Button>}
                 </section>
             </div>

@@ -10,8 +10,9 @@ test('flashcards page is flat: decks and card editors use the flat Card, no nest
     assert.doesNotMatch(source, /<Card(?![^>]*variant="flat")[^>]*>/);
     assert.doesNotMatch(source, /rounded-card border border-line bg-surface-sunken p-[46]|rounded-card border border-line bg-surface p-[46] (text-center )?shadow-card/);
     assert.match(source, /<details [^>]*className="border-y border-line">/);
-    // Dialogs keep their own box.
-    assert.match(source, /role="dialog"[^>]*className="w-full max-w-md rounded-card bg-surface p-6 shadow-pop"/);
+    // Dialogs are the shared Dialog (#958), not hand-made boxes.
+    assert.match(source, /<Dialog title=\{l\('newDeck'\)\}/);
+    assert.doesNotMatch(source, /role="dialog"/);
 });
 
 test('visual tools have no box inside box: help, create forms, columns and decks are flat', () => {
