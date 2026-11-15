@@ -214,14 +214,14 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
     const classSelection = (groupIds: number[], onChange: (groupId: number, linked: boolean) => void, notebookId?: number) => (
         <fieldset className="min-w-0 space-y-2" disabled={busy}>
             <legend className={notebookId !== undefined ? `${sectionTitle} w-full` : 'text-xs font-semibold text-ink-muted'}>{l('classes')}</legend>
-            <p className="text-xs text-ink-muted">{l('classesHint')}</p>
-            {notebookId !== undefined && <p className="text-xs text-ink-muted">{l('classesAutosave')}</p>}
-            {classGroups.loading && <p role="status" className="text-xs text-ink-muted">{t('common.loading')}</p>}
-            {(classGroups.failed || classGroups.forbidden) && <div role="alert" className="text-xs text-danger">
+            <p className="text-sm text-ink-muted">{l('classesHint')}</p>
+            {notebookId !== undefined && <p className="text-sm text-ink-muted">{l('classesAutosave')}</p>}
+            {classGroups.loading && <p role="status" className="text-sm text-ink-muted">{t('common.loading')}</p>}
+            {(classGroups.failed || classGroups.forbidden) && <div role="alert" className="text-sm text-danger">
                 <p>{l('classesError')}</p>
                 <Button type="button" variant="secondary" onClick={() => void classGroups.reload()}>{l('retry')}</Button>
             </div>}
-            {groups && !groups.length && <p className="text-xs text-ink-muted">{l('noClasses')}</p>}
+            {groups && !groups.length && <p className="text-sm text-ink-muted">{l('noClasses')}</p>}
             {groups?.map(group => (
                 <label key={group.id} className="flex min-h-control items-start gap-2 text-sm text-ink-body">
                     <input type="checkbox" className="mt-1" checked={groupIds.includes(group.id)}
@@ -232,7 +232,7 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
                     </span>
                 </label>
             ))}
-            {notebookId !== undefined && classSaveError === notebookId && <p role="alert" className="text-xs text-danger">{l('classSaveError')}</p>}
+            {notebookId !== undefined && classSaveError === notebookId && <p role="alert" className="text-sm text-danger">{l('classSaveError')}</p>}
             <Link href="/docente/classi" className="inline-flex min-h-control items-center text-xs font-semibold text-link underline underline-offset-2">{l('manageClasses')}</Link>
         </fieldset>
     );
@@ -304,7 +304,7 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
                     <PracticeAvatar />
                     <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                            <h2 id={practiceNotebookAnchor(notebook.id)} tabIndex={-1} className="scroll-mt-24 break-words text-xl font-semibold text-ink">{notebook.title}</h2>
+                            <h2 id={practiceNotebookAnchor(notebook.id)} tabIndex={-1} className="scroll-mt-24 break-words text-lg font-semibold text-ink">{notebook.title}</h2>
                             <RoleBadge role="test">{l('badge')}</RoleBadge>
                         </div>
                         {practiceDescription(notebook.data) && <p className="mt-1 text-sm text-ink-muted">{practiceDescription(notebook.data)}</p>}

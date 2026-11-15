@@ -75,12 +75,12 @@ export function PracticeChats({ notebookId, openChats, openChatsFailed }: {
     return (
         <section data-practice-chats aria-labelledby={`practice-chats-heading-${notebookId}`} className="space-y-2">
             <h2 id={`practice-chats-heading-${notebookId}`} className="border-b border-line pb-2 text-lg font-semibold text-ink">{l('practiceChats')}</h2>
-            <p className="text-xs text-ink-muted">{l('practiceChatsHint')}</p>
-            {(failed || openChatsFailed) && <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-danger">
+            <p className="text-sm text-ink-muted">{l('practiceChatsHint')}</p>
+            {(failed || openChatsFailed) && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-danger">
                 <p>{l('chatsError')}</p>
                 {failed && <Button type="button" variant="secondary" onClick={() => void load()}>{l('retry')}</Button>}
             </div>}
-            {chats !== null && openChats !== null && !rows.length && <p className="text-xs text-ink-muted">{l('noPracticeChats')}</p>}
+            {chats !== null && openChats !== null && !rows.length && <p className="text-sm text-ink-muted">{l('noPracticeChats')}</p>}
             <ul>
                 {rows.map((row) => (
                     <li key={row.sessionId} data-practice-chat={row.sessionId} className="border-b border-line py-2 text-sm">
@@ -98,8 +98,8 @@ export function PracticeChats({ notebookId, openChats, openChatsFailed }: {
                         </div>
                         {shown === row.sessionId && (
                             <div data-practice-transcript className="mt-2 space-y-2">
-                                {transcript === null && !transcriptFailed && <p role="status" className="text-xs text-ink-muted">{t('common.loading')}</p>}
-                                {transcriptFailed && <p role="alert" className="text-xs text-danger">{l('transcriptError')}</p>}
+                                {transcript === null && !transcriptFailed && <p role="status" className="text-sm text-ink-muted">{t('common.loading')}</p>}
+                                {transcriptFailed && <p role="alert" className="text-sm text-danger">{l('transcriptError')}</p>}
                                 {transcript?.map((message, index) => (
                                     <div key={index}>
                                         <p className="text-xs font-semibold text-ink-muted">{l(message.role === 'student' ? 'roleStudent' : 'roleCounselor')}</p>

@@ -285,7 +285,7 @@ function ForumDiscussion({ groupId, groupActive, topicId, onBack, onForbidden, o
             busy={acting} onCancel={() => setEditing(false)}
             onSave={changes => void act(`/api/forum/topics/${topicId}`, 'PATCH', changes).then(done => { if (done) setEditing(false); })} />
             : <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="min-w-0 break-words text-lg font-bold text-slate-800">{detail.topic.title || l('hidden')}{detail.topic.pinned && ` · ${l('pinned')}`}</h3>
+                <h3 className="min-w-0 break-words text-lg font-semibold text-ink">{detail.topic.title || l('hidden')}{detail.topic.pinned && ` · ${l('pinned')}`}</h3>
                 {forumTopicEditable(detail.topic, { moderator: detail.can_moderate, active: groupActive })
                     && detail.topic.body !== null && detail.forum_enabled !== false && !detail.mute &&
                     <Button size="md" variant="secondary" disabled={acting} onClick={() => setEditing(true)}>{l('editTopic')}</Button>}
@@ -324,7 +324,7 @@ function ForumLogView({ groupId, onBack }: { groupId: number; onBack: () => void
     const log = resource.data;
     return <Card variant="flat" className="space-y-4">
         <Button variant="secondary" onClick={onBack}>{l('back')}</Button>
-        <h3 className="text-lg font-bold text-slate-800">{l('log')}</h3>
+        <h3 className="text-lg font-semibold text-ink">{l('log')}</h3>
         <p className="text-xs text-slate-500">{l('logPrivacy')}</p>
         {resource.forbidden ? <Callout variant="danger">{l('forbidden')}</Callout> : !log ? <Callout variant={resource.failed ? 'danger' : 'info'}>
             <p>{l(resource.failed ? 'loadError' : 'loading')}</p>
@@ -380,7 +380,7 @@ function ForumReview({ groupId, mode, active, onBack, onForbidden, onDraft }: {
         ...queue.posts.map(post => ({ ...post, kind: 'posts', heading: post.topic_title }))] : [];
     return <Card variant="flat" className="space-y-4">
         <Button variant="secondary" disabled={busy} onClick={onBack}>{l('back')}</Button>
-        <h3 className="text-lg font-bold text-slate-800">{l(mode === 'pending' ? 'pending' : 'mutedStudents')}</h3>
+        <h3 className="text-lg font-semibold text-ink">{l(mode === 'pending' ? 'pending' : 'mutedStudents')}</h3>
         {error && <Callout variant="danger">{l('actionError')}</Callout>}
         {resource.forbidden ? <Callout variant="danger">{l('forbidden')}</Callout> : !queue ? <Callout variant={resource.failed ? 'danger' : 'info'}>
             {l(resource.failed ? 'loadError' : 'loading')}{resource.failed && <Button variant="secondary" onClick={() => void resource.reload()}>{l('retry')}</Button>}
@@ -444,7 +444,7 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
     return <div className="space-y-4">
         {student && <Link className="inline-flex min-h-control items-center text-sm text-indigo-700" href="/profilo/classi">{l('classes')}</Link>}
         <div className="flex flex-wrap items-center justify-between gap-3">
-            <Heading className="break-words text-lg font-bold text-slate-800">{l('forum')} · {listing.group.name}</Heading>
+            <Heading className="break-words text-lg font-semibold text-ink">{l('forum')} · {listing.group.name}</Heading>
             <div className="flex flex-wrap gap-2">
                 {view === 'list' && listing.can_moderate && <Button variant="secondary" onClick={() => navigate('log')}>{l('log')}</Button>}
                 {view === 'list' && listing.can_moderate && <Button variant="secondary" onClick={() => navigate('pending')}>{l('pending')} ({listing.pending_count ?? 0})</Button>}
