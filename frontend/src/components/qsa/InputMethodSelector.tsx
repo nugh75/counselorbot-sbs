@@ -17,6 +17,8 @@ import { readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookC
 import type { PracticeNotebook, PracticeResult } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { RoleBadge } from '@/components/ui/RoleBadge';
+import { Button } from '@/components/ui/Button';
+import { Input, Select } from '@/components/ui/Field';
 
 // Selezione del metodo di inserimento per il questionario.
 // Stesso pattern del QuestionnaireSelector / CounselorSelector:
@@ -181,34 +183,26 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, studentFl
     const renderCard = (opt: Option) => {
         const isSelected = selected === opt.key;
         const isTest = opt.key === 'test-student';
+        // Riga piatta come EntryLink: niente riquadro, filetto sotto, fondo tenue se scelta.
         const cardClass = cn(
-            'relative flex flex-col items-start justify-center p-8 h-56 rounded-lg border text-left transition-colors w-full',
-            isTest
-                ? cn('border-role-test-line bg-role-test-soft cursor-pointer', isSelected && 'ring-2 ring-indigo-400')
-                : opt.key === 'own'
-                ? cn('border-role-teacher-line bg-role-teacher-soft cursor-pointer', isSelected && 'ring-2 ring-indigo-400')
-                : isSelected
-                ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300'
-                : 'bg-white border-slate-200 hover:border-indigo-200 cursor-pointer'
+            'relative flex w-full cursor-pointer flex-col items-start gap-2 border-b border-line px-2 py-4 pr-12 text-left transition-colors',
+            isSelected ? 'bg-brand-soft' : 'hover:bg-surface-sunken'
         );
-        const badge = opt.badge && (isTest ? (
-            <div className="absolute top-4 left-4"><RoleBadge role="test">{opt.badge}</RoleBadge></div>
-        ) : (
-            <div className="absolute top-4 left-4">
-                <span className="px-2 py-1 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                    {opt.badge}
-                </span>
-            </div>
-        ));
+        const badge = opt.badge && (isTest
+            ? <RoleBadge role="test">{opt.badge}</RoleBadge>
+            : <span className="text-xs text-ink-muted">{opt.badge}</span>);
         const check = isSelected && (
-            <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
+            <div className="absolute right-2 top-4 rounded-full bg-brand p-1 text-ink-on-brand">
                 <Check className="h-3.5 w-3.5" />
             </div>
         );
         const body = (
             <>
-                <h3 className="text-xl font-semibold mb-2 text-slate-900">{opt.title}</h3>
-                <p className={cn('text-sm', isTest ? 'text-role-test-muted' : opt.key === 'own' ? 'text-role-teacher-muted' : 'text-slate-600')}>{opt.desc}</p>
+                <span className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-semibold text-ink">{opt.title}</h3>
+                    {badge}
+                </span>
+                <p className="text-sm leading-relaxed text-ink-muted">{opt.desc}</p>
             </>
         );
 
@@ -230,16 +224,14 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, studentFl
                     aria-pressed={isSelected}
                     className={cardClass}
                 >
-                    {badge}
                     {check}
                     {body}
                     {isSelected && (
-                        <div className="absolute inset-x-4 bottom-4" onClick={(e) => e.stopPropagation()}>
-                            <select
+                        <div className="w-full" onClick={(e) => e.stopPropagation()}>
+                            <Select
                                 aria-label={t('method.practice.placeholder')}
                                 value={chosenPracticeResultId ?? ''}
                                 onChange={(e) => setChosenPracticeResultId(e.target.value ? Number(e.target.value) : null)}
-                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             >
                                 <option value="">{t('method.practice.placeholder')}</option>
                                 {practiceResults.map((r) => (
@@ -247,7 +239,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, studentFl
                                         {r.created_at ? new Date(r.created_at).toLocaleDateString() : ''} · {Object.entries(r.scores).slice(0, 4).map(([code, value]) => `${code} ${value}`).join(' · ')}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                     )}
                 </div>
@@ -275,15 +267,14 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, studentFl
                     aria-pressed={isSelected}
                     className={cardClass}
                 >
-                    {badge}
                     {check}
                     {body}
                     {isSelected && savedResults.length > 0 && (
-                        <div className="absolute inset-x-4 bottom-4" onClick={(e) => e.stopPropagation()}>
-                            <select
+                        <div className="w-full" onClick={(e) => e.stopPropagation()}>
+                            <Select
+                                aria-label={t('method.resume.placeholder')}
                                 value={chosenResultId ?? ''}
                                 onChange={(e) => setChosenResultId(e.target.value ? Number(e.target.value) : null)}
-                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             >
                                 <option value="">{t('method.resume.placeholder')}</option>
                                 {savedResults.map((r) => (
@@ -291,7 +282,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, studentFl
                                         {new Date(r.submitted_at).toLocaleString()} · {r.session_id.slice(0, 8)}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                     )}
                 </div>
@@ -310,7 +301,6 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, studentFl
                 aria-pressed={isSelected}
                 className={cardClass}
             >
-                {badge}
                 {check}
                 {body}
             </button>
@@ -356,50 +346,48 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, studentFl
                 prendo?" arriva davvero, e finora non aveva risposta. */}
             {questionnaire && <QuestionnaireLink instrument={questionnaire.id} className="max-w-5xl" />}
             {isTeacher && !studentFlow && (practiceNotebooks.length > 0 || unscored) && (
-                <div data-practice-student className={cn('max-w-5xl space-y-2 rounded-lg border p-3 text-sm text-slate-700',
-                    practiceNotebook ? 'border-role-test-line bg-role-test-soft text-ink' : 'border-slate-200 bg-white')}>
+                <div data-practice-student className={cn('max-w-5xl space-y-2 rounded-card border p-4 text-sm',
+                    practiceNotebook ? 'border-role-test-line bg-role-test-soft text-ink' : 'border-line bg-surface text-ink-body')}>
                     <label className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold">{t('method.practice.student')}</span>
-                        <select value={newName !== null ? 'new' : practiceNotebook ? String(practiceNotebook.id) : ''}
+                        <Select value={newName !== null ? 'new' : practiceNotebook ? String(practiceNotebook.id) : ''}
                             onChange={(event) => {
                                 if (event.target.value === 'new') { setNewName(''); setCreateError(false); return; }
                                 setNewName(null);
                                 changePractice(event.target.value ? Number(event.target.value) : null);
                             }}
-                            className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900">
+                            className="w-auto flex-1">
                             <option value="">{t('method.practice.none')}</option>
                             {practiceNotebooks.map((notebook) => <option key={notebook.id} value={notebook.id}>{notebook.title}</option>)}
                             <option value="new">{t('method.practice.new')}</option>
-                        </select>
+                        </Select>
                     </label>
                     {newName !== null && (
                         <form data-practice-new className="flex flex-wrap items-center gap-2"
                             onSubmit={(event) => { event.preventDefault(); void createPractice(); }}>
-                            <input autoFocus aria-label={t('method.practice.newName')} placeholder={t('method.practice.newName')}
+                            <Input autoFocus aria-label={t('method.practice.newName')} placeholder={t('method.practice.newName')}
                                 value={newName} onChange={(event) => setNewName(event.target.value)} maxLength={120}
-                                className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" />
-                            <button type="submit" disabled={!newName.trim()}
-                                className="inline-flex min-h-11 items-center gap-1 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white disabled:opacity-50">
+                                className="w-auto flex-1" />
+                            <Button type="submit" disabled={!newName.trim()}>
                                 <Plus className="h-4 w-4" aria-hidden />{t('method.practice.create')}
-                            </button>
-                            <button type="button" onClick={() => { setNewName(null); setCreateError(false); }}
-                                className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700">{t('common.cancel')}</button>
-                            {createError && <p role="alert" className="w-full text-xs text-red-700">{t('method.practice.createError')}</p>}
+                            </Button>
+                            <Button type="button" variant="secondary" onClick={() => { setNewName(null); setCreateError(false); }}>{t('common.cancel')}</Button>
+                            {createError && <p role="alert" className="w-full text-xs text-danger">{t('method.practice.createError')}</p>}
                         </form>
                     )}
                     {practiceNotebook && !unscored && <p className="text-xs text-role-test-muted">{t('method.practice.saveHint', { name: practiceNotebook.title })}</p>}
                 </div>
             )}
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-5xl">
+            <div className="w-full max-w-5xl border-t border-line">
                 {options.map((opt) => (
-                    <div key={opt.key} className="flex-1 min-w-0">
+                    <div key={opt.key} className="min-w-0">
                         {renderCard(opt)}
                     </div>
                 ))}
             </div>
             {!unscored && selected !== 'resume' && selected !== 'practice' && (
-                <label className="flex min-h-11 items-center gap-3 text-sm text-slate-600">
-                    <input type="checkbox" checked={remember} onChange={event => setRemember(event.target.checked)} className="h-4 w-4 accent-indigo-600" />
+                <label className="flex min-h-control items-center gap-4 text-sm text-ink-body">
+                    <input type="checkbox" checked={remember} onChange={event => setRemember(event.target.checked)} className="h-4 w-4 accent-brand" />
                     {t('method.remember')}
                 </label>
             )}

@@ -18,6 +18,7 @@ import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { CounselorCover } from './CounselorCover';
 
@@ -177,6 +178,15 @@ export function CounselorSelector({
         const disabled = c.is_active === false || c.suitable === false;
         const isSelected = selected === c.id;
         const tagline = getCounselorTagline(c, lang);
+        // Una sola riga di metadati al posto delle pillole: stato, origine,
+        // modello, approcci e strumenti, separati da «·».
+        const meta = [
+            c.is_active === false && t('counselor.unavailable'),
+            c.is_active !== false && c.suitable === false && t('counselor.notForInstrument'),
+            c.model_origin && t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external'),
+            ...(c.approach_categories ?? []).map((cat) => formatCategoryLabel(cat, lang)),
+            ...(c.questionnaire_types ?? []).slice(0, 6),
+        ].filter(Boolean);
         return (
             <button
                 key={c.id}
@@ -188,98 +198,47 @@ export function CounselorSelector({
                     if (onContinue) onContinue(c.id);
                 }}
                 disabled={disabled}
-                className={`relative flex flex-col justify-between rounded-card border p-4 text-left transition-colors ${
+                aria-pressed={isSelected}
+                className={`flex w-full flex-col gap-4 border-b border-line px-2 py-4 text-left transition-colors sm:flex-row sm:items-start ${
                     disabled
-                        ? 'cursor-not-allowed border-line bg-surface-sunken opacity-70'
+                        ? 'cursor-not-allowed opacity-70'
                         : isSelected
-                            ? 'border-brand bg-brand-soft ring-1 ring-focus'
-                            : 'border-line bg-surface hover:border-brand-line hover:bg-surface-sunken'
+                            ? 'bg-brand-soft'
+                            : 'hover:bg-surface-sunken'
                 }`}
             >
-                <div className="w-full space-y-4">
-                    {/* In cima: blocco copertina rettangolare CounselorCover (16:9) come primo elemento assoluto (stile YouTube card) con spunta di selezione in overlay */}
-                    <div className="relative w-full">
-                        <CounselorCover
-                            src={c.avatar_url}
-                            alt={c.name}
-                            counselor={c}
-                        />
-                        {isSelected && !disabled && (
-                            <div className="absolute top-2 right-2 z-10 shrink-0 rounded-full bg-brand p-1 text-ink-on-brand">
-                                <Check className="h-3.5 w-3.5" />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Sotto la copertina: Testata con Nome counselor (h2), badge modello (Cpu/Cloud), badge tipo/stato */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-base font-semibold text-ink">{c.name}</h2>
-                        {c.is_active === false && (
-                            <span className="rounded-full border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted">
-                                {t('counselor.unavailable')}
-                            </span>
-                        )}
-                        {c.is_active !== false && c.suitable === false && (
-                            <span className="rounded-full border border-warning-line bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning">
-                                {t('counselor.notForInstrument')}
-                            </span>
-                        )}
-                        {c.model_origin && (
-                            <span
-                                title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
-                                className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1 text-2xs text-ink-muted"
-                            >
-                                {c.model_origin === 'local'
-                                    ? <Cpu className="h-3 w-3" />
-                                    : <Cloud className="h-3 w-3" />}
-                                {t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
-                            </span>
-                        )}
-                        {c.model && (
-                            <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-brand-line bg-brand-soft px-2 py-1 text-2xs text-link">
-                                <span>{t('counselor.modelLabel')}</span>
-                                <span className="truncate font-mono" title={c.model}>{c.model}</span>
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Tagline distintiva */}
-                    {tagline ? (
-                        <p className="rounded-control border border-brand-line bg-brand-soft/70 px-2 py-1 text-xs italic text-ink/90 leading-relaxed">
-                            {`"${tagline}"`}
-                        </p>
-                    ) : null}
-
-                    {/* Chip delle categorie di approccio */}
-                    {c.approach_categories && c.approach_categories.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                            {c.approach_categories.map((cat) => (
-                                <span
-                                    key={cat}
-                                    className="rounded-full border border-brand-line/70 bg-brand-soft/50 px-2 py-1 text-2xs font-semibold text-link"
-                                >
-                                    {formatCategoryLabel(cat, lang)}
-                                </span>
-                            ))}
+                {/* A sinistra: copertina CounselorCover (16:9) con spunta di selezione in overlay */}
+                <div className="relative w-full shrink-0 sm:w-48">
+                    <CounselorCover
+                        src={c.avatar_url}
+                        alt={c.name}
+                        counselor={c}
+                    />
+                    {isSelected && !disabled && (
+                        <div className="absolute top-2 right-2 z-10 shrink-0 rounded-full bg-brand p-1 text-ink-on-brand">
+                            <Check className="h-3.5 w-3.5" />
                         </div>
                     )}
+                </div>
 
-                    {/* Sotto le categorie: paragrafo descrittivo */}
+                <div className="min-w-0 flex-1 space-y-2">
+                    <h2 className="text-base font-semibold text-ink">{c.name}</h2>
+                    {(meta.length > 0 || c.model) && (
+                        <p
+                            className="break-words text-xs text-ink-muted"
+                            title={c.model_origin ? t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint') : undefined}
+                        >
+                            {meta.join(' · ')}
+                            {c.model && <>{meta.length > 0 && ' · '}{t('counselor.modelLabel')} <span className="font-mono">{c.model}</span></>}
+                        </p>
+                    )}
+                    {tagline ? (
+                        <p className="text-sm italic leading-relaxed text-ink-body">{`"${tagline}"`}</p>
+                    ) : null}
                     <p className="text-sm leading-relaxed text-ink-muted">
                         {c.description || t('counselor.toneDefault')}
                     </p>
                 </div>
-
-                {/* Sotto la descrizione: badge degli strumenti */}
-                {(c.questionnaire_types && c.questionnaire_types.length > 0) && (
-                    <div className="mt-4 flex flex-wrap gap-2 pt-1">
-                        {c.questionnaire_types.slice(0, 6).map((q) => (
-                            <span key={q} className="rounded-full border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted">
-                                {q}
-                            </span>
-                        ))}
-                    </div>
-                )}
             </button>
         );
     };
@@ -349,14 +308,12 @@ export function CounselorSelector({
                 </form>
 
                 {searchNoMatch && (
-                    <p className="text-xs text-warning-ink bg-warning-soft border border-warning-line rounded-control p-2">
-                        {t('counselor.search.noMatch')}
-                    </p>
+                    <Callout variant="warning">{t('counselor.search.noMatch')}</Callout>
                 )}
 
                 {/* Scheda raccomandazione se presente */}
                 {recommendation?.counselor && (
-                    <div className="rounded-card border border-brand-line bg-brand-soft p-4 transition-all">
+                    <div className="border-t border-line pt-4">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div className="flex flex-col sm:flex-row items-start gap-4 flex-1 min-w-0">
                                 <div className="w-full sm:w-44 md:w-48 shrink-0">
@@ -377,7 +334,7 @@ export function CounselorSelector({
                                             {recommendation.counselor.name}
                                         </span>
                                         {recommendation.confidence > 0 && (
-                                            <span className="rounded-full bg-brand-soft px-2 py-1 text-2xs font-semibold text-link">
+                                            <span className="text-xs text-ink-muted">
                                                 {Math.round(recommendation.confidence * 100)}% {t('counselor.search.confidence')}
                                             </span>
                                         )}
@@ -386,16 +343,9 @@ export function CounselorSelector({
                                         {recommendation.explanation}
                                     </p>
                                     {recommendation.matched_categories.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 pt-1">
-                                            {recommendation.matched_categories.map((cat) => (
-                                                <span
-                                                    key={cat}
-                                                    className="rounded-full border border-brand-line bg-surface px-2 py-1 text-2xs font-semibold text-link"
-                                                >
-                                                    {formatCategoryLabel(cat, lang)}
-                                                </span>
-                                            ))}
-                                        </div>
+                                        <p className="text-xs text-ink-muted">
+                                            {recommendation.matched_categories.map((cat) => formatCategoryLabel(cat, lang)).join(' · ')}
+                                        </p>
                                     )}
                                 </div>
                             </div>
@@ -432,9 +382,7 @@ export function CounselorSelector({
                             <Filter className="h-3.5 w-3.5 text-ink-muted" />
                             <span>{t('counselor.filter.label')}</span>
                             {selectedCategories.length > 0 && (
-                                <span className="rounded-full bg-brand-soft px-2 py-1 text-2xs font-semibold text-link">
-                                    {selectedCategories.length}
-                                </span>
+                                <span>({selectedCategories.length})</span>
                             )}
                         </div>
                         {selectedCategories.length > 0 && (
@@ -454,7 +402,7 @@ export function CounselorSelector({
                             onClick={clearCategories}
                             className={`min-h-control rounded-full px-4 py-1 text-xs transition-colors ${
                                 selectedCategories.length === 0
-                                    ? 'bg-brand text-ink-on-brand shadow-sm font-semibold'
+                                    ? 'bg-brand text-ink-on-brand font-semibold'
                                     : 'border border-line bg-surface text-ink-body hover:border-brand-line hover:bg-surface-sunken'
                             }`}
                         >
@@ -478,7 +426,7 @@ export function CounselorSelector({
                                     aria-pressed={active}
                                     className={`min-h-control rounded-full px-4 py-1 text-xs transition-colors ${
                                         active
-                                            ? 'bg-brand text-ink-on-brand shadow-sm font-semibold'
+                                            ? 'bg-brand text-ink-on-brand font-semibold'
                                             : 'border border-line bg-surface text-ink-body hover:border-brand-line hover:bg-surface-sunken'
                                     }`}
                                 >
@@ -491,8 +439,8 @@ export function CounselorSelector({
             )}
 
             {chosenIsUnfit && (
-                <div className="rounded-card border border-warning-line bg-warning-soft px-4 py-4 text-sm text-warning-ink" role="status">
-                    <p>
+                <Callout variant="warning">
+                    <p role="status">
                         <span className="font-semibold">{chosen?.name}</span>{' '}
                         {t('counselor.unfit.notice')}{' '}
                         {questionnaireName && <span className="font-semibold">{questionnaireName}</span>}
@@ -502,7 +450,7 @@ export function CounselorSelector({
                             {t('counselor.unfit.alternatives')} {fitNames.join(', ')}
                         </p>
                     )}
-                </div>
+                </Callout>
             )}
 
             <div className="flex items-center gap-4">
@@ -543,7 +491,7 @@ export function CounselorSelector({
                         <span className="h-px flex-1 bg-line" />
                     </div>
                     <p className="text-sm text-ink-muted">{counselorHelp(lang)[group.key]}</p>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="border-t border-line">
                         {group.items.map(renderCard)}
                     </div>
                 </div>

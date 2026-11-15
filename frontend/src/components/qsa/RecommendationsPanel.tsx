@@ -27,6 +27,7 @@ import type {
     StudentRequest,
 } from '@/lib/recommendations';
 import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/Card';
 
 type Tab = RecommendationType | 'diagram';
 
@@ -155,8 +156,8 @@ export function RecommendationsPanel({
     });
 
     return (
-        <section
-            className="glass-panel overflow-hidden"
+        <Card
+            as="section" variant="flat" className="overflow-hidden py-0"
             aria-label={t('recommendations.title')}
         >
             <button
@@ -351,7 +352,7 @@ export function RecommendationsPanel({
                     </div>
                 )}
             </div>
-        </section>
+        </Card>
     );
 }
 

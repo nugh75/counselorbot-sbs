@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { factorTranslationKey } from '@/lib/questionnaires';
 
 import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/Card';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import {
     ZTPIFactorCode,
@@ -312,7 +313,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
     );
 
     return (
-        <div className="w-full glass-panel p-4 space-y-3">
+        <Card variant="flat" className="w-full space-y-3 py-4">
             <h3 className="text-base font-semibold text-center text-slate-800">{fullName}</h3>
 
             {/* Sintesi: il messaggio in 3 secondi prima del dettaglio barre. */}
@@ -420,6 +421,6 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                     </div>
                 )}
             </div>
-        </div>
+        </Card>
     );
 }
