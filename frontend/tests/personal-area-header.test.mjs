@@ -25,7 +25,9 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             const root = header.getByRole('link', { name: personalAreaText(lang, 'title'), exact: true });
             assert.equal(await root.getAttribute('href'), '/profilo');
             assert.equal(await header.getByRole('button').count(), 0);
-            assert.equal(await header.getByRole('navigation').count(), 0);
+            const crumbs = header.getByRole('navigation', { name: personalAreaText(lang, 'breadcrumbs'), exact: true });
+            assert.equal(await crumbs.count(), 1);
+            assert.equal(await crumbs.locator('[aria-current="page"]').textContent(), personalAreaName(lang, 'orientamento'));
             assert.equal(await header.getByRole('link').count(), 2);
             const privacy = header.getByRole('link', { name: PRIVACY_DICTS[lang]['privacy.title'], exact: true });
             assert.equal(await privacy.getAttribute('href'), '/privacy');

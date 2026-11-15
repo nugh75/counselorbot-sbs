@@ -84,3 +84,16 @@ test('teacher operational plans page is flat and uses the shared form primitives
     assert.match(read('components/teacher/ClassPathsTab.tsx'), /<StatusBadge tone=/);
     assert.match(read('components/teacher/ClassPathProgress.tsx'), /<Callout icon=\{null\}>/);
 });
+
+test('student and teacher areas share one breadcrumb row; PageHeader puts the back link above the title', () => {
+    const shared = read('components/ui/AreaBreadcrumbs.tsx');
+    assert.match(shared, /aria-current="page"/);
+    assert.match(shared, /<nav\s/);
+    assert.match(shared, /<ol /);
+    assert.match(read('components/teacher/TeacherBreadcrumbs.tsx'), /<AreaBreadcrumbs [^>]*testId="teacher-breadcrumbs"/);
+    assert.match(read('components/profile/PersonalAreaHeader.tsx'), /<AreaBreadcrumbs/);
+    assert.doesNotMatch(read('app/profilo/page.tsx'), /backHref="\/"/);
+    const header = read('components/ui/PageHeader.tsx');
+    assert.ok(header.indexOf('PreviousPageButton variant') < header.indexOf('<h1'));
+    assert.match(header, /className="space-y-2"/);
+});

@@ -22,7 +22,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, backHref, onBack, backLabel, icon, actions, forward, headingRef }: PageHeaderProps) {
     return (
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="space-y-2">
             {(backHref || onBack) && (
                 <div className="flex items-center gap-2">
                     {onBack ? (
@@ -33,6 +33,7 @@ export function PageHeader({ title, subtitle, backHref, onBack, backLabel, icon,
                     {forward}
                 </div>
             )}
+            <div className="flex flex-wrap items-center gap-4">
             <div className="flex min-w-0 items-center gap-2">
                 {icon}
                 <div className="min-w-0">
@@ -41,6 +42,7 @@ export function PageHeader({ title, subtitle, backHref, onBack, backLabel, icon,
                 </div>
             </div>
             {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
+            </div>
         </div>
     );
 }
