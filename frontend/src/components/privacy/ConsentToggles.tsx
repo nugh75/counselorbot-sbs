@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Loader2, ShieldCheck, ShieldQuestion } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
+import { Button } from '@/components/ui/Button';
+import { StatusBadge, type StatusTone } from '@/components/ui/StatusBadge';
 import { useI18n } from '@/lib/i18n-context';
 import {
     canRecordNewChoice,
@@ -33,14 +35,14 @@ async function errorKey(response: Response): Promise<string> {
     return privacyErrorKey(response.status, detail);
 }
 
-const STATE_CLASSES = {
-    granted: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100',
-    refused: 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200',
-    unset: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    disabled: 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100',
+const STATE_TONES: Record<'granted' | 'refused' | 'unset' | 'disabled', StatusTone> = {
+    granted: 'success',
+    refused: 'neutral',
+    unset: 'neutral',
+    disabled: 'warning',
 };
 
-const STATE_KEYS: Record<keyof typeof STATE_CLASSES, string> = {
+const STATE_KEYS: Record<keyof typeof STATE_TONES, string> = {
     granted: 'privacy.purposes.state.granted',
     refused: 'privacy.purposes.state.refused',
     unset: 'privacy.purposes.state.unset',
@@ -120,28 +122,28 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
 
     if (purposes.length === 0) {
         return (
-            <section className="glass-panel space-y-3 p-5" aria-labelledby="privacy-purposes-title">
-                <h2 id="privacy-purposes-title" className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                    <ShieldCheck className="h-5 w-5 text-indigo-600" aria-hidden />
+            <section className="space-y-3 border-t border-line pt-6" aria-labelledby="privacy-purposes-title">
+                <h2 id="privacy-purposes-title" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                    <ShieldCheck className="h-5 w-5 text-link" aria-hidden />
                     {t('privacy.purposes.title')}
                 </h2>
-                <p className="text-sm text-slate-600">{t('privacy.purposes.empty')}</p>
+                <p className="text-sm text-ink-body">{t('privacy.purposes.empty')}</p>
             </section>
         );
     }
 
     return (
-        <section className="glass-panel space-y-5 p-5" aria-labelledby="privacy-purposes-title">
+        <section className="space-y-5 border-t border-line pt-6" aria-labelledby="privacy-purposes-title">
             <div className="space-y-1">
-                <h2 id="privacy-purposes-title" className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                    <ShieldCheck className="h-5 w-5 text-indigo-600" aria-hidden />
+                <h2 id="privacy-purposes-title" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                    <ShieldCheck className="h-5 w-5 text-link" aria-hidden />
                     {t('privacy.purposes.title')}
                 </h2>
-                <p className="max-w-3xl text-sm text-slate-600">{t('privacy.purposes.intro')}</p>
-                <p className="text-xs font-medium text-slate-600">{t('privacy.purposes.onlyExplicit')}</p>
+                <p className="max-w-3xl text-sm text-ink-body">{t('privacy.purposes.intro')}</p>
+                <p className="text-xs font-medium text-ink-muted">{t('privacy.purposes.onlyExplicit')}</p>
             </div>
 
-            <ul className="space-y-3">
+            <ul>
                 {purposes.map((purpose) => {
                     const choice = currentChoice(choices, purpose.key);
                     const state = purposeState(purpose, choice);
@@ -157,14 +159,14 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
                     const saveDisabled = !canEdit || choicesLoading || saving === purpose.key || !dirty || (checked && !canEnable);
                     const message = feedback?.purpose === purpose.key ? feedback : null;
                     return (
-                        <li key={purpose.key} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                        <li key={purpose.key} className="border-t border-line py-4 first:border-t-0">
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1">
-                                    <label className="flex min-h-11 cursor-pointer items-start gap-3">
+                                    <label className="flex min-h-control cursor-pointer items-start gap-3">
                                         <input
                                             type="checkbox"
                                             role="switch"
-                                            className="mt-1 h-5 w-5 shrink-0 accent-indigo-600 disabled:cursor-not-allowed"
+                                            className="mt-1 h-5 w-5 shrink-0 accent-brand disabled:cursor-not-allowed"
                                             checked={checked}
                                             disabled={switchDisabled}
                                             aria-label={t('privacy.purposes.switch', { purpose: label })}
@@ -174,12 +176,12 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
                                             }}
                                         />
                                         <span className="min-w-0">
-                                            <span className="block text-base font-semibold text-slate-900">{label}</span>
+                                            <span className="block text-base font-semibold text-ink">{label}</span>
                                             {description.text && !description.pending && (
-                                                <span className="mt-1 block text-sm text-slate-600">{description.text}</span>
+                                                <span className="mt-1 block text-sm text-ink-body">{description.text}</span>
                                             )}
                                             {description.pending && (
-                                                <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-800 dark:text-amber-200">
+                                                <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-warning-ink">
                                                     <ShieldQuestion className="h-3.5 w-3.5" aria-hidden />
                                                     {t('privacy.purposes.descriptionPending')}
                                                 </span>
@@ -187,12 +189,10 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
                                         </span>
                                     </label>
                                 </div>
-                                <div className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${STATE_CLASSES[state]}`}>
-                                    {t(STATE_KEYS[state])}
-                                </div>
+                                <StatusBadge tone={STATE_TONES[state]}>{t(STATE_KEYS[state])}</StatusBadge>
                             </div>
 
-                            <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                            <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                                 <div className="flex gap-1">
                                     <dt className="font-medium">{t('privacy.purposes.legalBasis')}:</dt>
                                     <dd>{t(legalBasisLabelKey(purpose.legal_basis))}</dd>
@@ -204,25 +204,20 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
                             </dl>
 
                             {!purpose.active || purpose.legal_basis === 'undefined' ? (
-                                <p className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">{t('privacy.purposes.inactive')} · {t('privacy.purposes.undefined')}</p>
+                                <p className="mt-2 text-xs font-medium text-warning-ink">{t('privacy.purposes.inactive')} · {t('privacy.purposes.undefined')}</p>
                             ) : !document ? (
-                                <p className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">{t('privacy.purposes.documentMissing')}</p>
+                                <p className="mt-2 text-xs font-medium text-warning-ink">{t('privacy.purposes.documentMissing')}</p>
                             ) : null}
 
                             <div className="mt-3 flex flex-wrap items-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => void save(purpose)}
-                                    disabled={saveDisabled}
-                                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700"
-                                >
+                                <Button type="button" onClick={() => void save(purpose)} disabled={saveDisabled}>
                                     {saving === purpose.key && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
                                     {saving === purpose.key ? t('privacy.purposes.saving') : t('privacy.purposes.save')}
-                                </button>
+                                </Button>
                                 {message && (
                                     <p
                                         role={message.kind === 'error' ? 'alert' : 'status'}
-                                        className={message.kind === 'error' ? 'text-sm font-medium text-red-700 dark:text-red-300' : 'text-sm font-medium text-emerald-700 dark:text-emerald-300'}
+                                        className={message.kind === 'error' ? 'text-sm font-medium text-danger-ink' : 'text-sm font-medium text-success-ink'}
                                     >
                                         {t(message.key)}
                                     </p>

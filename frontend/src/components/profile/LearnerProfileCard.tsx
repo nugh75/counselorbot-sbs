@@ -456,7 +456,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                         <span className="inline-flex" title={t('lp.autosaveError')} aria-label={t('lp.autosaveError')}>
                             <AlertCircle className="h-4 w-4 text-danger" aria-hidden="true" />
                         </span>
-                        <Button size="sm" onClick={() => void autosave.current?.flush()}>{t('setup.retry')}</Button>
+                        <Button size="md" onClick={() => void autosave.current?.flush()}>{t('setup.retry')}</Button>
                     </span>
                 </div>
             )}
@@ -493,8 +493,8 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                                 })}
                             </dl>
                             <div className="mt-4 flex flex-wrap gap-2">
-                                <Button size="sm" onClick={useSuggestion}>{t('lp.suggestion.use')}</Button>
-                                <Button size="sm" variant="ghost" onClick={() => setSuggestionHandled(true)}>{t('lp.skip')}</Button>
+                                <Button size="md" onClick={useSuggestion}>{t('lp.suggestion.use')}</Button>
+                                <Button size="md" variant="ghost" onClick={() => setSuggestionHandled(true)}>{t('lp.skip')}</Button>
                             </div>
                         </div>
                     </div>
@@ -527,8 +527,8 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                         {confirmDelete ? (
                             <span className="inline-flex items-center gap-2 text-sm">
                                 <span className="text-danger">{t('lp.deleteConfirm')}</span>
-                                <Button size="sm" variant="danger" onClick={() => void deleteAll()}>{t('lp.delete')}</Button>
-                                <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(false)}>{t('lp.skip')}</Button>
+                                <Button size="md" variant="danger" onClick={() => void deleteAll()}>{t('lp.delete')}</Button>
+                                <Button size="md" variant="secondary" onClick={() => setConfirmDelete(false)}>{t('lp.skip')}</Button>
                             </span>
                         ) : (
                             <Button

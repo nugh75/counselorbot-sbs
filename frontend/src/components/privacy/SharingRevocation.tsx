@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { Loader2, NotebookPen, Share2, ShieldOff } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
+import { Button } from '@/components/ui/Button';
+import { Field, Input, Select } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useI18n } from '@/lib/i18n-context';
 import {
     canRecordNewChoice,
@@ -114,69 +117,66 @@ export function SharingRevocation({ choices, groups, purpose, document, canEdit,
     };
 
     return (
-        <section className="glass-panel space-y-5 p-5" aria-labelledby="privacy-sharing-title">
+        <section className="space-y-5 border-t border-line pt-6" aria-labelledby="privacy-sharing-title">
             <div className="space-y-1">
-                <h2 id="privacy-sharing-title" className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                    <Share2 className="h-5 w-5 text-indigo-600" aria-hidden />
+                <h2 id="privacy-sharing-title" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                    <Share2 className="h-5 w-5 text-link" aria-hidden />
                     {t('privacy.sharing.title')}
                 </h2>
-                <p className="max-w-3xl text-sm text-slate-600">{t('privacy.sharing.intro')}</p>
-                <p className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <p className="max-w-3xl text-sm text-ink-body">{t('privacy.sharing.intro')}</p>
+                <StatusBadge>
                     <NotebookPen className="h-3.5 w-3.5" aria-hidden />
                     {t('privacy.sharing.onlyNotebook')}
-                </p>
+                </StatusBadge>
             </div>
 
             {rows.length === 0 ? (
-                <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">{t('privacy.sharing.empty')}</p>
+                <p className="text-sm text-ink-body">{t('privacy.sharing.empty')}</p>
             ) : (
-                <ul className="space-y-2">
+                <ul>
                     {rows.map((row) => (
-                        <li key={row.target || `${row.groupId}`} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                        <li key={row.target || `${row.groupId}`} className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-3 first:border-t-0">
                             <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-900">{row.groupName}</p>
-                                <p className="text-xs text-slate-600">
+                                <p className="text-sm font-semibold text-ink">{row.groupName}</p>
+                                <p className="text-xs text-ink-muted">
                                     {t('privacy.sharing.teacher')}: {row.teacherUsername || t('privacy.sharing.unknownTeacher')}
                                 </p>
                             </div>
-                            <button
+                            <Button
                                 type="button"
+                                variant="danger"
                                 onClick={() => void revoke(row.target, row.groupId, row.teacherUsername)}
                                 disabled={!canEdit || choicesLoading || busy !== null || !row.teacherUsername}
-                                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-red-300 bg-red-50 px-3 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-800 dark:bg-red-950 dark:text-red-100 dark:hover:bg-red-900"
                             >
                                 {busy === row.target ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ShieldOff className="h-4 w-4" aria-hidden />}
                                 {busy === row.target ? t('privacy.sharing.revoking') : t('privacy.sharing.revoke')}
-                            </button>
+                            </Button>
                         </li>
                     ))}
                 </ul>
             )}
 
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-                <h3 className="text-sm font-bold text-slate-900">{t('privacy.sharing.manageTitle')}</h3>
-                <p className="mt-1 text-xs text-slate-600">{t('privacy.sharing.manageIntro')}</p>
+            <div className="border-t border-line pt-4">
+                <h3 className="text-sm font-semibold text-ink">{t('privacy.sharing.manageTitle')}</h3>
+                <p className="mt-1 text-xs text-ink-muted">{t('privacy.sharing.manageIntro')}</p>
                 {groups.length === 0 ? (
-                    <p className="mt-3 text-sm text-slate-700">{t('privacy.sharing.noClasses')}</p>
+                    <p className="mt-3 text-sm text-ink-body">{t('privacy.sharing.noClasses')}</p>
                 ) : (
                     <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
-                        <label className="min-w-0 flex-1 text-sm font-medium text-slate-800">
-                            <span className="mb-1 block">{t('privacy.sharing.class')}</span>
-                            <select
+                        <Field label={t('privacy.sharing.class')} className="flex-1">
+                            <Select
                                 value={groupId}
                                 onChange={(event) => setGroupId(event.target.value)}
                                 disabled={formDisabled}
-                                className="min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                             >
                                 <option value="">—</option>
                                 {groups.map((group) => (
                                     <option key={group.group_id} value={group.group_id}>{group.name}</option>
                                 ))}
-                            </select>
-                        </label>
-                        <label className="min-w-0 flex-1 text-sm font-medium text-slate-800">
-                            <span className="mb-1 block">{t('privacy.sharing.teacherUsername')}</span>
-                            <input
+                            </Select>
+                        </Field>
+                        <Field label={t('privacy.sharing.teacherUsername')} className="flex-1">
+                            <Input
                                 value={teacher}
                                 onChange={(event) => setTeacher(event.target.value)}
                                 disabled={formDisabled}
@@ -184,22 +184,21 @@ export function SharingRevocation({ choices, groups, purpose, document, canEdit,
                                 autoComplete="off"
                                 spellCheck={false}
                                 maxLength={255}
-                                className="min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                             />
-                        </label>
-                        <button
+                        </Field>
+                        <Button
                             type="button"
+                            className="shrink-0"
                             onClick={() => void grant()}
                             disabled={formDisabled || !groupId || !teacher.trim()}
-                            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700"
                         >
                             {busy === 'grant' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
                             {busy === 'grant' ? t('privacy.sharing.granting') : t('privacy.sharing.grant')}
-                        </button>
+                        </Button>
                     </div>
                 )}
                 {!canGrant && groups.length > 0 && (
-                    <p className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">
+                    <p className="mt-2 text-xs font-medium text-warning-ink">
                         {!purpose?.active || purpose?.legal_basis === 'undefined'
                             ? t('privacy.sharing.inactive')
                             : t('privacy.sharing.documentMissing')}
@@ -208,7 +207,7 @@ export function SharingRevocation({ choices, groups, purpose, document, canEdit,
                 {feedback && (
                     <p
                         role={feedback.kind === 'error' ? 'alert' : 'status'}
-                        className={`mt-3 text-sm font-medium ${feedback.kind === 'error' ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}
+                        className={`mt-3 text-sm font-medium ${feedback.kind === 'error' ? 'text-danger-ink' : 'text-success-ink'}`}
                     >
                         {t(feedback.key)}
                     </p>

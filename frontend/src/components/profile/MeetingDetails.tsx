@@ -81,11 +81,11 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
                         <option value="">{m('chooseSlot')}</option>
                         {freeSlots.map(slot => <option key={slot.id} value={slot.id}>{meetingWhen(slot, lang)}</option>)}
                     </select></label>
-                <Button variant="secondary" size="sm" disabled={busy || !choice}
+                <Button variant="secondary" size="md" disabled={busy || !choice}
                     onClick={() => void call(`/api/user/meetings/${meeting.id}/booking`, 'POST', { slot_id: Number(choice) })}>
                     {mine ? m('changeSlot') : m('book')}</Button>
             </div> : !mine && <p className="text-xs text-ink-muted">{m('noFreeSlots')}</p>}
-            {mine && !started && <Button variant="ghost" size="sm" disabled={busy}
+            {mine && !started && <Button variant="ghost" size="md" disabled={busy}
                 onClick={() => void call(`/api/user/meetings/${meeting.id}/booking`, 'DELETE')}>{m('cancelBooking')}</Button>}
         </div>}
 
@@ -96,7 +96,7 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
             : started
             ? <div className="flex flex-wrap items-center gap-2">
                 {attended && <span role="status" className="text-xs text-success-ink">{m('attendedDone')}</span>}
-                <Button variant={attended ? 'ghost' : 'secondary'} size="sm" disabled={busy}
+                <Button variant={attended ? 'ghost' : 'secondary'} size="md" disabled={busy}
                     onClick={() => void call(`/api/user/meetings/${meeting.id}/attendance`, attended ? 'DELETE' : 'POST')}>
                     {attended ? m('undoAttended') : m('attended')}</Button>
             </div>
@@ -130,7 +130,7 @@ export function StudentMeetings({ lang }: { lang: string }) {
     if (!failed && (!meetings || meetings.length === 0)) return null;
     return <Card as="section" aria-label={m('timelineTitle')} className="space-y-4 p-4">
         <h2 className="font-semibold text-ink">{m('timelineTitle')}</h2>
-        {failed && <Callout variant="danger">{m('loadError')} <Button variant="secondary" size="sm" onClick={() => void load()}>{m('retry')}</Button></Callout>}
+        {failed && <Callout variant="danger">{m('loadError')} <Button variant="secondary" size="md" onClick={() => void load()}>{m('retry')}</Button></Callout>}
         <ul className="space-y-4">
             {(meetings ?? []).map(row => <li key={row.id} className="rounded-control border border-line bg-surface p-4">
                 <MeetingDetails lang={lang} meeting={row} attended={Boolean(row.attended)} onChanged={load} showTitle />
