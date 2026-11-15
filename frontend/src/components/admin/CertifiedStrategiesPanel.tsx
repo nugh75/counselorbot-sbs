@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { ContentLanguageStatus } from './ContentLanguageStatus';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Button } from '@/components/ui/Button';
+import { Input, Select, Textarea } from '@/components/ui/Field';
 
 // Le sei lingue dell'app: i testi vivono in campi JSON, non in colonne fisse.
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
@@ -212,8 +213,6 @@ export function CertifiedStrategiesPanel() {
         }
     };
 
-    const inputCls = 'h-9 w-full rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-focus';
-    const areaCls = 'min-h-[70px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body outline-none focus:border-focus';
     const fieldValue = (field: 'name_i18n' | 'recommended_when_i18n' | 'description_i18n') =>
         form[field][lang] ?? '';
     // Una lingua svuotata esce dalla mappa: "non tradotto" e "tradotto in vuoto"
@@ -230,22 +229,22 @@ export function CertifiedStrategiesPanel() {
         <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.slug')}
-                    <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="focus-c6" />
+                    <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="focus-c6" />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.status')}
-                    <select className={inputCls} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                    <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                         <option value="draft">{t('admin.certified.draft')}</option>
                         <option value="certified">{t('admin.certified.certified')}</option>
-                    </select>
+                    </Select>
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.matchMode')}
-                    <select className={inputCls} value={form.match_mode} onChange={(e) => setForm({ ...form, match_mode: e.target.value })}>
+                    <Select value={form.match_mode} onChange={(e) => setForm({ ...form, match_mode: e.target.value })}>
                         <option value="any">{t('admin.certified.matchAny')}</option>
                         <option value="all">{t('admin.certified.matchAll')}</option>
-                    </select>
+                    </Select>
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.order')}
-                    <input className={inputCls} type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
+                    <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
                 </label>
             </div>
 
@@ -269,13 +268,13 @@ export function CertifiedStrategiesPanel() {
             )}
             <div className="mt-2 space-y-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.name')}
-                    <input className={inputCls} value={fieldValue('name_i18n')} onChange={(e) => setField('name_i18n', e.target.value)} />
+                    <Input value={fieldValue('name_i18n')} onChange={(e) => setField('name_i18n', e.target.value)} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.recommendedWhen')}
-                    <textarea className={areaCls} value={fieldValue('recommended_when_i18n')} onChange={(e) => setField('recommended_when_i18n', e.target.value)} />
+                    <Textarea value={fieldValue('recommended_when_i18n')} onChange={(e) => setField('recommended_when_i18n', e.target.value)} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.howTo')}
-                    <textarea className={areaCls} value={fieldValue('description_i18n')} onChange={(e) => setField('description_i18n', e.target.value)} />
+                    <Textarea value={fieldValue('description_i18n')} onChange={(e) => setField('description_i18n', e.target.value)} />
                 </label>
             </div>
 
@@ -301,13 +300,13 @@ export function CertifiedStrategiesPanel() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.keywords')}
-                    <input className={inputCls} value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })} placeholder="concentrazione distrazione" />
+                    <Input value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })} placeholder="concentrazione distrazione" />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.certifiedBy')}
-                    <input className={inputCls} value={form.certified_by} onChange={(e) => setForm({ ...form, certified_by: e.target.value })} />
+                    <Input value={form.certified_by} onChange={(e) => setForm({ ...form, certified_by: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.source')}
-                    <input className={inputCls} value={form.source_reference} onChange={(e) => setForm({ ...form, source_reference: e.target.value })} />
+                    <Input value={form.source_reference} onChange={(e) => setForm({ ...form, source_reference: e.target.value })} />
                 </label>
             </div>
 
