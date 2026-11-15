@@ -3,7 +3,8 @@
 Aggiornato: 2026-11-16
 
 ## Stato
-In corso: codice e docs pronti, manca commit/push/PR. Nessun dev server né Docker.
+PR aperta: https://github.com/nugh75/counselorbot-sbs/pull/970 (3 commit, merge di
+`origin/main` già fatto). Nessun dev server né Docker. Task del Diario chiuso (fatto).
 
 ## Fatto
 - 16 primitive chat da palette grezza ai token semantici (`ink*`, `surface*`,
@@ -30,7 +31,8 @@ In corso: codice e docs pronti, manca commit/push/PR. Nessun dev server né Dock
 - Nessun controllo visivo (niente dev server né browser).
 
 ## Prossimi passi
-- Commit atomici, push, PR su `main` con milestone e progetto CounselorBot.
+- Attesa merge da app del proprietario; i build desktop restano pending ma non
+  sono gating.
 
 ## Blocchi e rischi
 - Il composer (`ChatShell`) e l'input di `InlineRename` restano `<textarea>`/
