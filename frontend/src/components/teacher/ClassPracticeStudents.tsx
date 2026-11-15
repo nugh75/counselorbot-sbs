@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
-import { Card } from '@/components/ui/Card';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useI18n } from '@/lib/i18n-context';
 import { practiceNotebookText } from '@/lib/i18n-practice-notebooks';
@@ -49,10 +48,13 @@ export function ClassPracticeStudents({ groupId }: { groupId: number }) {
     }
 
     return (
-        <Card as="section" aria-labelledby="class-practice-students-heading" className="space-y-3 border-role-test-line bg-role-test-soft [--ink-muted:var(--role-test-muted)]">
-            <h2 id="class-practice-students-heading" className="text-lg font-semibold text-ink">{l('classPracticeStudents')}</h2>
+        <section aria-labelledby="class-practice-students-heading" className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2 border-b border-line pb-2">
+                <h2 id="class-practice-students-heading" className="text-lg font-semibold text-ink">{l('classPracticeStudents')}</h2>
+                <RoleBadge role="test">{l('testStudentBadge')}</RoleBadge>
+            </div>
             <p className="text-sm text-ink-muted">{l('classPracticeStudentsHint')}</p>
             {content}
-        </Card>
+        </section>
     );
 }

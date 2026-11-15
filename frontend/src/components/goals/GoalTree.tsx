@@ -18,8 +18,8 @@ export function GoalTree({ goals, forest, groups, onOpen, onAddChild, canAddChil
         const goal = node.goal; const open = node.repeat === flipped.has(node.key);
         const { done, total } = progress(goals, goal.id);
         const shares = [...effectiveShares(goals, goal.id).keys()].map(id => groups.find(group => group.id === id)?.name ?? `#${id}`);
-        return <li key={node.key} className="space-y-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-card border border-line bg-surface p-2 sm:p-4">
+        return <li key={node.key}>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line py-2">
                 {node.children.length > 0
                     ? <button type="button" aria-expanded={open} aria-label={`${l(open ? 'collapse' : 'expand')} ${goal.title}`} onClick={() => flip(node.key)} className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control hover:bg-surface-raised">{open ? <ChevronDown className="h-5 w-5" aria-hidden /> : <ChevronRight className="h-5 w-5" aria-hidden />}</button>
                     : <span className="w-control shrink-0" aria-hidden />}
@@ -30,8 +30,8 @@ export function GoalTree({ goals, forest, groups, onOpen, onAddChild, canAddChil
                 {node.otherParents.length > 0 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-ink-muted"><Link2 className="h-3 w-3 shrink-0" aria-hidden />{l('alsoUnder')}: {node.otherParents.map(parent => parent.title).join(', ')}</p>}
                 {node.depth >= 4 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-ink-muted"><CornerDownRight className="h-3 w-3 shrink-0" aria-hidden />{goalFormat(lang, 'level', { n: node.depth + 1 })}</p>}
             </div>
-            {open && node.children.length > 0 && <ul className={`space-y-1 ${node.depth < 3 ? 'pl-4 sm:pl-6' : ''}`}>{node.children.map(render)}</ul>}
+            {open && node.children.length > 0 && <ul className={node.depth < 3 ? 'ml-4 border-l border-line pl-2 sm:ml-6' : ''}>{node.children.map(render)}</ul>}
         </li>;
     };
-    return <ul className="space-y-2" aria-label={l('goals')}>{forest.map(render)}</ul>;
+    return <ul aria-label={l('goals')}>{forest.map(render)}</ul>;
 }

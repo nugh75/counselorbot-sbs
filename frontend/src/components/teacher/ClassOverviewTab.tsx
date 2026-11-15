@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
     AlertTriangle,
-    ArrowRight,
     Check,
     Copy,
     FileText,
@@ -35,6 +34,7 @@ import { ClassImageModal } from './ClassImageModal';
 import { ClassPairingSection } from './ClassPairingSection';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import type { StudentGroup } from './class-group-types';
 import type { ClassSettings } from '@/lib/class-settings';
 
@@ -380,94 +380,18 @@ export function ClassOverviewTab({
     return (
         <div className="space-y-6">
             {/* 1. Quick Links verso le altre tab dell'Hub */}
-            <section aria-labelledby="class-overview-quicklinks-heading">
-                <h2 id="class-overview-quicklinks-heading" className="sr-only">
-                    {l('quickLinksTitle')}
-                </h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {/* Studenti iscritti */}
-                    <button
-                        type="button"
-                        onClick={() => onSelectTab('students')}
-                        className="group flex flex-col justify-between rounded-card border border-line bg-surface p-4 text-left shadow-card transition hover:border-brand-line hover:shadow-card"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-ink-body">{l('enrolledStudents')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link group-hover:bg-brand-soft">
-                                <Users className="h-4 w-4" aria-hidden />
-                            </span>
-                        </div>
-                        <div className="mt-4 flex items-baseline gap-2">
-                            <span className="text-2xl font-semibold text-ink">{group.members_count}</span>
-                            <span className="text-xs text-ink-muted">{l('members')}</span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-link group-hover:underline">
-                            {l('goToStudents')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                        </div>
-                    </button>
-
-                    {/* Strumenti abilitati */}
-                    <button
-                        type="button"
-                        onClick={() => onSelectTab('toolsTab')}
-                        className="group flex flex-col justify-between rounded-card border border-line bg-surface p-4 text-left shadow-card transition hover:border-brand-line hover:shadow-card"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-ink-body">{l('enabledTools')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link group-hover:bg-brand-soft">
-                                <Wrench className="h-4 w-4" aria-hidden />
-                            </span>
-                        </div>
-                        <div className="mt-4 flex items-baseline gap-2">
-                            <span className="text-2xl font-semibold text-ink">{enabledToolsCount}</span>
-                            <span className="text-sm text-ink-muted">/ {nonAlwaysOnTools.length}</span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-link group-hover:underline">
-                            {l('goToTools')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                        </div>
-                    </button>
-
-                    {/* Percorsi didattici */}
-                    <button
-                        type="button"
-                        onClick={() => onSelectTab('paths')}
-                        className="group flex flex-col justify-between rounded-card border border-line bg-surface p-4 text-left shadow-card transition hover:border-brand-line hover:shadow-card"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-ink-body">{l('classPaths')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link group-hover:bg-brand-soft">
-                                <Route className="h-4 w-4" aria-hidden />
-                            </span>
-                        </div>
-                        <div className="mt-4">
-                            <p className="line-clamp-2 text-xs text-ink-muted">{l('classPathsDesc')}</p>
-                        </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-link group-hover:underline">
-                            {l('goToPaths')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                        </div>
-                    </button>
-
-                    {/* Forum di classe */}
-                    <button
-                        type="button"
-                        onClick={() => onSelectTab('forum')}
-                        className="group flex flex-col justify-between rounded-card border border-line bg-surface p-4 text-left shadow-card transition hover:border-brand-line hover:shadow-card"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-ink-body">{l('classForum')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link group-hover:bg-brand-soft">
-                                <MessageSquare className="h-4 w-4" aria-hidden />
-                            </span>
-                        </div>
-                        <div className="mt-4">
-                            <p className="line-clamp-2 text-xs text-ink-muted">{l('classForumDesc')}</p>
-                        </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-link group-hover:underline">
-                            {l('goToForum')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                        </div>
-                    </button>
-                </div>
-            </section>
+            <EntrySection id="class-overview-quicklinks-heading" title={l('quickLinksTitle')}>
+                <EntryLink idPrefix="class-overview" id="students" href="#" onOpen={() => onSelectTab('students')}
+                    illustration={<Users className="h-8 w-8 shrink-0 text-link" aria-hidden />} name={l('enrolledStudents')}
+                    description={`${group.members_count} ${l('members')}`} />
+                <EntryLink idPrefix="class-overview" id="tools" href="#" onOpen={() => onSelectTab('toolsTab')}
+                    illustration={<Wrench className="h-8 w-8 shrink-0 text-link" aria-hidden />} name={l('enabledTools')}
+                    description={`${enabledToolsCount} / ${nonAlwaysOnTools.length}`} />
+                <EntryLink idPrefix="class-overview" id="paths" href="#" onOpen={() => onSelectTab('paths')}
+                    illustration={<Route className="h-8 w-8 shrink-0 text-link" aria-hidden />} name={l('classPaths')} description={l('classPathsDesc')} />
+                <EntryLink idPrefix="class-overview" id="forum" href="#" onOpen={() => onSelectTab('forum')}
+                    illustration={<MessageSquare className="h-8 w-8 shrink-0 text-link" aria-hidden />} name={l('classForum')} description={l('classForumDesc')} />
+            </EntrySection>
 
             <TargetedGoals target={{ groupId: group.id }} />
 
