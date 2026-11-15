@@ -15,13 +15,14 @@ import { useTeacherResource } from '@/components/teacher/useTeacherResource';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 
 type TextKey = keyof typeof forumTexts;
 
 type ForumAction = (path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: object) => Promise<boolean>;
 
 function ForumMarkdown({ body }: { body: string }) {
-    return <div className="prose prose-slate max-w-none text-sm">
+    return <div className="prose max-w-none text-sm">
         <ReactMarkdown skipHtml allowedElements={['p', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote', 'br', 'a', 'code']} unwrapDisallowed
             urlTransform={href => forumLink(href) || ''}
             components={{ a: ({ href, children }) => href ? <a href={href} rel="nofollow noopener noreferrer" target="_blank">{children}</a> : <span>{children}</span> }}>
@@ -34,10 +35,9 @@ function HideForm({ busy, onHide, onCancel }: { busy: boolean; onHide: (reason: 
     const { lang } = useI18n(); const l = (key: TextKey) => forumText(lang, key);
     const [reason, setReason] = useState('');
     return <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); if (reason.trim()) onHide(reason.trim()); }}>
-        <label className="block min-w-0 flex-1 text-sm font-semibold text-slate-700">{l('reason')}
-            <input value={reason} maxLength={500} disabled={busy} onChange={event => setReason(event.target.value)}
-                className="mt-1 block min-h-control w-full rounded-control border border-slate-300 bg-white p-2 font-normal" />
-        </label>
+        <Field className="min-w-0 flex-1" label={l('reason')}>
+            <Input value={reason} maxLength={500} disabled={busy} onChange={event => setReason(event.target.value)} />
+        </Field>
         <Button type="submit" variant="danger" disabled={busy || !reason.trim()}>{l('hideConfirm')}</Button>
         <Button type="button" variant="secondary" disabled={busy} onClick={onCancel}>{l('cancel')}</Button>
     </form>;
@@ -48,11 +48,9 @@ function EditForm({ initial, busy, onSave, onCancel }: { initial: string; busy: 
     const [body, setBody] = useState(initial);
     useDraftGuard(body !== initial, l('discard'), { blocked: busy });
     return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (forumDraftValid(body)) onSave(body); }}>
-        <label className="block text-sm font-semibold text-slate-700">{l('edit')}
-            <textarea value={body} maxLength={4000} disabled={busy} rows={4} onChange={event => setBody(event.target.value)}
-                className="mt-1 block w-full rounded-control border border-slate-300 bg-white p-3 text-base font-normal" />
-            <span className="font-mono text-xs text-slate-500">{body.length} / 4000</span>
-        </label>
+        <Field label={l('edit')} help={<span className="font-mono">{body.length} / 4000</span>}>
+            <Textarea value={body} maxLength={4000} disabled={busy} rows={4} onChange={event => setBody(event.target.value)} />
+        </Field>
         <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={busy || !forumDraftValid(body) || body === initial}>{l('save')}</Button>
             <Button type="button" variant="secondary" disabled={busy}
@@ -73,16 +71,12 @@ export function TopicForm({ initial, busy, onSave, onCancel, onDraft, guard = tr
     useDraftGuard(guard && dirty, l('discard'), { blocked: busy });
     useEffect(() => { onDraft?.(dirty, busy); }, [dirty, busy, onDraft]);
     return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (valid && changes) onSave(changes); }}>
-        <label className="block text-sm font-semibold text-slate-700">{l('title')}
-            <input value={title} maxLength={160} disabled={busy} onChange={event => setTitle(event.target.value)}
-                className="mt-1 block min-h-control w-full rounded-control border border-slate-300 bg-white p-2 font-normal" />
-            <span className="font-mono text-xs text-slate-500">{title.length} / 160</span>
-        </label>
-        <label className="block text-sm font-semibold text-slate-700">{l('body')}
-            <textarea value={body} maxLength={4000} disabled={busy} rows={6} onChange={event => setBody(event.target.value)}
-                className="mt-1 block w-full rounded-control border border-slate-300 bg-white p-3 text-base font-normal" />
-            <span className="font-mono text-xs text-slate-500">{body.length} / 4000</span>
-        </label>
+        <Field label={l('title')} help={<span className="font-mono">{title.length} / 160</span>}>
+            <Input value={title} maxLength={160} disabled={busy} onChange={event => setTitle(event.target.value)} />
+        </Field>
+        <Field label={l('body')} help={<span className="font-mono">{body.length} / 4000</span>}>
+            <Textarea value={body} maxLength={4000} disabled={busy} rows={6} onChange={event => setBody(event.target.value)} />
+        </Field>
         <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={busy || !valid || !changes}>{l('save')}</Button>
             <Button type="button" variant="secondary" disabled={busy}
@@ -100,16 +94,16 @@ function ForumMessage({ post, moderator = false, active = false, busy = false, o
     const run = async (path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: object) => {
         if (onAction && await onAction(path, method, body)) setMode('view');
     };
-    return <article className="min-w-0 space-y-2 break-words border-b border-slate-200 py-4 last:border-0">
-        <p className="text-sm text-slate-600">{post.author_display_name} · <time dateTime={post.created_at}>{new Date(post.created_at).toLocaleString(lang)}</time>
+    return <article className="min-w-0 space-y-2 break-words border-b border-line py-4 last:border-0">
+        <p className="text-sm text-ink-muted">{post.author_display_name} · <time dateTime={post.created_at}>{new Date(post.created_at).toLocaleString(lang)}</time>
             {post.edited_at && !post.deleted && <> · <span title={new Date(post.edited_at).toLocaleString(lang)}>{l('edited')}</span></>}</p>
         {post.status === 'pending' && !post.hidden && !post.deleted && <Callout>{l('pendingHint')}</Callout>}
-        {post.deleted ? <p className="text-sm text-slate-500">{l('deleted')}</p>
+        {post.deleted ? <p className="text-sm text-ink-muted">{l('deleted')}</p>
             : mode === 'edit' && post.body !== null ? <EditForm initial={post.body} busy={busy} onCancel={() => setMode('view')}
                 onSave={body => void run(`/api/forum/posts/${post.id}`, 'PATCH', { body })} />
-            : post.body === null ? <p className="text-sm text-slate-500">{l('hidden')}</p>
+            : post.body === null ? <p className="text-sm text-ink-muted">{l('hidden')}</p>
             : <ForumMarkdown body={post.body} />}
-        {post.hidden && post.hidden_reason !== null && <p className="text-sm font-semibold text-amber-800">
+        {post.hidden && post.hidden_reason !== null && <p className="text-sm font-semibold text-warning-ink">
             {l('hiddenWithReason')}: “{post.hidden_reason}”</p>}
         {mode === 'hide' && <HideForm busy={busy} onCancel={() => setMode('view')}
             onHide={reason => void run(`/api/teacher/forum/posts/${post.id}/hide`, 'POST', { reason })} />}
@@ -133,12 +127,12 @@ function MuteForm({ busy, onMute, onCancel }: { busy: boolean; onMute: (reason: 
     const [reason, setReason] = useState(''); const [until, setUntil] = useState('');
     useDraftGuard(Boolean(reason || until), l('discard'), { blocked: busy });
     return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (reason.trim()) onMute(reason.trim(), until ? new Date(until).toISOString() : null); }}>
-        <label className="block text-sm text-slate-700">{l('reason')}
-            <input className="block min-h-control w-full rounded-control border border-slate-300 p-2" required maxLength={500} disabled={busy} value={reason} onChange={event => setReason(event.target.value)} />
-        </label>
-        <label className="block text-sm text-slate-700">{l('muteUntil')}
-            <input type="datetime-local" className="block min-h-control max-w-full rounded-control border border-slate-300 p-2" disabled={busy} value={until} onChange={event => setUntil(event.target.value)} />
-        </label>
+        <Field label={l('reason')}>
+            <Input required maxLength={500} disabled={busy} value={reason} onChange={event => setReason(event.target.value)} />
+        </Field>
+        <Field label={l('muteUntil')}>
+            <Input type="datetime-local" disabled={busy} value={until} onChange={event => setUntil(event.target.value)} />
+        </Field>
         <Button type="submit" disabled={busy || !reason.trim()}>{l('muteConfirm')}</Button>{' '}
         <Button type="button" variant="secondary" disabled={busy} onClick={onCancel}>{l('cancel')}</Button>
     </form>;
@@ -153,16 +147,16 @@ function ForumLinkPicker({ groupId, value, busy, onChange }: { groupId: number; 
     const { lang } = useI18n();
     const resource = useTeacherResource(`/api/groups/${groupId}/forum/link-targets`, parseForumTargets);
     return <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-700">{forumText(lang, 'linkOptional')}
-            <select value={value} disabled={busy || resource.loading || !resource.data || resource.forbidden}
-                onChange={event => onChange(event.target.value)} className="mt-1 block min-h-control w-full rounded-control border border-slate-300 bg-white p-2">
+        <Field label={forumText(lang, 'linkOptional')}>
+            <Select value={value} disabled={busy || resource.loading || !resource.data || resource.forbidden}
+                onChange={event => onChange(event.target.value)}>
                 <option value="">{forumText(lang, 'noLink')}</option>
                 {resource.data?.targets.map(target => <option key={`${target.kind}:${target.id}`} value={`${target.kind}:${target.id}`}>
                     {targetLabel(target, lang)}
                 </option>)}
-            </select>
-        </label>
-        {resource.loading && <p role="status" className="text-sm text-slate-500">{forumText(lang, 'loading')}</p>}
+            </Select>
+        </Field>
+        {resource.loading && <p role="status" className="text-sm text-ink-muted">{forumText(lang, 'loading')}</p>}
         {(resource.failed || resource.forbidden) && <Callout variant="danger">{forumText(lang, 'linkLoadError')}
             <Button type="button" variant="secondary" disabled={busy} onClick={() => void resource.reload()}>{forumText(lang, 'retry')}</Button>
         </Callout>}
@@ -212,19 +206,15 @@ export function ForumComposer({ path, topic, linkGroupId, onPublished, onForbidd
         finally { if (current()) { pending.current = null; setBusy(false); } }
     };
     return <form className="space-y-3" onSubmit={event => { event.preventDefault(); void send(); }}>
-        {topic && <label className="block text-sm font-semibold text-slate-700">{l('title')}
-            <input value={title} maxLength={160} disabled={busy} onChange={event => setTitle(event.target.value)}
-                className="mt-1 block min-h-control w-full rounded-control border border-slate-300 bg-white p-2" />
-            <span className="font-mono text-xs text-slate-500">{title.length} / 160</span>
-        </label>}
-        <label className="block text-sm font-semibold text-slate-700">{l(topic ? 'body' : 'reply')}
-            <textarea value={body} maxLength={4000} disabled={busy} rows={5} onChange={event => setBody(event.target.value)}
-                className="mt-1 block w-full rounded-control border border-slate-300 bg-white p-3 text-base font-normal" />
-            <span className="font-mono text-xs text-slate-500">{body.length} / 4000</span>
-        </label>
+        {topic && <Field label={l('title')} help={<span className="font-mono">{title.length} / 160</span>}>
+            <Input value={title} maxLength={160} disabled={busy} onChange={event => setTitle(event.target.value)} />
+        </Field>}
+        <Field label={l(topic ? 'body' : 'reply')} help={<span className="font-mono">{body.length} / 4000</span>}>
+            <Textarea value={body} maxLength={4000} disabled={busy} rows={5} onChange={event => setBody(event.target.value)} />
+        </Field>
         {topic && linkGroupId !== undefined && <ForumLinkPicker groupId={linkGroupId} value={link} busy={busy} onChange={setLink} />}
-        <p className="text-xs text-slate-500">{l('safeText')}</p>
-        {error && <p role="alert" className="text-sm text-red-700">{l(error)}</p>}
+        <p className="text-xs text-ink-muted">{l('safeText')}</p>
+        {error && <p role="alert" className="text-sm text-danger-ink">{l(error)}</p>}
         <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={busy || !forumDraftValid(body, topic ? title : undefined)}>{l(busy ? 'sending' : 'send')}</Button>
             {onCancel && <Button type="button" variant="secondary" disabled={busy} onClick={onCancel}>{l('cancel')}</Button>}
@@ -290,12 +280,12 @@ function ForumDiscussion({ groupId, groupActive, topicId, onBack, onForbidden, o
                     && detail.topic.body !== null && detail.forum_enabled !== false && !detail.mute &&
                     <Button size="md" variant="secondary" disabled={acting} onClick={() => setEditing(true)}>{l('editTopic')}</Button>}
             </div>}
-        {detail.topic.link && <p className="break-words text-sm text-slate-600">{l('linkedResource')}: {' '}
-            {targetHref ? <Link href={targetHref} className="text-indigo-700 underline">
+        {detail.topic.link && <p className="break-words text-sm text-ink-muted">{l('linkedResource')}: {' '}
+            {targetHref ? <Link href={targetHref} className="text-link underline">
                 {targetLabel(detail.topic.link, lang)}</Link> : <span>{targetLabel(detail.topic.link, lang)} · {l('linkUnavailable')}</span>}
         </p>}
         {moderate && detail.topic.status !== 'pending' && <TopicModeration topic={detail.topic} busy={acting} onAction={act} />}
-        {actionError && <p role="alert" className="text-sm text-red-700">{l('actionError')}</p>}
+        {actionError && <p role="alert" className="text-sm text-danger-ink">{l('actionError')}</p>}
         <ForumMessage post={detail.topic} moderator={detail.can_moderate} active={groupActive} busy={acting} topicMessage
             groupId={groupId} onAction={async (path, method, body) => path.endsWith('/mutes') && await act(path, method, body)} />
         {resource.failed && <Callout variant="danger">{l('loadError')} <Button variant="secondary" onClick={() => void resource.reload()}>{l('retry')}</Button></Callout>}
@@ -325,18 +315,18 @@ function ForumLogView({ groupId, onBack }: { groupId: number; onBack: () => void
     return <Card variant="flat" className="space-y-4">
         <Button variant="secondary" onClick={onBack}>{l('back')}</Button>
         <h3 className="text-lg font-semibold text-ink">{l('log')}</h3>
-        <p className="text-xs text-slate-500">{l('logPrivacy')}</p>
+        <p className="text-xs text-ink-muted">{l('logPrivacy')}</p>
         {resource.forbidden ? <Callout variant="danger">{l('forbidden')}</Callout> : !log ? <Callout variant={resource.failed ? 'danger' : 'info'}>
             <p>{l(resource.failed ? 'loadError' : 'loading')}</p>
             {resource.failed && <Button variant="secondary" onClick={() => void resource.reload()}>{l('retry')}</Button>}
         </Callout> : <>
-            {!log.entries.length && <p className="text-sm text-slate-600">{l('logEmpty')}</p>}
-            <ul className="divide-y divide-slate-200">{log.entries.map(entry => <li key={entry.id} className="min-w-0 break-words py-3 text-sm text-slate-700">
-                <time className="font-mono text-xs text-slate-500" dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString(lang)}</time>
+            {!log.entries.length && <p className="text-sm text-ink-muted">{l('logEmpty')}</p>}
+            <ul className="divide-y divide-line">{log.entries.map(entry => <li key={entry.id} className="min-w-0 break-words py-3 text-sm text-ink-body">
+                <time className="font-mono text-xs text-ink-muted" dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString(lang)}</time>
                 <span className="block">{entry.actor_username} {LOG_ACTIONS[entry.action] ? l(LOG_ACTIONS[entry.action]) : entry.action}{' '}
                     {l(entry.target_kind === 'topic' ? 'logTopic' : entry.target_kind === 'user' ? 'logUser' : entry.target_kind === 'settings' ? 'options' : 'logPost')}
                     {entry.target_id !== null && ` #${entry.target_id}`}</span>
-                {entry.reason && <span className="block text-slate-600">“{entry.reason}”</span>}
+                {entry.reason && <span className="block text-ink-muted">“{entry.reason}”</span>}
             </li>)}</ul>
             <div className="flex gap-2">
                 {offset > 0 && <Button variant="secondary" disabled={resource.loading} onClick={() => setOffset(value => Math.max(0, value - 50))}>{l('previous')}</Button>}
@@ -387,19 +377,19 @@ function ForumReview({ groupId, mode, active, onBack, onForbidden, onDraft }: {
         </Callout> : <>
             {resource.failed && <Callout variant="danger">{l('loadError')} <Button variant="secondary" onClick={() => void resource.reload()}>{l('retry')}</Button></Callout>}
             {mode === 'pending' ? <>
-                {!entries.length && <p className="text-sm text-slate-600">{l('pending')} (0)</p>}
-                {entries.map(entry => <article key={`${entry.kind}-${entry.id}`} className="space-y-2 border-b border-slate-200 py-3">
-                    <h4 className="break-words font-semibold text-slate-800">{entry.heading}</h4>
-                    <p className="text-sm text-slate-600">{entry.author_display_name}</p>
+                {!entries.length && <p className="text-sm text-ink-muted">{l('pending')} (0)</p>}
+                {entries.map(entry => <article key={`${entry.kind}-${entry.id}`} className="space-y-2 border-b border-line py-3">
+                    <h4 className="break-words font-semibold text-ink">{entry.heading}</h4>
+                    <p className="text-sm text-ink-muted">{entry.author_display_name}</p>
                     {entry.body && <ForumMarkdown body={entry.body} />}
                     {active && <div className="flex flex-wrap gap-2">
                         <Button disabled={busy} onClick={() => void act(`/api/teacher/forum/${entry.kind}/${entry.id}/approve`, 'POST')}>{l('approve')}</Button>
                         <Button variant="secondary" disabled={busy} onClick={() => { if (!reason || window.confirm(l('discard'))) { setRejecting(`${entry.kind}-${entry.id}`); setReason(''); } }}>{l('reject')}</Button>
                     </div>}
                     {rejecting === `${entry.kind}-${entry.id}` && <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (reason.trim()) void act(`/api/teacher/forum/${entry.kind}/${entry.id}/reject`, 'POST', { reason: reason.trim() }); }}>
-                        <label className="block text-sm text-slate-700">{l('reason')}
-                            <input required maxLength={500} className="block min-h-control w-full rounded-control border border-slate-300 p-2" disabled={busy} value={reason} onChange={event => setReason(event.target.value)} />
-                        </label>
+                        <Field label={l('reason')}>
+                            <Input required maxLength={500} disabled={busy} value={reason} onChange={event => setReason(event.target.value)} />
+                        </Field>
                         <Button type="submit" variant="danger" disabled={busy || !reason.trim()}>{l('reject')}</Button>
                     </form>}
                 </article>)}
@@ -407,9 +397,9 @@ function ForumReview({ groupId, mode, active, onBack, onForbidden, onDraft }: {
                     {offset > 0 && <Button variant="secondary" disabled={busy || resource.loading} onClick={() => setOffset(value => Math.max(0, value - 50))}>{l('previous')}</Button>}
                     {queue.has_more && <Button variant="secondary" disabled={busy || resource.loading} onClick={() => setOffset(value => value + 50)}>{l('more')}</Button>}
                 </div>
-            </> : <ul className="divide-y divide-slate-200">
-                {!queue.mutes.length && <li className="text-sm text-slate-600">{l('mutedStudents')} (0)</li>}
-                {queue.mutes.map(mute => <li key={mute.id} className="space-y-2 break-words py-3 text-sm text-slate-700">
+            </> : <ul className="divide-y divide-line">
+                {!queue.mutes.length && <li className="text-sm text-ink-muted">{l('mutedStudents')} (0)</li>}
+                {queue.mutes.map(mute => <li key={mute.id} className="space-y-2 break-words py-3 text-sm text-ink-body">
                     <p className="font-semibold">{mute.username}</p><p>{mute.reason}</p>
                     {mute.until && <p>{l('muteUntil')}: {new Date(mute.until).toLocaleString(lang)}</p>}
                     {active && <Button variant="secondary" disabled={busy} onClick={() => void act(`/api/teacher/groups/${groupId}/forum/mutes/${mute.id}`, 'DELETE')}>{l('unmute')}</Button>}
@@ -442,7 +432,7 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
         {resource.failed && <Button variant="secondary" onClick={() => void resource.reload()}>{l('retry')}</Button>}
     </Callout>;
     return <div className="space-y-4">
-        {student && <Link className="inline-flex min-h-control items-center text-sm text-indigo-700" href="/profilo/classi">{l('classes')}</Link>}
+        {student && <Link className="inline-flex min-h-control items-center text-sm text-link" href="/profilo/classi">{l('classes')}</Link>}
         <div className="flex flex-wrap items-center justify-between gap-3">
             <Heading className="break-words text-lg font-semibold text-ink">{l('forum')} · {listing.group.name}</Heading>
             <div className="flex flex-wrap gap-2">
@@ -464,12 +454,12 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
             mode={view} active={listing.group.is_active} onBack={() => navigate('list')} onForbidden={() => setForbidden(true)} onDraft={onDraft} />}
         {typeof view === 'number' && <ForumDiscussion key={view} groupId={groupId} groupActive={listing.group.is_active} topicId={view} onBack={() => navigate('list')} onDraft={onDraft} onForbidden={() => setForbidden(true)} />}
         {view === 'list' && <Card variant="flat">
-            {!listing.topics.length && <p className="text-sm text-slate-600">{l('empty')}</p>}
-            <ul className="divide-y divide-slate-200">{listing.topics.map(topic => <li key={topic.id}>
+            {!listing.topics.length && <p className="text-sm text-ink-muted">{l('empty')}</p>}
+            <ul className="divide-y divide-line">{listing.topics.map(topic => <li key={topic.id}>
                 <button type="button" className="block min-h-control w-full space-y-1 py-3 text-left" onClick={() => navigate(topic.id)}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="block break-words font-semibold text-indigo-700">{topic.pinned && <><Pin className="mr-1 inline h-3.5 w-3.5 align-baseline" aria-hidden />{`${l('pinned')} · `}</>}{topic.locked && <><Lock className="mr-1 inline h-3.5 w-3.5 align-baseline" aria-hidden /><span className="sr-only">{l('closed')} </span></>}{topic.title || l('hidden')}</span>
-                        {topic.status === 'pending' && <span className="text-xs font-semibold text-amber-800">{l('pending')}</span>}
+                        <span className="block break-words font-semibold text-link">{topic.pinned && <><Pin className="mr-1 inline h-3.5 w-3.5 align-baseline" aria-hidden />{`${l('pinned')} · `}</>}{topic.locked && <><Lock className="mr-1 inline h-3.5 w-3.5 align-baseline" aria-hidden /><span className="sr-only">{l('closed')} </span></>}{topic.title || l('hidden')}</span>
+                        {topic.status === 'pending' && <span className="text-xs font-semibold text-warning-ink">{l('pending')}</span>}
                         {Boolean(topic.unread_count && topic.unread_count > 0) && (
                             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ochre-700" aria-label={l('unreadMarker').replace('{count}', String(topic.unread_count))}>
                                 <span className="h-2 w-2 rounded-full bg-ochre-500" aria-hidden="true" />
@@ -478,8 +468,8 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
                             </span>
                         )}
                     </div>
-                    {topic.hidden && topic.hidden_reason !== null && <span className="block text-sm font-semibold text-amber-800">{l('hiddenWithReason')}: “{topic.hidden_reason}”</span>}
-                    <span className="block text-sm text-slate-600">{topic.author_display_name} · {topic.replies_count} {l(topic.replies_count === 1 ? 'replyOne' : 'replies')}{topic.locked && ` · ${l('closed')}`}</span>
+                    {topic.hidden && topic.hidden_reason !== null && <span className="block text-sm font-semibold text-warning-ink">{l('hiddenWithReason')}: “{topic.hidden_reason}”</span>}
+                    <span className="block text-sm text-ink-muted">{topic.author_display_name} · {topic.replies_count} {l(topic.replies_count === 1 ? 'replyOne' : 'replies')}{topic.locked && ` · ${l('closed')}`}</span>
                 </button>
             </li>)}</ul>
             <div className="flex gap-2">
