@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { BookOpen, ExternalLink, FileText, Loader2, Plus, Search, Trash2 } from 'lucide-react';
+import { BookOpen, ExternalLink, FileText, Plus, Search, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchIdeaBranches } from '@/lib/idea-map';
 import {
@@ -175,7 +175,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                     className="gap-1.5"
                 >
                     {busy
-                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        ? <Spinner className="h-3.5 w-3.5" aria-hidden="true" />
                         : <Search className="h-3.5 w-3.5" aria-hidden="true" />}
                     {t('idea.sources.search')}
                 </Button>
@@ -211,7 +211,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                                     className="inline-flex shrink-0 items-center gap-1 rounded-md border border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft disabled:opacity-40"
                                 >
                                     {keeping === item.url
-                                        ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                                        ? <Spinner className="h-3 w-3" aria-hidden="true" />
                                         : <Plus className="h-3 w-3" aria-hidden="true" />}
                                     {t('idea.sources.keep')}
                                 </button>

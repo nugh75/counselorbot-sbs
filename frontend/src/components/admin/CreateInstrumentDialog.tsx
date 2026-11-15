@@ -2,23 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import {
-    BarChart3,
-    Briefcase,
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    ClipboardList,
-    ChevronDown,
-    ChevronUp,
-    Clock,
-    Compass,
-    Lightbulb,
-    Loader2,
-    Sparkles,
-    Target,
-    X,
-} from 'lucide-react';
+import { BarChart3, Briefcase, Check, ChevronLeft, ChevronRight, ClipboardList, ChevronDown, ChevronUp, Clock, Compass, Lightbulb, Sparkles, Target, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import {
@@ -31,7 +15,7 @@ import {
     type InstrumentWizardForm,
     type StepTemplateKey,
 } from '@/lib/instrument-wizard';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 const ICONS = [
@@ -744,7 +728,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
 
                                 {loadingCounselors ? (
                                     <div className="mt-4 flex items-center gap-2 text-xs text-ink-muted">
-                                        <Loader2 className="h-4 w-4 animate-spin text-brand" />
+                                        <Spinner className="h-4 w-4 text-brand" />
                                         {t('admin.instrumentWizard.loadingCounselors')}
                                     </div>
                                 ) : counselors.length === 0 ? (
@@ -894,7 +878,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                 className="text-xs">
                                 {submitting ? (
                                     <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <Spinner className="h-4 w-4" />
                                         {t('admin.instrumentWizard.submitting')}
                                     </>
                                 ) : (

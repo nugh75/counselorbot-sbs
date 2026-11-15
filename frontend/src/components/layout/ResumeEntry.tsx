@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useI18n } from '@/lib/i18n-context';
 import { deleteFrozenSession } from '@/lib/frozen-session';
 import { getResume, setResume } from '@/lib/resume';
 import { clearPqblProgress } from '@/lib/pqbl-progress';
+import { Spinner } from '@/components/ui/Button';
 
 type Target = { kind: 'session'; sessionId: string } | { kind: 'pqbl' };
 
@@ -36,7 +37,7 @@ export function ResumeEntry({ target, label, children, deletable = true }: {
             <button type="button" aria-label={`${t('frozen.delete')}: ${label}`}
                 disabled={busy} onClick={() => setConfirming(true)}
                 className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted hover:bg-danger-soft hover:text-danger disabled:opacity-40">
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Trash2 className="h-4 w-4" aria-hidden="true" />}
+                {busy ? <Spinner className="h-4 w-4" aria-hidden="true" /> : <Trash2 className="h-4 w-4" aria-hidden="true" />}
             </button>
         </Tooltip>}
         {deletable && confirming && <ConfirmInline question={t('frozen.deleteConfirm')} busy={busy}

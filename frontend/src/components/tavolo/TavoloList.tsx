@@ -8,13 +8,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2, Pencil, Plus, Table2, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Table2, Trash2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
 import { TavoloCounselor } from '@/components/tavolo/TavoloCounselor';
 import { InlineRename } from '@/components/ui/InlineRename';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import {
     createTavolo,
     deleteTavolo,
@@ -28,6 +28,7 @@ import {
     type TavoloSummary,
 } from '@/lib/tavolo';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
+import { SkeletonEntryList } from '@/components/ui/Skeleton';
 
 interface TavoloListProps {
     // La casella del prompt resta nell'area personale: nel pannello della
@@ -137,9 +138,7 @@ export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {})
             {disabled && <p className="text-sm text-ink-muted">{label('notFound')}</p>}
 
             {rows === null && !disabled && (
-                <p className="flex items-center gap-2 text-sm text-ink-muted" role="status">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />{label('loading')}
-                </p>
+                <SkeletonEntryList rows={3} label={label('loading')} />
             )}
             {rows !== null && rows.length === 0 && !disabled && <p className="text-sm text-ink-muted">{label('none')}</p>}
 
@@ -175,7 +174,7 @@ export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {})
             <div className="space-y-4 border-t border-line pt-4">
                 <h3 className="text-base font-semibold text-ink">{label('createTitle')}</h3>
                 <Button type="button" disabled={busy || disabled} onClick={() => void openNew()}>
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+                    {busy ? <Spinner className="h-4 w-4" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
                     {label('newOne')}
                 </Button>
                 {showCompose && <TavoloCompose busy={busy || disabled} aiAvailable={aiAvailable} onCompose={composeNew} onOpenExample={openExample} />}

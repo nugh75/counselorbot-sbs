@@ -8,7 +8,7 @@
 // snapshot e il server li riverifica a ogni salvataggio.
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { FlaskConical, Loader2, Users } from 'lucide-react';
+import { FlaskConical, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -19,6 +19,7 @@ import { useTeacherResource } from '@/components/teacher/useTeacherResource';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import type { PracticeNotebook } from '@/lib/practice-notebooks';
 import { NO_DOCENZA_TARGETS, hasDocenzaTarget, toggleDocenzaStudent, type DocenzaTargets } from '@/lib/docenza-groups';
+import { Spinner } from '@/components/ui/Button';
 
 const TEXTS = {
     it: {
@@ -201,7 +202,7 @@ export function DocenzaTargetPicker({ onConfirm, onBack }: { onConfirm: () => vo
                         {activeGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
                     </select>
                 </label>
-                {studentsGroupId !== null && members.status === 'loading' && <p role="status" className="mt-2 flex items-center gap-1 text-xs text-ink-muted"><Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> {t('common.loading')}</p>}
+                {studentsGroupId !== null && members.status === 'loading' && <p role="status" className="mt-2 flex items-center gap-1 text-xs text-ink-muted"><Spinner className="h-3 w-3" aria-hidden="true" /> {t('common.loading')}</p>}
                 {studentsGroupId !== null && members.status === 'failed' && <p role="alert" className="mt-2 text-xs text-danger">{texts.error}</p>}
                 {studentsGroupId !== null && members.status === 'ready' && (members.usernames.length === 0
                     ? <p className="mt-2 text-xs text-ink-muted">{texts.studentsNone}</p>

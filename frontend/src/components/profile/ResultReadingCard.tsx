@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Loader2, Save } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { ArrowRight, Save } from 'lucide-react';
+import { Button, Spinner } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { goalApi, type GoalGroup, type PersonalGoal } from '@/lib/goals';
@@ -179,7 +179,7 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraf
                     </label>
                     <div className="flex justify-end border-t border-line pt-4">
                         <Button type="button" onClick={() => void save()} disabled={saving}>
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" aria-hidden />}
+                            {saving ? <Spinner className="h-4 w-4" /> : <Save className="h-4 w-4" aria-hidden />}
                             {l('save')}
                         </Button>
                     </div>

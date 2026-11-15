@@ -6,7 +6,7 @@ import { useUserAccess } from '@/lib/use-user-access';
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
-import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, NotebookPen, ArrowRight } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, NotebookPen, ArrowRight } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -56,7 +56,7 @@ import { ChatWorkspace } from '@/components/qsa/ChatWorkspace';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { EventMilestoneCard } from '@/components/qsa/EventMilestoneCard';
 import { isEventInstrument, type EventBookletDraft } from '@/lib/event-booklet';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import {
@@ -83,6 +83,8 @@ import { GoalDraftCard } from '@/components/qsa/GoalDraftCard';
 import { DocenzaClassBar, readStoredDocenzaGroupIds } from '@/components/qsa/DocenzaClassBar';
 import { initialDocenzaGroupIds, initialDocenzaTargets } from '@/lib/docenza-groups';
 import { readStoredDocenzaTargets } from '@/components/qsa/DocenzaTargetPicker';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { TypingDots } from '@/components/ui/TypingDots';
 
 // --- Types ---
 
@@ -1669,9 +1671,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     if (initialLoading) {
         return (
             <div className="flex min-h-chat items-center justify-center lg:h-chat">
-                <div className="text-center space-y-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
-                    <p className="text-sm text-slate-500">{t('guided.loading')}</p>
+                <div role="status" aria-label={t('guided.loading')} className="w-full max-w-md space-y-3 p-4">
+                    <Skeleton className="h-16 w-4/5" />
+                    <Skeleton className="ml-auto h-10 w-3/5" />
+                    <Skeleton className="h-16 w-4/5" />
                 </div>
             </div>
         );
@@ -2011,7 +2014,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                             onClick={() => toggleReasoning(idx)}
                                                             className="flex w-full min-w-0 items-center gap-1.5 text-2xs uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-600"
                                                         >
-                                                            {!msg.content.trim() && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            {!msg.content.trim() && <TypingDots />}
                                                             <ChevronRight className={cn("w-3 h-3 transition-transform", !hiddenReasoning.has(idx) && "rotate-90")} />
                                                             {t('guided.reasoning')}
                                                             <span className="ml-auto truncate normal-case tracking-normal text-slate-500/80">
@@ -2192,7 +2195,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                             className="inline-flex h-control w-[44px] shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {isIdeaReferenceUploading
-                                                ? <Loader2 className="h-5 w-5 animate-spin" />
+                                                ? <Spinner className="h-5 w-5" />
                                                 : <Paperclip className="h-5 w-5" />}
                                         </button>
                                     </Tooltip>

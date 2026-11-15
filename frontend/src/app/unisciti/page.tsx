@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, KeyRound, Loader2, LogIn, ShieldCheck, UserRoundCheck } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Check, Copy, KeyRound, LogIn, ShieldCheck, UserRoundCheck } from 'lucide-react';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -257,7 +257,7 @@ export default function JoinPage() {
                         />
                     </label>
                     <Button type="submit" variant="accent" disabled={busy !== null || !classKey.trim() || !pseudonym.trim()}>
-                        {busy === 'pair' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <LogIn className="h-4 w-4" aria-hidden />}
+                        {busy === 'pair' ? <Spinner className="h-4 w-4" aria-hidden /> : <LogIn className="h-4 w-4" aria-hidden />}
                         {l(busy === 'pair' ? 'pairBusy' : 'pairSubmit')}
                     </Button>
                 </form>
@@ -285,7 +285,7 @@ export default function JoinPage() {
                         />
                     </label>
                     <Button type="submit" variant="secondary" disabled={busy !== null || !personalCode.trim()}>
-                        {busy === 'recover' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+                        {busy === 'recover' && <Spinner className="h-4 w-4" aria-hidden />}
                         {l(busy === 'recover' ? 'recoverBusy' : 'recoverSubmit')}
                     </Button>
                 </form>

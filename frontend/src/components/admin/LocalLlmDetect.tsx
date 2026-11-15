@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseServer, localLlmText, modelsSummary, serverStatusText, type LocalDetectResponse } from '@/lib/local-llm';
 
@@ -43,7 +43,7 @@ export function LocalLlmDetect({ customUrl, currentValues, envOverrides, onUse }
         <div className="rounded-card border border-line bg-surface shadow-card p-4 space-y-4" data-testid="local-llm-detect">
             <div className="flex flex-wrap items-center gap-4">
                 <Button type="button" size="sm" variant="secondary" onClick={detect} disabled={loading}>
-                    <RefreshCw aria-hidden className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCw aria-hidden className={`w-4 h-4 ${loading ? SPIN : ''}`} />
                     {localLlmText(lang, loading ? 'detecting' : 'detect')}
                 </Button>
                 <p className="flex-1 min-w-[16rem] text-xs text-ink-muted">{localLlmText(lang, 'help')}</p>

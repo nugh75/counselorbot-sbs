@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Building2, Check, RefreshCw, School, Search, UserCheck, Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 
 interface UserEntry {
     username: string;
@@ -255,7 +255,7 @@ export function UsersSummaryPanel() {
                         type="button"
                         onClick={() => void load()}
                     >
-                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-4 w-4 ${loading ? SPIN : ''}`} />
                         {texts.refresh}
                     </Button>
                 </div>

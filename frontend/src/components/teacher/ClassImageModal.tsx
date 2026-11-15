@@ -3,23 +3,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import {
-    X,
-    Palette,
-    Upload,
-    Sparkles,
-    Check,
-    Copy,
-    ExternalLink,
-    RotateCcw,
-    AlertCircle,
-    Loader2,
-    ImagePlus,
-} from 'lucide-react';
+import { X, Palette, Upload, Sparkles, Check, Copy, ExternalLink, RotateCcw, AlertCircle, ImagePlus } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { apiFetch } from '@/lib/auth';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import type { StudentGroup } from './class-group-types';
 import {
@@ -458,7 +446,7 @@ export function ClassImageModal({
                                         >
                                             {saving ? (
                                                 <>
-                                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                    <Spinner className="h-4 w-4" aria-hidden />
                                                     <span>{l('classCoverUploadSaving')}</span>
                                                 </>
                                             ) : (

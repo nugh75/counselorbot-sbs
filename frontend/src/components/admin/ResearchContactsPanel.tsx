@@ -5,7 +5,7 @@ import { Building2, Check, Copy, FileText, Link2, Mail, Pencil, Phone, Plus, QrC
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
 import { getAuthUrls } from '@/lib/auth';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Callout } from '@/components/ui/Callout';
 
@@ -439,7 +439,7 @@ export function ResearchContactsPanel() {
                             type="button"
                             onClick={() => void refresh()}
                         >
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`h-4 w-4 ${loading ? SPIN : ''}`} />
                             {t('admin.rc.refresh')}
                         </Button>
                         {editingId === null && (

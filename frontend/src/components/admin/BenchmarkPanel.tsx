@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Play, Loader2, MessageSquare, X } from 'lucide-react';
+import { Play, MessageSquare, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 
 interface Preset {
     id: number;
@@ -144,7 +144,7 @@ export function BenchmarkPanel() {
                 <div className="mt-4">
                     <div className="mb-2 text-xs font-semibold text-ink-muted">{t('admin.bench.selectPresets')}</div>
                     {loading ? (
-                        <div className="flex items-center gap-2 text-sm text-ink-muted"><Loader2 className="h-4 w-4 animate-spin" /></div>
+                        <div className="flex items-center gap-2 text-sm text-ink-muted"><Spinner className="h-4 w-4" /></div>
                     ) : presets.length === 0 ? (
                         <div className="rounded-control border border-dashed border-line-strong p-4 text-sm text-ink-muted">{t('admin.bench.noPresets')}</div>
                     ) : (
@@ -166,7 +166,7 @@ export function BenchmarkPanel() {
                         <option value="en">en</option>
                     </select>
                     <Button type="button" disabled={selected.length === 0 || !!isRunning} onClick={() => void runBenchmark()}>
-                        {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                        {isRunning ? <Spinner className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         {isRunning ? t('admin.bench.running') : t('admin.bench.run')}
                     </Button>
                 </div>
@@ -203,7 +203,7 @@ export function BenchmarkPanel() {
                                         <td className="px-4 py-2 text-right font-semibold text-ink">{fmtNum(r.score, 3)}</td>
                                     </tr>
                                 ))}
-                                {sortedSummary.length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-center text-ink-muted"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>}
+                                {sortedSummary.length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-center text-ink-muted"><Spinner className="mx-auto h-4 w-4" /></td></tr>}
                             </tbody>
                         </table>
                     </div>

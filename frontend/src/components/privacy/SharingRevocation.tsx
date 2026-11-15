@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, NotebookPen, Share2, ShieldOff } from 'lucide-react';
+import { NotebookPen, Share2, ShieldOff } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useI18n } from '@/lib/i18n-context';
@@ -148,7 +148,7 @@ export function SharingRevocation({ choices, groups, purpose, document, canEdit,
                                 onClick={() => void revoke(row.target, row.groupId, row.teacherUsername)}
                                 disabled={!canEdit || choicesLoading || busy !== null || !row.teacherUsername}
                             >
-                                {busy === row.target ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ShieldOff className="h-4 w-4" aria-hidden />}
+                                {busy === row.target ? <Spinner className="h-4 w-4" aria-hidden /> : <ShieldOff className="h-4 w-4" aria-hidden />}
                                 {busy === row.target ? t('privacy.sharing.revoking') : t('privacy.sharing.revoke')}
                             </Button>
                         </li>
@@ -192,7 +192,7 @@ export function SharingRevocation({ choices, groups, purpose, document, canEdit,
                             onClick={() => void grant()}
                             disabled={formDisabled || !groupId || !teacher.trim()}
                         >
-                            {busy === 'grant' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+                            {busy === 'grant' && <Spinner className="h-4 w-4" aria-hidden />}
                             {busy === 'grant' ? t('privacy.sharing.granting') : t('privacy.sharing.grant')}
                         </Button>
                     </div>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { FileAudio, Loader2, Mic, Pause, Play, Square, X } from 'lucide-react';
+import { FileAudio, Mic, Pause, Play, Square, X } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { ChatActionsPopover } from './ChatActionsPopover';
@@ -10,6 +10,7 @@ import { useAudioAutoSend } from './AudioSendOption';
 import { useAudioLanguage } from './AudioLanguageOption';
 import { VoiceReaderController } from '@/lib/voice-reader';
 import { speechInput } from '@/components/voice-reader/VoiceReader';
+import { Spinner } from '@/components/ui/Button';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_SECONDS = 180;
@@ -260,7 +261,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
             onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); cancel(); onExitVoice?.(); } }}>
             <button ref={talkButton} type="button" disabled={waiting || (disabled && stage !== 'recording')} className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 onClick={() => { if (stage === 'recording') { if (recorder.current?.state === 'recording') recorder.current.stop(); } else void startRecording(() => {}); }}>
-                {waiting ? <Loader2 className="h-5 w-5 shrink-0 animate-spin" /> : stage === 'recording' ? <Square className="h-5 w-5 shrink-0" /> : <Mic className="h-5 w-5 shrink-0" />}
+                {waiting ? <Spinner className="h-5 w-5 shrink-0" /> : stage === 'recording' ? <Square className="h-5 w-5 shrink-0" /> : <Mic className="h-5 w-5 shrink-0" />}
                 {waiting ? status : stage === 'recording' ? t('audio.voice.send') : speaking ? t('audio.voice.interrupt') : t('audio.voice.talk')}
             </button>
         </div>
@@ -302,7 +303,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
                 <button type="button" className={actionClass} onClick={() => fileInput.current?.click()}><FileAudio className="h-4 w-4 shrink-0" />{t('audio.upload')}</button>
             </>}
             {stage !== 'idle' && <p role="status" className="flex items-center gap-2 px-2 text-sm text-indigo-700">
-                {stage === 'recording' ? <Mic className="h-4 w-4 shrink-0" /> : <Loader2 className="h-4 w-4 shrink-0 animate-spin" />}
+                {stage === 'recording' ? <Mic className="h-4 w-4 shrink-0" /> : <Spinner className="h-4 w-4 shrink-0" />}
                 {stage === 'recording' ? t('audio.recording', { seconds }) : t(`audio.${stage}`)}
             </p>}
             {stage === 'recording' && <button type="button" className={actionClass} onClick={() => { if (recorder.current?.state === 'recording') recorder.current.stop(); }}><Square className="h-4 w-4 shrink-0" />{t('audio.stop')}</button>}

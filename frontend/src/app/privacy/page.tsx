@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Callout } from '@/components/ui/Callout';
 import { Button, buttonClasses } from '@/components/ui/Button';
@@ -25,6 +25,7 @@ import {
     type PrivacyPurpose,
     type PrivacyPurposesPayload,
 } from '@/lib/privacy';
+import { SkeletonEntryList } from '@/components/ui/Skeleton';
 
 export default function PrivacyPage() {
     const { lang, t } = useI18n();
@@ -117,10 +118,7 @@ export default function PrivacyPage() {
             </div>
 
             {loading ? (
-                <p role="status" className="flex items-center gap-2 text-sm text-ink-muted">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    {t('privacy.loading')}
-                </p>
+                <SkeletonEntryList rows={3} label={t('privacy.loading')} />
             ) : loadError ? (
                 <Callout variant="danger" title={t('privacy.loadError')}>
                     <Button variant="secondary" onClick={() => void loadPublic()}>{t('privacy.retry')}</Button>

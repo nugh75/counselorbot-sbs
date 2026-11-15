@@ -6,16 +6,13 @@
 // riepilogo → test finale opzionale (submit unico, feedback alla fine).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-    BookOpen, CheckCircle2, FileType, Lightbulb,
-    ListChecks, Loader2, RotateCcw, Target, UploadCloud, XCircle,
-} from 'lucide-react';
+import { BookOpen, CheckCircle2, FileType, Lightbulb, ListChecks, RotateCcw, Target, UploadCloud, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { Callout } from '@/components/ui/Callout';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { clearPqblProgress, loadPqblProgress, savePqblProgress } from '@/lib/pqbl-progress';
@@ -553,7 +550,7 @@ export default function PqblPage() {
             {/* Generazione in corso */}
             {phase === 'generating' && (
                 <Card variant="flat" className="text-center space-y-4">
-                    <Loader2 className="w-10 h-10 mx-auto text-link animate-spin" />
+                    <div role="status" aria-hidden="true" className="mx-auto h-1 w-48 overflow-hidden rounded-control bg-brand-soft"><div className="h-full w-1/3 animate-indeterminate bg-brand" /></div>
                     <h2 className="text-xl font-semibold text-ink">{t('pqbl.generating.title')}</h2>
                     {documentInfo && documentInfo.chunks_total > 0 && (
                         <>
@@ -627,7 +624,7 @@ export default function PqblPage() {
                         <span className="flex items-center gap-2">
                             {documentInfo && documentInfo.chunks_done < documentInfo.chunks_total && (
                                 <span className="inline-flex items-center gap-1 text-warning text-xs">
-                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    <Spinner className="w-3 h-3" />
                                     {t('pqbl.quiz.generating')}
                                 </span>
                             )}

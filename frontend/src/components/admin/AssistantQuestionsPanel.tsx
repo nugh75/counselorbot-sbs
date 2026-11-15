@@ -5,7 +5,7 @@ import { Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import type { AdminAssistantQuestion } from '@/lib/assistant-questions';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 // Topic allineati a TOPICS_BY_COLLECTION_AUDIENCE della pagina /assistente.
@@ -261,7 +261,7 @@ export function AssistantQuestionsPanel() {
                         <Button variant="secondary"
                             type="button"
                             onClick={() => void refresh()}>
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`h-4 w-4 ${loading ? SPIN : ''}`} />
                             {t('admin.aq.refresh')}
                         </Button>
                         {editingId === null && (

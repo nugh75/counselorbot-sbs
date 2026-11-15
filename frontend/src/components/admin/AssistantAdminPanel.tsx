@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bot, ExternalLink, FileText, FolderOpen, Gauge, MessageCircleQuestion, RefreshCw, Settings, Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 type TargetTab = 'config' | 'ragDocs' | 'assistantQuestions' | 'counselors' | 'logs';
@@ -263,7 +263,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                             type="button"
                             disabled={reindexing || !selectedCollection}
                             onClick={() => void reindex()}>
-                            <RefreshCw className={`h-4 w-4 ${reindexing ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`h-4 w-4 ${reindexing ? SPIN : ''}`} />
                             {reindexing ? t('admin.assistant.rag.reindexing') : t('admin.assistant.rag.reindex')}
                         </Button>
                         {selected?.graph_available && (

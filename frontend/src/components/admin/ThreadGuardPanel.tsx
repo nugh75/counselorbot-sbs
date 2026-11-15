@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Check, Eye, Info, RefreshCw, Save } from 'lucide-react';
+import { AlertTriangle, Check, Eye, Info, Save } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 
 interface ActiveProvider {
     id: string;
@@ -260,7 +260,7 @@ export function ThreadGuardPanel() {
 
                     {loadingModels ? (
                         <div className="mt-4 flex items-center gap-2 text-xs text-ink-muted">
-                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                            <Spinner className="h-3.5 w-3.5" />
                             {t('admin.threadGuard.loading')}
                         </div>
                     ) : liveModels.length > 0 && !customModel ? (

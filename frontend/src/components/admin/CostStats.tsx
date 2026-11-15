@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DollarSign, RefreshCw, Users, MessageSquare, Layers, TrendingUp, CalendarDays, Wallet, AlertTriangle } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 
 interface ModelRow {
     model: string;
@@ -213,7 +213,7 @@ export function CostStats() {
                         <input type="number" min={0} step="0.01" value={eurRate} onChange={(e) => setEurRate(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
                     </label>
                     <Button variant="secondary" type="button" onClick={() => void fetchStats()}>
-                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-4 w-4 ${loading ? SPIN : ''}`} />
                         {t('admin.costs.refresh')}
                     </Button>
                 </div>

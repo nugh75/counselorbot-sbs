@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useI18n } from '@/lib/i18n-context';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Spinner, SPIN } from '@/components/ui/Button';
 // Dynamically import Plotly for client-side rendering only
 // Plotly non legge le variabili CSS: un solo tratto sottile nel petrol del marchio
 // (--brand) per tutte le dimensioni, invece di dieci tinte diverse.
@@ -279,7 +280,7 @@ export function SurveyViewer() {
                     onClick={fetchSurveys}
                     className="inline-flex items-center justify-center min-h-control min-w-control p-2 hover:bg-surface-raised rounded-lg text-ink-muted hover:text-ink transition-colors"
                 >
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${loading ? SPIN : ''}`} />
                 </button>
             </div>
 
@@ -433,7 +434,7 @@ export function SurveyViewer() {
                             {loading && (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-8 text-center text-ink-muted">
-                                        <RefreshCw className="w-5 h-5 animate-spin mx-auto" />
+                                        <Spinner className="w-5 h-5 mx-auto" />
                                     </td>
                                 </tr>
                             )}

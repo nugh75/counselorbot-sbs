@@ -2,8 +2,8 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Check, Copy, Link2, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { ArrowRight, Check, Copy, Link2 } from 'lucide-react';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { TeacherDevicesPanel } from '@/components/teacher/TeacherDevicesPanel';
@@ -99,7 +99,7 @@ export function ClassPairingSection({ groupId }: { groupId: number }) {
                             />
                         </label>
                         <Button type="submit" variant="accent" disabled={busy || invalidMaxUses}>
-                            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+                            {busy && <Spinner className="h-4 w-4" aria-hidden />}
                             {l(busy ? 'generateBusy' : 'generateLink')}
                         </Button>
                     </div>

@@ -1,22 +1,6 @@
 'use client';
 
-import {
-    ArrowDown,
-    ArrowLeft,
-    ArrowRight,
-    ArrowUp,
-    Check,
-    CheckCircle2,
-    CornerLeftUp,
-    Loader2,
-    MoreHorizontal,
-    Plus,
-    RotateCcw,
-    Target,
-    Trash2,
-    Undo2,
-    X,
-} from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, CheckCircle2, CornerLeftUp, MoreHorizontal, Plus, RotateCcw, Target, Trash2, Undo2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
@@ -32,6 +16,7 @@ import {
     type IdeaBranchOp,
     type IdeaRole,
 } from '@/lib/idea-map';
+import { Spinner } from '@/components/ui/Button';
 
 interface IdeaBranchTreeProps {
     sessionId: string;
@@ -194,7 +179,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                             aria-label={t(starting ? 'idea.branches.start' : 'idea.branches.create')}
                         >
                             {moving === 'new'
-                                ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                                ? <Spinner className="h-4 w-4" aria-hidden="true" />
                                 : <Check className="h-4 w-4" aria-hidden="true" />}
                         </button>
                         <button
@@ -245,7 +230,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                             >
                                 <span className="mt-0.5 shrink-0">
                                     {moving === row.id
-                                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                                        ? <Spinner className="h-3.5 w-3.5" aria-hidden="true" />
                                         : row.closed
                                             ? <CheckCircle2 className="h-3.5 w-3.5 text-brand" aria-hidden="true" />
                                             : row.is_focus

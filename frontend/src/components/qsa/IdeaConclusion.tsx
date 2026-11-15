@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BookMarked, Check, FileText, FolderPlus, Loader2, X } from 'lucide-react';
+import { BookMarked, Check, FileText, FolderPlus, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
@@ -13,6 +13,7 @@ import {
     type IdeaKeepTarget,
     type IdeaVariant,
 } from '@/lib/idea-map';
+import { Spinner } from '@/components/ui/Button';
 
 interface IdeaConclusionProps {
     sessionId: string;
@@ -138,7 +139,7 @@ export function IdeaConclusion({ sessionId, locale, variant, onClose }: IdeaConc
                                 disabled={saving}
                                 className="inline-flex items-center gap-2 rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
                             >
-                                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                                {saving && <Spinner className="h-4 w-4" />}
                                 {targets.length > 0 ? t('idea.conclude.save') : t('idea.conclude.keepNothing')}
                             </button>
                             <a

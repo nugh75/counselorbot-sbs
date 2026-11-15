@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, ShieldCheck, ShieldQuestion } from 'lucide-react';
+import { ShieldCheck, ShieldQuestion } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { StatusBadge, type StatusTone } from '@/components/ui/StatusBadge';
 import { useI18n } from '@/lib/i18n-context';
 import {
@@ -211,7 +211,7 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
 
                             <div className="mt-3 flex flex-wrap items-center gap-3">
                                 <Button type="button" onClick={() => void save(purpose)} disabled={saveDisabled}>
-                                    {saving === purpose.key && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+                                    {saving === purpose.key && <Spinner className="h-4 w-4" aria-hidden />}
                                     {saving === purpose.key ? t('privacy.purposes.saving') : t('privacy.purposes.save')}
                                 </Button>
                                 {message && (

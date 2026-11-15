@@ -7,11 +7,11 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 
 interface AvailabilityInstrument {
     questionnaire_type: string;
@@ -95,7 +95,7 @@ export function CrossSynthesisCard({ showHeading = true }: { showHeading?: boole
                         >
                             {loading ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <Spinner className="w-4 h-4" />
                                     {t('combined.generating')}
                                 </>
                             ) : (
