@@ -9,6 +9,8 @@ import { publicOrigin } from '@/lib/runtime-config';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { Field, Select } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
@@ -66,20 +68,18 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
     };
 
     return <div className="space-y-6">
-        <Card className="space-y-4">
+        <Card variant="flat" className="space-y-4">
             <div className="space-y-2">
                 <h2 className="text-lg font-semibold text-ink">{l('title')}</h2>
                 <p className="text-sm text-ink-muted">{l('intro')}</p>
                 <p className="text-sm text-ink-muted">{l('privacy')}</p>
             </div>
             <div className="flex flex-wrap items-end gap-4">
-                <label className="space-y-1 text-sm font-semibold text-ink-body">
-                    <span className="block">{l('duration')}</span>
-                    <select value={days} onChange={event => setDays(Number(event.target.value))}
-                        className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm">
+                <Field label={l('duration')}>
+                    <Select value={days} onChange={event => setDays(Number(event.target.value))} className="w-auto">
                         {DURATIONS.map(value => <option key={value} value={value}>{value} {l('days')}</option>)}
-                    </select>
-                </label>
+                    </Select>
+                </Field>
                 <Button disabled={busy} onClick={() => void create()}>{l(busy ? 'creating' : 'create')}</Button>
             </div>
             {error && <p role="alert" className="text-sm text-danger">{l(error)}</p>}
@@ -90,7 +90,7 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
                 <CopyField label={l('password')} value={created.password} lang={lang} />
             </Callout>}
         </Card>
-        <Card className="space-y-4">
+        <Card variant="flat" className="space-y-4">
             <h3 className="font-semibold text-ink">{l('links')}</h3>
             {links.loading && <TeacherLoading />}
             {links.failed && <Callout variant="danger"><p>{l('loadError')}</p>
@@ -100,7 +100,7 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
                 {links.data.map(link => <li key={link.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
                     <div className="min-w-0 space-y-1 text-sm">
                         <p className="flex flex-wrap items-center gap-2">
-                            <span className={`rounded-full px-2 py-1 text-xs font-semibold ${link.state === 'active' ? 'bg-success-soft text-success-ink' : 'bg-surface-raised text-ink-muted'}`}>{l(link.state)}</span>
+                            <StatusBadge tone={link.state === 'active' ? 'success' : 'neutral'}>{l(link.state)}</StatusBadge>
                             <span className="text-ink-body">{l('expires')} {date(link.expires_at)}</span>
                         </p>
                         <p className="text-ink-muted">{link.last_viewed_at ? `${l('lastViewed')}: ${date(link.last_viewed_at)}` : l('neverViewed')}</p>

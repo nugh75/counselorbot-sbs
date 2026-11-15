@@ -6,7 +6,6 @@ import type { ClassSettings } from '@/lib/class-settings';
 import { useTeacherResource } from './useTeacherResource';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
 
 interface AuditRow {
@@ -48,11 +47,11 @@ export function ClassSettingsAudit({ settings }: { settings: ClassSettings }) {
         <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-ink">{l('audit')}</h2>
             <Button variant="secondary" onClick={() => void resource.reload()}>{l('reload')}</Button></div>
         {!resource.data?.length && <p className="text-sm text-ink-muted">{l('auditEmpty')}</p>}
-        {resource.data?.map(row => <Card key={row.id}><div className="break-words text-sm text-ink-body">
+        {!!resource.data?.length && <ul className="divide-y divide-line border-y border-line">{resource.data.map(row => <li key={row.id} className="break-words py-4 text-sm text-ink-body">
             <p className="font-semibold">{targetText(row)} · {l(row.action)}</p>
             <p>{valueText(row.old_value)} → {valueText(row.new_value)}</p>
             <p>{row.actor_display_name || row.actor_username} ({row.actor_username}) · <time dateTime={row.created_at}>{new Date(row.created_at).toLocaleString(lang)}</time></p>
             {row.reason && <p className="mt-2 whitespace-pre-wrap">{row.reason}</p>}
-        </div></Card>)}
+        </li>)}</ul>}
     </section>;
 }
