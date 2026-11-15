@@ -123,9 +123,10 @@ def save_view(db: Session, identity, view: str | int) -> None:
 
 
 def class_names(db: Session, group_ids: list[int]) -> list[dict]:
-    names = dict(db.query(models.StudentGroup.id, models.StudentGroup.name)
-                 .filter(models.StudentGroup.id.in_(group_ids))) if group_ids else {}
-    return [{"id": group_id, "name": names.get(group_id, "")} for group_id in group_ids]
+    rows = {row.id: row for row in db.query(models.StudentGroup.id, models.StudentGroup.name, models.StudentGroup.image_url)
+            .filter(models.StudentGroup.id.in_(group_ids))} if group_ids else {}
+    return [{"id": group_id, "name": rows[group_id].name if group_id in rows else "",
+             "image_url": rows[group_id].image_url if group_id in rows else None} for group_id in group_ids]
 
 
 def class_enables(settings: models.ClassSettings | None, key: str) -> bool:

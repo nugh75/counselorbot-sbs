@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Plus, Share2, Users } from 'lucide-react';
+import Image from 'next/image';
+import { Plus, Share2 } from 'lucide-react';
+import { getClassCoverUrl } from '@/lib/class-cover-presets';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { fetchTeacherInstitutions, type Institution } from '@/lib/referrals-api';
@@ -234,7 +236,11 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                 idPrefix="class"
                                 id={String(group.id)}
                                 href={`${basePath}/${group.id}`}
-                                illustration={<Users className="h-6 w-6 shrink-0 text-ink-muted" aria-hidden="true" />}
+                                illustration={
+                                    <span className="relative block h-12 w-[5.25rem] shrink-0 overflow-hidden rounded-control bg-surface-sunken">
+                                        <Image src={getClassCoverUrl(group)} alt="" fill unoptimized className="object-cover" />
+                                    </span>
+                                }
                                 name={group.name}
                                 description={description}
                                 badge={

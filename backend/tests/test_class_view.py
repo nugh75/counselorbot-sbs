@@ -78,7 +78,7 @@ def test_default_is_the_class_view_with_the_class_list(db):
     assert access["view"] == "classes"
     assert access["restricted"] is True
     assert "QSA" not in access["tool_keys"] and "SAVICKAS" in access["tool_keys"], "union unchanged"
-    assert access["classes"] == [{"id": second.id, "name": "Seconda B"}, {"id": first.id, "name": "Prima A"}]
+    assert access["classes"] == [{"id": second.id, "name": "Seconda B", "image_url": None}, {"id": first.id, "name": "Prima A", "image_url": None}]
 
 
 def test_full_view_lifts_class_restrictions_but_not_admin_ones(db):
@@ -91,7 +91,7 @@ def test_full_view_lifts_class_restrictions_but_not_admin_ones(db):
     assert "OFF" not in access["tool_keys"] and "DOCENZA" not in access["tool_keys"]
     assert access["counselor_ids"] is None and access["default_counselor_id"] is None
     assert access["class_ids"] == [group.id], "membership still listed for class path and forum"
-    assert access["classes"] == [{"id": group.id, "name": "a"}]
+    assert access["classes"] == [{"id": group.id, "name": "a", "image_url": None}]
 
 
 def test_full_view_opens_the_server_guards(db):
@@ -170,7 +170,7 @@ def test_no_class_has_no_selector_and_enrolled_staff_start_in_full_view(db):
     assert access["classes"] == [] and access["view"] == "classes" and access["restricted"] is False
     group = _group(db, "a", disabled=["QSA"], members=["prof"])
     staff = class_access.resolve_access(db, TEACHER)
-    assert staff["classes"] == [{"id": group.id, "name": "a"}]
+    assert staff["classes"] == [{"id": group.id, "name": "a", "image_url": None}]
     assert staff["view"] == "all" and staff["restricted"] is False
 
 
@@ -243,3 +243,11 @@ def test_telegram_counselor_keyboard_follows_the_stored_view(db):
     assert keyboard() == [f"couns:{GIULIO}"]
     _set_view(db, "all")
     assert keyboard() == [f"couns:{CLIO}", f"couns:{GIULIO}"]
+
+
+def test_access_lists_class_cover_image_url(db):
+    group = _group(db, "a")
+    group.image_url = "/uploads/class-a.png"
+    db.commit()
+    access = class_access.resolve_access(db, STUDENT)
+    assert access["classes"] == [{"id": group.id, "name": "a", "image_url": "/uploads/class-a.png"}]

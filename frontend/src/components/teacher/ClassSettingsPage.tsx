@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronRight, Lock } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, ChevronRight, ImagePlus, Lock } from 'lucide-react';
 import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
 import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, toggleCounselorIds, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
 import type { ResponseFormat } from '@/lib/chat-preferences';
@@ -23,6 +24,9 @@ import { ClassSettingLock } from './ClassSettingLock';
 import { ClassSettingsAudit } from './ClassSettingsAudit';
 import { ClassPathsTab } from './ClassPathsTab';
 import { ClassOverviewTab } from './ClassOverviewTab';
+import { ClassImageModal } from './ClassImageModal';
+import { getClassCoverUrl } from '@/lib/class-cover-presets';
+import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { ClassCouncilTab } from './ClassCouncilTab';
 import { OrientationTab } from './OrientationTab';
 import { ClassNoticingTab } from './ClassNoticingTab';
@@ -31,7 +35,6 @@ import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
 import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
-import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { TeacherBreadcrumbs } from './TeacherBreadcrumbs';
 import { ClassQuickSwitcher } from './ClassQuickSwitcher';
 import { getClassBreadcrumbs, type TeacherBreadcrumbItem } from '@/lib/teacher-breadcrumbs';
@@ -414,6 +417,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         } as const)[raw as 'students'] ?? 'overview';
     });
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const [coverOpen, setCoverOpen] = useState(false);
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
     if (groups.loading || settings.loading) return <TeacherLoading />;
@@ -428,10 +432,18 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
             items={breadcrumbItems}
             extra={<ClassQuickSwitcher currentGroupId={groupId} groups={groups.data} currentTab={tab} basePath={adminRoute ? '/admin/classi' : '/docente/classi'} />}
         />
-        <header className="flex flex-wrap items-center justify-between gap-4">
-            <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-control items-center gap-2 text-sm text-link hover:text-link font-semibold"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
+        <header className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-control items-center gap-2 text-sm text-link hover:text-link font-semibold"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
+                <button type="button" onClick={() => setCoverOpen(true)} className="inline-flex min-h-control items-center gap-2 text-sm font-semibold text-link hover:underline"><ImagePlus className="h-4 w-4" aria-hidden />{teacherAreaText(lang, 'classCoverChange')}</button>
+            </div>
+            <div className="relative aspect-[16/9] h-40 w-full overflow-hidden rounded-card bg-surface-sunken sm:h-48 lg:h-52">
+                <Image src={getClassCoverUrl(group)} alt="" fill unoptimized className="object-cover" />
+            </div>
             <div><h1 className="break-words text-2xl font-semibold text-ink">{group.name}</h1><p className="text-sm text-ink-muted">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
         </header>
+        {coverOpen && <ClassImageModal open={coverOpen} group={group} onClose={() => setCoverOpen(false)}
+            onUpdated={() => { setCoverOpen(false); void groups.reload(); }} />}
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-line pb-2">
             {activeTabs.map((key, index) => <button key={key} ref={node => { tabRefs.current[index] = node; }}
                 id={`class-tab-${key}`} type="button" role="tab" aria-selected={tab === key} aria-controls={`class-panel-${key}`}

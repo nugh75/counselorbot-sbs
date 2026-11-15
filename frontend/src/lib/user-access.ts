@@ -12,7 +12,7 @@ export interface UserAccess {
     // Student view (#146): 'classes' (default), 'all' (full view) or one class id.
     // Optional: a cached payload from before the switcher has neither.
     view?: 'all' | 'classes' | number;
-    classes?: { id: number; name: string }[];
+    classes?: { id: number; name: string; image_url?: string | null }[];
 }
 
 // Fired on window after the student switches view, so every mounted
