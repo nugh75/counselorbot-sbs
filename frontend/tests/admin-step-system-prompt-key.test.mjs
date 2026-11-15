@@ -50,7 +50,7 @@ async function fixture() {
 }
 
 const systemPromptBlock = (page, key) =>
-    page.locator(`xpath=//h5/following-sibling::p[normalize-space()="${key}"]/ancestor::div[contains(@class,"rounded-lg")][1]`);
+    page.locator(`xpath=//h5/following-sibling::p[normalize-space()="${key}"]/ancestor::div[contains(@class,"rounded-card")][1]`);
 
 test('step prompt panel shows and saves the backend-resolved system prompt key', async () => {
     const f = await fixture();

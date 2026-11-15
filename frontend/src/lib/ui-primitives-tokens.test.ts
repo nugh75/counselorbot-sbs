@@ -102,14 +102,31 @@ test('the pilot zone (practice gym, goals) uses the primitives, not hand-written
     assert.match(read('../goals/GoalCatalogDialog'), /<Dialog title=\{l\('catalog'\)\}/);
 });
 
-// Due soli raggi (#932): il controllo e il contenitore. `rounded-full` resta per
-// avatar e puntini; l'admin e DiagramBlock non sono ancora migrati.
-test('only rounded-control and rounded-card outside the admin area', () => {
+// Due soli raggi (#932, #963): il controllo e il contenitore. `rounded-full`
+// resta per avatar e puntini; DiagramBlock non è ancora migrato.
+test('only rounded-control and rounded-card outside DiagramBlock', () => {
     const root = new URL('../', import.meta.url);
     const stale = /(?<![\w-])rounded(?:-(?:md|lg|xl|2xl))?(?![\w-])/;
     const legacy = [...readdirSync(root, { recursive: true, encoding: 'utf-8' })]
         .filter(name => name.endsWith('.tsx'))
-        .filter(name => !name.startsWith('components/admin/') && name !== 'components/ui/DiagramBlock.tsx')
+        .filter(name => name !== 'components/ui/DiagramBlock.tsx')
         .filter(name => stale.test(readFileSync(new URL(name, root), 'utf-8')));
+    assert.deepEqual(legacy, []);
+});
+
+// #963: i file dell'admin usano gli stessi due raggi, anche `rounded-sm`/`xs`/
+// `3xl`. Restano fuori solo `rounded-full` e le varianti direzionali dei due
+// dialoghi a mano (`rounded-t-xl`, `rounded-t-2xl`; elencate nella PR).
+test('the admin area uses the same two radii', () => {
+    const stale = /(?<![\w-])rounded(?:-(?:sm|md|lg|xl|2xl|3xl|xs))?(?![\w-])/;
+    const areas = ['../components/admin/', '../app/admin/'];
+    const files = areas.flatMap(area => {
+        const root = new URL(area, import.meta.url);
+        return readdirSync(root, { recursive: true, encoding: 'utf-8' })
+            .filter(name => name.endsWith('.tsx'))
+            .map(name => [new URL(name, root), `${area.slice(3)}${name}`] as const);
+    });
+    assert.ok(files.length >= 60, `admin pages and components: ${files.length}`);
+    const legacy = files.filter(([url]) => stale.test(readFileSync(url, 'utf-8'))).map(([, name]) => name);
     assert.deepEqual(legacy, []);
 });
