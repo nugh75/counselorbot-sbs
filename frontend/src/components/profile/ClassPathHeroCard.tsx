@@ -20,7 +20,7 @@ import {
     type StudentClassPath,
     type StudentClassPathStep,
 } from '@/lib/class-paths';
-import { formatPlanDay, plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
+import { dueHint, formatPlanDay, plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import { pathForumText } from '@/lib/i18n-path-forum';
@@ -234,8 +234,11 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
 
     const renderDetails = (view: StepView) => {
         const {step, presentation, isDone, isLocked, isUnavailable, blocked, inProgress, number} = view;
-        const planned = plannedDayText(step, lang);
-        const plannedLocation = plannedDayLocation(step);
+        // One date per step: the deadline, else the planned day; nothing once done.
+        const dueDay = !isDone && presentation.showDueDate ? presentation.dueDate : null;
+        const planned = !isDone && !dueDay ? plannedDayText(step, lang) : null;
+        const plannedLocation = !isDone ? plannedDayLocation(step) : null;
+        const hint = dueHint(dueDay);
         const returnTo = activityReturnHref(pathname, step.id);
         const isNext = view === nextView;
         const previous = step.activity?.attempts.filter(attempt => attempt.session_id !== step.activity?.current?.session_id) ?? [];
@@ -273,10 +276,16 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
             <ForumDiscussionLinks links={discussionLinks} kind="path_step" targetId={step.id} />
             {isDone && inProgress && <p className="text-sm text-ink-body">{pa('restarted')}</p>}
 
-            {(planned || (presentation.showDueDate && presentation.dueDate) || (isDone && step.source && step.source !== 'automatic')) && (
+            {(planned || plannedLocation || dueDay || (isDone && step.source && step.source !== 'automatic')) && (
                 <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                    {planned && <span>{l('plannedOn').replace('{date}', planned)}{plannedLocation ? ` · ${plannedLocation}` : ''}</span>}
-                    {presentation.showDueDate && presentation.dueDate && <span>{l('dueOn').replace('{date}', formatPlanDay(presentation.dueDate, lang))}</span>}
+                    {planned && <span>{l('plannedOn').replace('{date}', planned)}</span>}
+                    {plannedLocation && <span>{l('placeLabel').replace('{place}', plannedLocation)}</span>}
+                    {dueDay && <span>{l('dueOn').replace('{date}', formatPlanDay(dueDay, lang))}</span>}
+                    {hint && <span className={hint.kind === 'late' ? 'inline-flex items-center gap-1 font-semibold text-danger-ink' : 'font-semibold text-ink-body'}>
+                        {hint.kind === 'late' && <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
+                        {hint.kind === 'late' ? l('dueLate') : hint.kind === 'today' ? l('dueToday')
+                            : hint.days === 1 ? l('dueTomorrow') : l('dueInDays').replace('{n}', String(hint.days))}
+                    </span>}
                     {isDone && step.source === 'teacher' && <span>{l('markedByTeacher')}</span>}
                     {isDone && step.source === 'student' && <span>{l('markedByYou')}</span>}
                 </p>

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath, orderClassPaths, planStepHref } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { formatPlanDay, plannedDayIso, plannedDayLocation, plannedDayText } from './class-path-schedule.ts';
+import { dueBeforePlanned, dueHint, formatPlanDay, plannedDayIso, plannedDayLocation, plannedDayText } from './class-path-schedule.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
@@ -450,4 +450,25 @@ test('legacy follow-up metadata never couples displayed meeting steps to a chat'
     assert.equal(path.mode, 'recommended');
     assert.equal(path.steps[0].follows_step_id, null);
     assert.deepEqual(path.steps.map(step => step.id), [2, 1]);
+});
+
+test('dueHint: today, tomorrow, soon, past, none', () => {
+    const now = new Date('2026-11-16T15:00:00');
+    assert.deepEqual(dueHint('2026-11-16', now), { kind: 'today', days: 0 });
+    assert.deepEqual(dueHint('2026-11-17', now), { kind: 'soon', days: 1 });
+    assert.deepEqual(dueHint('2026-11-20', now), { kind: 'soon', days: 4 });
+    assert.deepEqual(dueHint('2026-11-14', now), { kind: 'late', days: 2 });
+    assert.equal(dueHint(null, now), null);
+    assert.equal(dueHint('nope', now), null);
+});
+
+test('dueBeforePlanned warns only when the deadline precedes the administration day', () => {
+    const step = (due: string | null, at = '2026-11-20T10:00:00') => ({
+        step_type: 'questionnaire_administration', due_date: due, target_summary: { scheduled_at: at },
+    });
+    assert.equal(dueBeforePlanned(step('2026-11-19')), true);
+    assert.equal(dueBeforePlanned(step('2026-11-20')), false);
+    assert.equal(dueBeforePlanned(step('2026-11-25')), false);
+    assert.equal(dueBeforePlanned(step(null)), false);
+    assert.equal(dueBeforePlanned({ step_type: 'guided_chat', due_date: '2026-01-01' }), false);
 });
