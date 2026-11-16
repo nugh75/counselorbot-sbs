@@ -60,6 +60,11 @@ export function getDisplayedCounselorId(): number | null {
     return activeSessionCounselorId ?? getSelectedCounselorId();
 }
 
+// #1020: the counselor of the open chat only, without the account default.
+export function getActiveSessionCounselorId(): number | null {
+    return activeSessionCounselorId;
+}
+
 export function setActiveSessionCounselorId(id: number | null): void {
     activeSessionCounselorId = id;
     window.dispatchEvent(new Event(COUNSELOR_EVENT));

@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { BookOpen, Bot, Compass, GraduationCap, House, Settings, User, type LucideIcon } from 'lucide-react';
 import { HeaderAccount, SignInLink } from './HeaderAccount';
 import { HeaderAreas } from './HeaderAreas';
+import { HeaderAISource } from './HeaderAISource';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
 import { HeaderMenu } from './HeaderMenu';
@@ -100,6 +101,7 @@ export function Header() {
                         <div role="group" aria-label={t('header.conversation')} className="header-group hidden shrink-0 items-center gap-1 lg:flex">
                             <HeaderInstrument />
                             {nav.authenticated && <HeaderCounselor />}
+                            {nav.authenticated && <HeaderAISource />}
                             <HeaderResume entries={resumeEntries} />
                         </div>
 
