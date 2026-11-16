@@ -3942,6 +3942,14 @@ e verifiche: `docs/operations/independent-plan-steps.md`.
 con `origin/main` e richiede l'aggiornamento di questo Markdown quando cambiano
 sorgenti di prodotto. Nessuna modifica a funzionalità o Guida interfaccia.
 
+### Elenco classi e scheda studenti più veloci (#1001)
+
+L'elenco delle classi e la scheda studenti di una classe caricano ora i dati con
+un numero di richieste al database che non cresce con il numero di classi o di
+studenti (conteggi di iscritti e condivisioni, risultati, collegamento Telegram
+e profilo del discente in blocco). Nessun cambiamento visibile: stessi dati,
+stesse autorizzazioni sulla privacy. Nessuna modifica alla Guida interfaccia.
+
 ### Backup PostgreSQL prima degli aggiornamenti desktop
 
 Nell'app docente, **Aggiorna ora (con backup preventivo)** ora crea davvero una
