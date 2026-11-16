@@ -6,6 +6,3 @@
 # commit b398e6f2 landed; the same failures reproduce on main without the PR.
 # test_sse_heartbeat::test_sync_disconnect... also failed in run 40199013418 but
 # passed in 40201355383: flaky here, so it stays out of this list and visible.
-<<<<<<< HEAD
-=======
->>>>>>> origin/main
