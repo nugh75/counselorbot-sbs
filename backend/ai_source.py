@@ -43,7 +43,7 @@ def describe(db, identity, counselor_id=None):
         counselor_id = None
         personal_api.bind_counselor(db, None)
     own_role = "teacher" if is_staff(db, username) else "student"
-    result = {"owner_label": None, "connection": "api", "fallback": False, "fallback_reason": None}
+    result = {"viewer_role": own_role, "owner_label": None, "connection": "api", "fallback": False, "fallback_reason": None}
 
     connection = personal_api.active_settings(db, username, counselor_id)
     if connection:

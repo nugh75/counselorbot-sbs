@@ -43,7 +43,7 @@ def source(client, counselor=None):
 
 def test_system_key_by_default(client):
     data = source(client, 30)
-    assert data == {"source": "system", "owner_role": "admin", "owner_label": None, "provider": "anthropic",
+    assert data == {"source": "system", "owner_role": "admin", "viewer_role": "student", "owner_label": None, "provider": "anthropic",
                     "connection": "api", "model": "system-model", "fallback": False, "fallback_reason": None}
 
 
