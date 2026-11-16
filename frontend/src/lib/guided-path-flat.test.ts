@@ -8,7 +8,6 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf
 const guidedPath = [
     '../components/questionnaire/CounselorSelector.tsx',
     '../components/questionnaire/CounselorCover.tsx',
-    '../components/qsa/AnalysisModeSelector.tsx',
     '../components/qsa/InputMethodSelector.tsx',
     '../components/qsa/ChatSettingsCard.tsx',
     '../components/qsa/ProfileScoresPanel.tsx',
@@ -40,10 +39,7 @@ test('counselors are rows with one metadata line, without pills or shadows', () 
     assert.doesNotMatch(selector, /grid gap-4 sm:grid-cols-2 lg:grid-cols-3/);
 });
 
-test('mode and input choices are flat rows on tokens, with the shared primitives', () => {
-    const mode = read('../components/qsa/AnalysisModeSelector.tsx');
-    assert.match(mode, /<EntryLink/);
-    assert.match(mode, /onOpen=\{\(\) => onSelect\(opt\.id\)\}/);
+test('input choices are flat rows on tokens, with the shared primitives', () => {
     const input = read('../components/qsa/InputMethodSelector.tsx');
     assert.doesNotMatch(input, /\b(?:slate|indigo|red)-\d|min-h-11|bg-white|font-medium/);
     assert.match(input, /<Button type="submit"/);

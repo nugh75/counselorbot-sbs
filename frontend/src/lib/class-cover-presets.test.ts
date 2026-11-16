@@ -65,7 +65,7 @@ test('composeClassCoverAIPrompt produces compliant 16:9 prompt in counselor styl
 
     assert.ok(prompt.includes('16:9'), 'Must specify 16:9 aspect ratio');
     assert.ok(prompt.includes('4B Liceo Scientifico'), 'Must contain the class name');
-    assert.ok(prompt.includes('verde petrolio'), 'Must mention brand petrol palette');
-    assert.ok(prompt.includes('senza assolutamente alcun testo, scritte o lettere'), 'Must strictly forbid text');
-    assert.ok(prompt.includes('senza figure umane realistiche'), 'Must prevent photorealistic humans');
+    assert.ok(prompt.includes('petrol green'), 'Must mention brand petrol palette');
+    assert.ok(prompt.includes('absolutely no text, writing or letters'), 'Must strictly forbid text');
+    assert.ok(prompt.includes('no realistic human figures'), 'Must prevent photorealistic humans');
 });

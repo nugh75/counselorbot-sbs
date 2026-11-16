@@ -2942,7 +2942,7 @@ La pagina **Gruppi e classi** (`GroupsPanel`, Issue #277, #278, #282) presenta u
 La personalizzazione visiva delle classi (Issue #286) introduce copertine rettangolari in proporzione 16:9 (`viewBox="0 0 320 180"`) realizzate nello stesso stile visivo istituzionale ed elegante delle copertine dei counselor (gradienti teal/petrolio/indaco `#042f2e` / `#0f766e`, elementi vettoriali simbolici raffinati, accenti ambra e ciano, totale assenza di testo o volti umani). Le copertine arricchiscono sia le card del cruscotto operativo «Le mie classi» (`MyClassesSection` in `/docente`, con testata 16:9 e pulsante a matita in hover) sia la testata della pagina di classe del docente (`ClassSettingsPage`: fascia 16:9 a tutta larghezza sopra le schede, con sotto nome, scuola e iscritti e il link «Modifica copertina»; #953), l'elenco «Gruppi e classi che gestisco» (miniatura 16:9 al posto dell'icona generica) e l'area studente (fascia sottile con il nome sotto il selettore «Scegli la tua classe»; il payload di accesso `classes` ora include `image_url`, sola lettura). Il modale `ClassImageModal` offre tre modalità complete per la gestione dell'immagine:
 - **Preset grafici**: 10 illustrazioni vettoriali tematiche SVG standalone in stile CounselorBot (`class-science`, `class-space`, `class-humanities`, `class-arts`, `class-tech`, `class-nature`, `class-math`, `class-music`, `class-sports`, `class-geography`). In assenza di immagine personalizzata (`image_url`), ogni classe adotta deterministicamente uno dei 10 preset tramite hash stabile del proprio ID o nome, garantendo sempre una testata coerente e professionale.
 - **Carica dal computer**: upload drag-and-drop o tramite selezione file per immagini PNG, JPG, WebP o GIF (fino a 5 MB), con anteprima 16:9 istantanea, invio all'endpoint amministrativo `POST /api/admin/groups/{group_id}/image` e memorizzazione persistente su disco, servita con header cache tramite `GET /api/groups/{group_id}/image`.
-- **Crea con IA**: guida operativa per generare copertine personalizzate su ChatGPT (DALL-E) o Google Gemini (Imagen), con prompt ottimizzato pre-compilato sulle linee guida del brand (formato 16:9, assenza di caratteri/testo, palette petrolio/teal e accenti caldi), pulsante di copia rapida negli appunti e collegamenti esterni diretti a ChatGPT e Gemini.
+- **Crea con IA**: guida operativa per generare copertine personalizzate su ChatGPT (DALL-E) o Google Gemini (Imagen), con prompt ottimizzato in inglese pre-compilato sulle linee guida del brand (formato 16:9, assenza di caratteri/testo, palette petrolio/teal e accenti caldi), pulsante di copia rapida negli appunti e collegamenti esterni diretti a ChatGPT e Gemini.
 Il modale include inoltre la funzione «Ripristina predefinita» per azzerare `image_url` e ripristinare il preset automatico.
 
 Un errore nel caricamento delle classi gestite, del Taccuino del docente o delle
@@ -4002,6 +4002,18 @@ A ogni modifica del frontend la verifica su GitHub controlla ora anche i tipi
 (`tsc`) e i test Node senza browser, oltre a lingue e ESLint. Nessuna modifica
 visibile all'app, ai dati o alla Guida interfaccia.
 
+### Pulizia di file e immagini non usati (#1003)
+
+Sono stati rimossi i file del frontend non più importati da nessuna pagina
+(`PersonalAreaEntry`, `GroupAssignments`, `QuestionnaireIcon`,
+`guide-institutes`, `AnalysisModeSelector`, `VisualPersonalTransfer`) e le
+immagini di `frontend/public/images/` che non erano citate né dal codice né
+dalla documentazione (le cartelle `onboarding`, `minimal`, `stylized`,
+`functional` e dieci PNG della piattaforma). Il file SQLite vuoto
+`backend/app.db` non è più versionato. Nessuna modifica visibile all'app, ai
+dati o alla Guida interfaccia; i prompt per le copertine di classe generate con
+IA sono ora interamente in inglese.
+
 ### Python 3.12 nell'immagine backend (#981)
 
 L'immagine backend usa Python 3.12 come default (`PYTHON_BASE_IMAGE` in
@@ -4010,6 +4022,8 @@ entrambi i Compose). Il codice importa `datetime.UTC`, disponibile da Python 3.1
 con il vecchio default 3.10 una nuova installazione non riusciva ad avviare il
 backend. Nessuna modifica a funzioni, dati o Guida interfaccia; un deploy già in
 esecuzione resta valido finché non si ricostruisce l'immagine.
+
+**Copertina di classe e memoria di sessione protette (#999).** `GET /groups/{id}/image` richiede l'accesso e risponde solo a iscritti, docenti proprietari o con cui la classe e condivisa e amministratori (404 agli altri), con `Cache-Control: private`. `GET /memory/user/{session_id}` risponde solo al proprietario della sessione (403 altrimenti). `GET /groups/info` e rimossa: nessuna schermata la usava. Nessuna modifica alla Guida interfaccia ne ai dati; il deploy richiede solo il backend.
 
 ### Integrità dei dati di classe (#1000)
 

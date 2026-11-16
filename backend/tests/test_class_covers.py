@@ -55,6 +55,7 @@ def client_env(db_session):
     app.dependency_overrides[database.get_db] = lambda: db_session
     app.dependency_overrides[auth.get_current_plan_manager] = lambda: teacher_identity
     app.dependency_overrides[auth.get_identity_view_as] = lambda: teacher_identity
+    app.dependency_overrides[auth.get_current_user] = lambda: teacher_identity
 
     with TestClient(app) as client:
         yield client, db_session
