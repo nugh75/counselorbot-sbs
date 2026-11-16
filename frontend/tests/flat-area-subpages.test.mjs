@@ -68,6 +68,14 @@ test('student plans are flat: flat Card, step rows without boxes, FlowStepper co
     assert.match(hero, /bg-indigo-600/);
     assert.match(hero, /data-step-status/);
     assert.match(hero, /id=\{`class-step-\$\{step\.id\}`\}/);
+    // #989: one «To do now» block, plain wording, no uppercase eyebrow, no [n], no percentage, no faded rows.
+    assert.match(hero, /data-testid="class-path-do-now"/);
+    assert.match(hero, /l\('assignedEyebrow'\)/);
+    assert.match(hero, /next_step_id/);
+    assert.doesNotMatch(hero, /uppercase|\[\$\{stepNumber\}\]|progressPercent\}%`\}<|opacity-60|piano\.builder\.independentSteps|sourceAutomatic/);
+    assert.match(read('components/administration/PlanChatCompleted.tsx'), /<Card variant="flat"/);
+    assert.match(read('components/profile/PersonalAreaHome.tsx'), /<Callout variant="danger">/);
+    assert.match(read('components/profile/PersonalAreaHome.tsx'), /<ClassPathHeroList[^>]*nextOnly/);
     const flow = read('components/profile/PlanActivityFlow.tsx');
     assert.doesNotMatch(flow, /rounded-card border border-line bg-surface p-4/);
     assert.match(flow, /<Callout variant="danger">/);

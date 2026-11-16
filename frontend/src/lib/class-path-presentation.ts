@@ -15,6 +15,8 @@ import { pathAssignmentText } from './i18n-path-assignments.ts';
 import { pathForumText } from './i18n-path-forum.ts';
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
 import { classMeetingText } from './i18n-class-meetings.ts';
+// @ts-expect-error -- Node's TypeScript runner requires the extension.
+import { classPathText } from './i18n-class-paths.ts';
 
 export type PresentationStepType =
     | 'tool'
@@ -75,6 +77,8 @@ interface PresentationOptions {
     toolName?: (key: string) => string;
     /** Editor fallback for a pending step, whose target does not exist yet. */
     fallbackTitle?: string;
+    /** Student views name an analysis by what it is, not by the editor configuration. */
+    student?: boolean;
 }
 
 function stepType(step: PresentationStep): PresentationStepType {
@@ -168,7 +172,10 @@ export function resolveStepPresentation(
     step: PresentationStep,
     options: PresentationOptions = {},
 ): StepPresentation {
-    const derivedTitle = derivedStepTitle(lang, step, options.toolName);
+    const instrument = step.tool_key || step.target_summary?.instrument_code;
+    const derivedTitle = options.student && stepType(step) === 'guided_results_chat' && instrument
+        ? classPathText(lang, 'analysisSubtitle').replace('{tool}', instrument)
+        : derivedStepTitle(lang, step, options.toolName);
     const fallback = options.fallbackTitle?.trim() || derivedTitle;
     const override = step.title?.trim() || '';
     const {value: dueDate, source: dueDateSource} = effectiveDueDate(step);

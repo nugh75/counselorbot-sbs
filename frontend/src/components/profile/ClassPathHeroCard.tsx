@@ -1,17 +1,17 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { activityReturnHref, withActivityReturn, withActivityOptions } from '@/lib/path-activity';
 import { chatPreferenceLabel, isEssentialInstrument } from '@/lib/chat-preferences';
 import { pathActivityText } from '@/lib/i18n-path-activity';
-import { Check, Lock, AlertCircle, ArrowRight, ChevronRight } from 'lucide-react';
+import { Check, Lock, AlertCircle, ArrowRight, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { pathPublicationText } from '@/lib/i18n-path-publication';
 import { apiFetch } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClasses } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
 import {
@@ -20,7 +20,7 @@ import {
     type StudentClassPath,
     type StudentClassPathStep,
 } from '@/lib/class-paths';
-import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
+import { formatPlanDay, plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import { pathForumText } from '@/lib/i18n-path-forum';
@@ -39,25 +39,64 @@ interface Props {
     pausedChats?: Map<string, FrozenSessionSummary>;
     drafts?: Map<string, string>;
     onReload?: () => Promise<void> | void;
-    /** With several plans each card folds to its header and progress. */
+    /** With several plans, or a finished one, the card folds to its header and progress. */
     collapsible?: boolean;
     defaultOpen?: boolean;
     /** The student's forum links and meetings, loaded once by the list. */
     discussionLinks?: ForumDiscussionLink[];
     meetings?: ClassMeeting[] | null;
     onMeetingsChanged?: () => Promise<void> | void;
+    /** Student home: header and the «To do now» block only; the rows live on the plans page. */
+    nextOnly?: boolean;
 }
 
-export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
-    const { lang, t } = useI18n();
+type StepStatus = 'todo' | 'unfinished' | 'done' | 'unavailable';
+interface StepAction { href: string; label: string; anchor?: boolean }
+
+const STATUS_KEY: Record<StepStatus, PathTextKey> = {
+    todo: 'statusTodo', unfinished: 'statusUnfinished', done: 'statusDone', unavailable: 'statusUnavailable',
+};
+const STATUS_TEXT: Record<StepStatus, string> = {
+    todo: 'text-ink-muted', unfinished: 'font-semibold text-ochre-700', done: 'font-medium text-indigo-700', unavailable: 'text-ink-muted',
+};
+
+/** «Review» says what it shows: the saved results or the conversation. */
+function actionLabel(lang: string, kind: string, label: string): string {
+    if (label === 'review' && kind === 'questionnaire') return pathActivityText(lang, 'seeResults');
+    if (label === 'review' && (kind === 'chat' || kind === 'analysis')) return pathActivityText(lang, 'rereadConversation');
+    return pathActivityText(lang, label);
+}
+
+export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged, nextOnly = false }: Props) {
+    const { lang } = useI18n();
     const pathname = usePathname();
     const l = (key: PathTextKey) => classPathText(lang, key);
+    const pa = (key: string) => pathActivityText(lang, key);
     const [actionStepId, setActionStepId] = useState<number | null>(null);
     const [open, setOpen] = useState(defaultOpen);
+    const [openSteps, setOpenSteps] = useState<Set<number>>(new Set());
     const [selectedResults, setSelectedResults] = useState<Record<number, string>>({});
     const [selectedPaths, setSelectedPaths] = useState<Record<number, string>>({});
     const stepsId = useId();
     const expanded = !collapsible || open;
+    const finished = path.total > 0 && path.done >= path.total;
+
+    // A link back to a step (#class-step-N, also the return from an activity) opens its details.
+    useEffect(() => {
+        const sync = () => {
+            const match = /^#class-step-(\d+)$/.exec(window.location.hash);
+            if (match) setOpenSteps(current => new Set(current).add(Number(match[1])));
+        };
+        queueMicrotask(sync);
+        window.addEventListener('hashchange', sync);
+        return () => window.removeEventListener('hashchange', sync);
+    }, []);
+
+    const toggleStep = (id: number, force?: boolean) => setOpenSteps(current => {
+        const next = new Set(current);
+        if (force ?? !next.has(id)) next.add(id); else next.delete(id);
+        return next;
+    });
 
     const progressPercent = path.total > 0 ? Math.min(100, Math.round((path.done / path.total) * 100)) : 0;
     const progressLabel = l('progressCount')
@@ -75,10 +114,10 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                 method,
             });
             if (res.ok) {
-                toast.success(isDone ? l('markUndone') : l('completed'));
+                toast.success(isDone ? l('markUndone') : l('statusDone'));
                 if (onReload) await onReload();
             } else if (res.status === 422) {
-                toast.error(l('notAvailable'));
+                toast.error(l('statusUnavailable'));
             } else {
                 toast.error(l('genericError'));
             }
@@ -89,6 +128,178 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
         }
     };
 
+    // Everything a step row, its details and the «To do now» block need.
+    const views = path.steps.map((step, index) => {
+        const isDone = step.state === 'done';
+        const isLocked = step.state === 'locked';
+        const isUnavailable = step.state === 'unavailable';
+        const blocked = isLocked || isUnavailable;
+        const presentation = resolveStepPresentation(lang, step, {toolName: key => resolveClassPathToolName(key, lang), student: true});
+        // Standalone chats share the instrument's saved activity. Analysis
+        // and administration pages resolve their exact bound session themselves.
+        const paused = step.start_href?.startsWith('/?start=') && step.tool_key
+            ? pausedChats?.get(`${path.id}:${step.id}`) : undefined;
+        const draft = drafts?.get(`${path.id}:${step.id}`);
+        const inProgress = step.activity ? step.activity.current?.state === 'in_progress'
+            : Boolean(paused) || draft !== undefined || step.attempt_state === 'in_progress';
+        const status: StepStatus = blocked ? 'unavailable' : isDone ? 'done' : inProgress ? 'unfinished' : 'todo';
+        const returnTo = activityReturnHref(pathname, step.id);
+        const needsChoice = (step.activity?.choices?.length ?? 0) > 1 && !selectedResults[step.id];
+
+        let primary: StepAction | null = null;
+        let repeat: StepAction | null = null;
+        if (!blocked && step.activity) {
+            const activity = step.activity;
+            if (activity.primary) primary = {
+                href: withActivityReturn(withActivityOptions(activity.primary.href, selectedResults[step.id],
+                    activity.primary.label === 'start' ? selectedPaths[step.id] : undefined), returnTo),
+                label: actionLabel(lang, activity.kind, activity.primary.label),
+            };
+            if (activity.repeat) repeat = {
+                href: withActivityReturn(withActivityOptions(activity.repeat.href, undefined, selectedPaths[step.id]), returnTo),
+                label: pa(activity.repeat.label),
+            };
+        } else if (!blocked) {
+            const canRepeat = step.step_type === 'guided_chat' || step.step_type === 'guided_results_chat'
+                || step.step_type === 'questionnaire_administration' || step.step_type === 'assignment' || Boolean(step.start_href?.startsWith('/?start='));
+            const [redoPath, redoHash] = (step.start_href || '').split('#', 2);
+            const redoHref = step.start_href && (step.step_type === 'guided_results_chat' || step.step_type === 'questionnaire_administration' || step.step_type === 'assignment')
+                ? `${redoPath}${redoPath.includes('?') ? '&' : '?'}attempt=new${redoHash ? `#${redoHash}` : ''}` : step.start_href;
+            const resumeStepHref = draft && step.start_href ? `${step.start_href}${step.start_href.includes('?') ? '&' : '?'}attempt=${draft}` : step.start_href;
+            const planHref = (href: string) => planStepHref(href, path.id, step.id);
+            if (paused) {
+                primary = {href: planHref(resumeHref(paused)), label: pa('resume'), anchor: true};
+                if (resumeStepHref) repeat = {href: planHref(resumeStepHref), label: pa('anotherAttempt')};
+            } else if (step.start_href && inProgress) {
+                primary = {href: planHref(resumeStepHref!), label: pa('resume')};
+                if (canRepeat && redoHref) repeat = {href: planHref(redoHref), label: pa('anotherAttempt')};
+            } else if (step.start_href && isDone && canRepeat) {
+                primary = {href: planHref(redoHref!), label: pa('anotherAttempt')};
+            } else if (step.start_href) {
+                primary = {href: planHref(resumeStepHref!), label: pa(isDone ? 'open' : 'start')};
+            }
+        }
+        return {step, number: index + 1, isDone, isLocked, isUnavailable, blocked, presentation, inProgress, status, needsChoice, primary, repeat};
+    });
+    type StepView = (typeof views)[number];
+    const nextView = finished ? undefined : views.find(view => view.step.id === path.next_step_id && !view.blocked);
+
+    const actionLink = (action: StepAction, className: string, content: ReactNode) => action.anchor
+        ? <a href={action.href} className={className}>{content}</a>
+        : <Link href={action.href} className={className}>{content}</Link>;
+
+    // Path options and the result choice come before the step's main action.
+    const renderOptions = ({step}: StepView) => {
+        const activity = step.activity;
+        if (!activity || step.state === 'locked' || step.state === 'unavailable') return null;
+        return <>
+            {['chat', 'analysis'].includes(activity.kind) && isEssentialInstrument(activity.instrument_code || '') && <details className="group text-sm">
+                <summary className="flex min-h-control cursor-pointer list-none items-center gap-2 text-ink-muted [&::-webkit-details-marker]:hidden">
+                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden />
+                    {pa(activity.current ? 'newPathOptions' : 'pathOptions')}
+                </summary>
+                <label className="block">{chatPreferenceLabel(lang, 'choosePath')}
+                    <select className="mt-1 min-h-control rounded-control border border-line-strong bg-surface p-2" value={selectedPaths[step.id] || 'complete'}
+                        onChange={event => setSelectedPaths(current => ({...current, [step.id]: event.target.value}))}>
+                        {(['complete', 'essential'] as const).map(mode => <option key={mode} value={mode}>{chatPreferenceLabel(lang, mode)}</option>)}
+                    </select>
+                </label>
+            </details>}
+            {(activity.choices?.length ?? 0) > 1 && <label className="block text-sm">
+                {pa('chooseResult')}
+                <select value={selectedResults[step.id] || ''}
+                    onChange={event => setSelectedResults(current => ({...current, [step.id]: event.target.value}))}
+                    className="mt-1 block min-h-control w-full rounded-control border border-line-strong bg-surface p-2">
+                    <option value="" disabled>—</option>
+                    {activity.choices!.map(result => <option key={result.id} value={result.id}>{new Date(result.submitted_at).toLocaleString(lang, {dateStyle: 'medium', timeStyle: 'short'})} · {result.locale.toUpperCase()}</option>)}
+                </select>
+            </label>}
+        </>;
+    };
+
+    const renderSelfMark = ({step, isDone, blocked}: StepView) => {
+        if (!step.can_self_mark || blocked) return null;
+        if (step.step_type === 'forum') return (
+            <label className="inline-flex min-h-control cursor-pointer items-center gap-2 text-sm font-semibold">
+                <input type="checkbox" checked={isDone} disabled={actionStepId === step.id} onChange={() => void handleToggleDone(step)} />
+                {pathForumText(lang, 'studentDone')}
+            </label>
+        );
+        return (
+            <Button variant={isDone ? 'ghost' : 'secondary'} disabled={actionStepId === step.id} onClick={() => void handleToggleDone(step)}>
+                {isDone ? l('markUndone') : l('markDone')}
+            </Button>
+        );
+    };
+
+    const renderDetails = (view: StepView) => {
+        const {step, presentation, isDone, isLocked, isUnavailable, blocked, inProgress, number} = view;
+        const planned = plannedDayText(step, lang);
+        const plannedLocation = plannedDayLocation(step);
+        const returnTo = activityReturnHref(pathname, step.id);
+        const isNext = view === nextView;
+        const previous = step.activity?.attempts.filter(attempt => attempt.session_id !== step.activity?.current?.session_id) ?? [];
+        return <div className="space-y-2 pb-1 pl-9">
+            {isUnavailable && <p className="text-sm text-ink-body">{pathPublicationText(lang, 'studentUnavailable')}</p>}
+            {isLocked && <p className="text-sm text-ink-body">
+                {l('unlocksAfter').replace('{n}', String(lockedStepUnlockNumber(path) ?? number - 1))}
+            </p>}
+            {presentation.titleSource === 'override' && presentation.title !== presentation.derivedTitle && (
+                <p className="text-sm text-ink-muted">{presentation.derivedTitle}</p>
+            )}
+            {presentation.note && <p className="whitespace-pre-wrap text-sm text-ink-body">{presentation.note}</p>}
+            {step.step_type === 'assignment' && !isUnavailable && (
+                <p className="text-sm text-ink-muted">{pathAssignmentText(lang, 'studentRule')}</p>
+            )}
+            {step.step_type === 'forum' && !isUnavailable && (() => {
+                const notice = forumStepNotice(step.forum_state, isDone);
+                return (<>
+                    <p className="text-sm text-ink-muted">{pathForumText(lang, 'studentRule')}</p>
+                    {notice && <p role="status" className="text-sm font-semibold text-ink-body">{pathForumText(lang, `notice_${notice}`)}</p>}
+                </>);
+            })()}
+            {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (() => {
+                // The student's own view of the meeting carries slots and booking (#176).
+                const meeting = meetings?.find(row => row.id === step.meeting_id) ?? step.meeting_summary;
+                return (<>
+                    <MeetingDetails lang={lang} meeting={meeting} attended={isDone}
+                        onChanged={async () => { await Promise.all([onReload?.(), onMeetingsChanged?.()]); }} />
+                    {/* The rule matters once it can be followed: started, not yet marked. */}
+                    {!isDone && meeting.status === 'scheduled' && meeting.kind === 'group' && meeting.attendance_mode !== 'teacher' && meeting.starts_at
+                        && new Date(meeting.starts_at).getTime() <= Date.now()
+                        && <p className="text-sm text-ink-muted">{classMeetingText(lang, 'studentRule')}</p>}
+                </>);
+            })()}
+            <ForumDiscussionLinks links={discussionLinks} kind="path_step" targetId={step.id} />
+            {isDone && inProgress && <p className="text-sm text-ink-body">{pa('restarted')}</p>}
+
+            {(planned || (presentation.showDueDate && presentation.dueDate) || (isDone && step.source && step.source !== 'automatic')) && (
+                <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                    {planned && <span>{l('plannedOn').replace('{date}', planned)}{plannedLocation ? ` · ${plannedLocation}` : ''}</span>}
+                    {presentation.showDueDate && presentation.dueDate && <span>{l('dueOn').replace('{date}', formatPlanDay(presentation.dueDate, lang))}</span>}
+                    {isDone && step.source === 'teacher' && <span>{l('markedByTeacher')}</span>}
+                    {isDone && step.source === 'student' && <span>{l('markedByYou')}</span>}
+                </p>
+            )}
+
+            {!isNext && renderOptions(view)}
+            {view.repeat && actionLink(view.repeat, 'inline-flex min-h-control items-center text-sm font-semibold text-link underline', view.repeat.label)}
+            {!blocked && previous.length > 0 && <details className="group text-sm">
+                <summary className="flex min-h-control cursor-pointer list-none items-center gap-2 font-semibold text-link [&::-webkit-details-marker]:hidden">
+                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden />
+                    {`${pa('history')} (${previous.length})`}
+                </summary>
+                <ul className="divide-y divide-line">{previous.map(attempt => <li key={attempt.session_id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <span>{attempt.started_at ? new Date(attempt.started_at).toLocaleString(lang, {dateStyle: 'medium', timeStyle: 'short'}) : ''} · {l(attempt.state === 'completed' ? 'statusDone' : 'statusUnfinished')}</span>
+                    <Link className="inline-flex min-h-control items-center px-2 font-semibold text-link underline" href={withActivityReturn(attempt.href, returnTo)}>
+                        {attempt.state === 'completed' ? actionLabel(lang, step.activity!.kind, 'review') : pa('resume')}
+                    </Link>
+                </li>)}</ul>
+            </details>}
+            {!isNext && renderSelfMark(view)}
+        </div>;
+    };
+
     return (
         <Card
             as="section"
@@ -96,15 +307,9 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
             data-testid="class-path-hero-card"
             className="space-y-6"
         >
-            {/* Header: class, title and independent progress. */}
-            <div className={`space-y-4 ${expanded ? 'border-b border-line/80 pb-4' : ''}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-muted">
-                        {`${l('yourClassPath')} · ${path.group_name}`}
-                    </span>
-                </div>
-
-                <p className="text-sm text-ink-muted">{t('piano.builder.independentSteps')}</p>
+            {/* Header: who assigned it, title and progress. */}
+            <div className={`space-y-3 ${expanded && !nextOnly ? 'border-b border-line/80 pb-4' : ''}`}>
+                <p className="text-sm text-ink-muted">{l('assignedEyebrow').replace('{name}', path.group_name)}</p>
                 <div>
                     <h2 className="font-display text-xl font-semibold text-ink sm:text-2xl">
                         {collapsible ? (
@@ -123,271 +328,115 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                             </button>
                         ) : path.title}
                     </h2>
-                    {expanded && path.description && (
+                    {expanded && !nextOnly && path.description && (
                         <p className="mt-1 text-sm text-ink-muted">{path.description}</p>
                     )}
+                    {expanded && !nextOnly && !finished && <p className="mt-1 text-sm text-ink-muted">{l('studentIntro')}</p>}
                 </div>
 
-                <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between text-xs font-semibold text-ink-muted">
-                        <span>{progressLabel}</span>
-                        <span>{`${progressPercent}%`}</span>
+                {finished ? (
+                    <p className="flex items-center gap-2 text-sm font-semibold text-success-ink" data-plan-complete>
+                        <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
+                        {l('planComplete')}
+                    </p>
+                ) : (
+                    <div className="space-y-2">
+                        <p className="text-xs font-semibold text-ink-muted">{progressLabel}</p>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-line">
+                            <div
+                                className="h-full rounded-full bg-brand transition-all duration-300"
+                                style={{ width: `${progressPercent}%` }}
+                                role="progressbar"
+                                aria-valuenow={path.done}
+                                aria-valuemin={0}
+                                aria-valuemax={path.total}
+                                aria-label={progressLabel}
+                            />
+                        </div>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-line">
-                        <div
-                            className="h-full rounded-full bg-brand transition-all duration-300"
-                            style={{ width: `${progressPercent}%` }}
-                            role="progressbar"
-                            aria-valuenow={path.done}
-                            aria-valuemin={0}
-                            aria-valuemax={path.total}
-                            aria-label={progressLabel}
-                        />
-                    </div>
-                </div>
+                )}
             </div>
 
-            {/* Steps List */}
-            {expanded && <div id={stepsId} className="divide-y divide-line">
-                {path.steps.map((step, index) => {
-                    const stepNumber = index + 1;
-                    const isCurrent = step.id === path.next_step_id;
-                    const isDone = step.state === 'done';
-                    const isLocked = step.state === 'locked';
-                    const isUnavailable = step.state === 'unavailable';
-                    const presentation = resolveStepPresentation(lang, step, {toolName: key => resolveClassPathToolName(key, lang)});
-                    const titleDisplay = presentation.title;
-                    const isActionBusy = actionStepId === step.id;
-                    const planned = plannedDayText(step, lang);
-                    const plannedLocation = plannedDayLocation(step);
-                    // Standalone chats share the instrument's saved activity. Analysis
-                    // and administration pages resolve their exact bound session themselves.
-                    const paused = step.start_href?.startsWith('/?start=') && step.tool_key
-                        ? pausedChats?.get(`${path.id}:${step.id}`) : undefined;
-                    const draft = drafts?.get(`${path.id}:${step.id}`);
-                    const inProgress = step.activity ? step.activity.current?.state === 'in_progress'
-                        : Boolean(paused) || draft !== undefined || step.attempt_state === 'in_progress';
-                    const returnTo = activityReturnHref(pathname, step.id);
-                    const canRepeat = step.step_type === 'guided_chat' || step.step_type === 'guided_results_chat'
-                        || step.step_type === 'questionnaire_administration' || step.step_type === 'assignment' || Boolean(step.start_href?.startsWith('/?start='));
-                    const [redoPath, redoHash] = (step.start_href || '').split('#', 2);
-                    const redoHref = step.start_href && (step.step_type === 'guided_results_chat' || step.step_type === 'questionnaire_administration' || step.step_type === 'assignment')
-                        ? `${redoPath}${redoPath.includes('?') ? '&' : '?'}attempt=new${redoHash ? `#${redoHash}` : ''}` : step.start_href;
-                    const resumeStepHref = draft && step.start_href ? `${step.start_href}${step.start_href.includes('?') ? '&' : '?'}attempt=${draft}` : step.start_href;
-
-                    // Flat row: state is told by the FlowStepper colours (ochre current,
-                    // indigo done, slate ahead) and a small status line, not a coloured box.
-                    const status = [
-                        isCurrent && {tone: 'current', text: isDone && inProgress ? pathActivityText(lang, 'newInProgress') : l(inProgress ? 'current' : 'next')},
-                        isDone && {tone: 'done', text: l('completed')},
-                        inProgress && !isCurrent && {tone: 'current', text: pathActivityText(lang, isDone ? 'newInProgress' : 'inProgress')},
-                        isUnavailable && {tone: 'muted', text: l('notAvailable')},
-                    ].filter((item): item is {tone: string; text: string} => Boolean(item));
-
-                    return (
-                        <div
-                            key={step.id}
-                            id={`class-step-${step.id}`}
-                            className={`py-4 first:pt-0 last:pb-0 ${isLocked || isUnavailable ? 'opacity-60' : ''}`}
-                        >
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                {/* Left side: indicator, titles */}
-                                <div className="flex min-w-0 items-start gap-4">
-                                    <div className="mt-1 flex shrink-0 items-center justify-center">
-                                        {isCurrent ? (
-                                            <span
-                                                className="flex h-5 w-5 items-center justify-center rounded-full bg-ochre-600 text-2xs font-bold text-white ring-4 ring-ochre-600/15"
-                                                aria-label={l(inProgress ? 'current' : 'next')}
-                                            >
-                                                {stepNumber}
-                                            </span>
-                                        ) : isDone ? (
-                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white">
-                                                <Check className="h-3 w-3" aria-hidden />
-                                            </span>
-                                        ) : isLocked ? (
-                                            <Lock className="h-4 w-4 text-slate-500" aria-hidden />
-                                        ) : isUnavailable ? (
-                                            <AlertCircle className="h-4 w-4 text-slate-500" aria-hidden />
-                                        ) : (
-                                            <span className="m-1 h-2.5 w-2.5 rounded-full border-2 border-slate-300" aria-hidden />
-                                        )}
-                                    </div>
-
-                                    <div className="min-w-0 space-y-1">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="text-xs font-semibold text-ink-muted">
-                                                {`[${stepNumber}]`}
-                                            </span>
-                                            <h3
-                                                className="text-base font-semibold text-ink"
-                                            >
-                                                {titleDisplay}
-                                            </h3>
-                                        </div>
-                                        {status.length > 0 && (
-                                            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" data-step-status>
-                                                {status.map(item => (
-                                                    <span key={item.text} className={`inline-flex items-center gap-2 ${item.tone === 'current' ? 'font-semibold text-ochre-700' : item.tone === 'done' ? 'font-medium text-indigo-700' : 'text-ink-muted'}`}>
-                                                        <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${item.tone === 'current' ? 'bg-ochre-600' : item.tone === 'done' ? 'bg-indigo-600' : 'bg-slate-300'}`} />
-                                                        {item.text}
-                                                    </span>
-                                                ))}
-                                            </p>
-                                        )}
-                                        {isUnavailable && (
-                                            <p className="mt-1 text-xs text-ink-muted">{pathPublicationText(lang, 'studentUnavailable')}</p>
-                                        )}
-
-                                        {presentation.titleSource === 'override' && presentation.title !== presentation.derivedTitle && (
-                                            <p className="text-xs font-semibold text-ink-muted">
-                                                {presentation.derivedTitle}
-                                            </p>
-                                        )}
-
-                                        {presentation.note && (
-                                            <p className="whitespace-pre-wrap text-sm text-ink-muted">
-                                                {presentation.note}
-                                            </p>
-                                        )}
-                                        {step.step_type === 'assignment' && !isUnavailable && (
-                                            <p className="text-xs text-ink-muted">{pathAssignmentText(lang, 'studentRule')}</p>
-                                        )}
-                                        {step.step_type === 'forum' && !isUnavailable && (() => {
-                                            const notice = forumStepNotice(step.forum_state, isDone);
-                                            return (<>
-                                                <p className="text-xs text-ink-muted">{pathForumText(lang, 'studentRule')}</p>
-                                                {notice && <p role="status" className="text-xs font-semibold text-ink-body">{pathForumText(lang, `notice_${notice}`)}</p>}
-                                            </>);
-                                        })()}
-                                        {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (() => {
-                                            // The student's own view of the meeting carries slots and booking (#176).
-                                            const meeting = meetings?.find(row => row.id === step.meeting_id) ?? step.meeting_summary;
-                                            return (<>
-                                                <MeetingDetails lang={lang} meeting={meeting} attended={isDone}
-                                                    onChanged={async () => { await Promise.all([onReload?.(), onMeetingsChanged?.()]); }} />
-                                                {/* The rule matters once it can be followed: started, not yet marked. */}
-                                                {!isDone && meeting.status === 'scheduled' && meeting.kind === 'group' && meeting.attendance_mode !== 'teacher' && meeting.starts_at
-                                                    && new Date(meeting.starts_at).getTime() <= Date.now()
-                                                    && <p className="text-xs text-ink-muted">{classMeetingText(lang, 'studentRule')}</p>}
-                                            </>);
-                                        })()}
-                                        <ForumDiscussionLinks links={discussionLinks} kind="path_step" targetId={step.id} />
-
-                                        {isLocked && (
-                                            <p className="text-xs italic text-ink-muted">
-                                                {l('unlocksAfter').replace(
-                                                    '{n}',
-                                                    String(lockedStepUnlockNumber(path) ?? stepNumber - 1)
-                                                )}
-                                            </p>
-                                        )}
-
-                                        <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-ink-muted">
-                                            {planned && (
-                                                <span>
-                                                    {l('plannedOn').replace('{date}', planned)}
-                                                    {plannedLocation ? ` · ${plannedLocation}` : ''}
-                                                </span>
-                                            )}
-                                            {presentation.showDueDate && presentation.dueDate && (
-                                                <span>{l('dueOn').replace('{date}', presentation.dueDate)}</span>
-                                            )}
-                                            {isDone && step.source && (
-                                                <span>
-                                                    {step.source === 'teacher'
-                                                        ? l('sourceTeacher')
-                                                        : step.source === 'automatic'
-                                                        ? l('sourceAutomatic')
-                                                        : l('sourceStudent')}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Right side: actions */}
-                                <div className="flex flex-wrap items-center gap-2 pt-2 sm:max-w-md sm:shrink-0 sm:justify-end sm:pt-0">
-                                    {step.activity && !isLocked && !isUnavailable && <>
-                                        {['chat', 'analysis'].includes(step.activity.kind) && isEssentialInstrument(step.activity.instrument_code || '') && <details className="basis-full text-sm">
-                                            <summary className="cursor-pointer py-2 text-ink-muted">{pathActivityText(lang, step.activity.current ? 'newPathOptions' : 'pathOptions')}</summary>
-                                            <label className="block">{chatPreferenceLabel(lang, 'choosePath')}
-                                                <select className="mt-1 min-h-control rounded-control border border-line-strong bg-surface p-2" value={selectedPaths[step.id] || 'complete'}
-                                                    onChange={event => setSelectedPaths(current => ({...current, [step.id]: event.target.value}))}>
-                                                    {(['complete', 'essential'] as const).map(mode => <option key={mode} value={mode}>{chatPreferenceLabel(lang, mode)}</option>)}
-                                                </select>
-                                            </label>
-                                        </details>}
-                                        {(step.activity.choices?.length ?? 0) > 1 && <label className="basis-full text-sm">
-                                            {pathActivityText(lang, 'chooseResult')}
-                                            <select value={selectedResults[step.id] || ''}
-                                                onChange={event => setSelectedResults(current => ({...current, [step.id]: event.target.value}))}
-                                                className="mt-1 block min-h-control w-full rounded-control border border-line-strong bg-surface p-2">
-                                                <option value="">{pathActivityText(lang, 'chooseResult')}</option>
-                                                {step.activity.choices!.map(result => <option key={result.id} value={result.id}>{new Date(result.submitted_at).toLocaleString(lang)} · {result.locale.toUpperCase()}</option>)}
-                                            </select>
-                                        </label>}
-                                        {step.activity.primary && <Link href={withActivityReturn(withActivityOptions(step.activity.primary.href,
-                                            selectedResults[step.id], step.activity.primary.label === 'start' ? selectedPaths[step.id] : undefined), returnTo)}
-                                            aria-disabled={(step.activity.choices?.length ?? 0) > 1 && !selectedResults[step.id]}
-                                            onClick={event => { if ((step.activity?.choices?.length ?? 0) > 1 && !selectedResults[step.id]) event.preventDefault(); }}
-                                            className={`inline-flex min-h-control items-center gap-2 rounded-control px-4 text-sm font-semibold aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${isCurrent ? 'bg-brand text-ink-on-brand hover:bg-brand-hover' : 'border border-line-strong bg-surface text-ink-body hover:bg-surface-sunken'}`}>
-                                            {pathActivityText(lang, step.activity.primary.label)}<ArrowRight className="h-4 w-4" aria-hidden />
-                                        </Link>}
-                                        {step.activity.repeat && <Link href={withActivityReturn(withActivityOptions(step.activity.repeat.href, undefined, selectedPaths[step.id]), returnTo)}
-                                            className="inline-flex min-h-control items-center rounded-control border border-line-strong px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken">
-                                            {pathActivityText(lang, step.activity.repeat.label)}
-                                        </Link>}
-                                        {step.activity.attempts.length > 0 && <details className="basis-full text-sm sm:ml-auto">
-                                            <summary className="cursor-pointer py-2 font-semibold text-link">{pathActivityText(lang, 'history')} ({step.activity.attempts.length})</summary>
-                                            <ul className="divide-y divide-line">{step.activity.attempts.map(attempt => <li key={attempt.session_id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                                                <span>{attempt.started_at ? new Date(attempt.started_at).toLocaleString(lang) : ''} · {pathActivityText(lang, attempt.state === 'completed' ? 'completed' : 'inProgress')}</span>
-                                                <Link className="inline-flex min-h-control items-center px-2 font-semibold text-link underline" href={withActivityReturn(attempt.href, returnTo)}>
-                                                    {pathActivityText(lang, attempt.state === 'completed' ? 'review' : 'resume')}
-                                                </Link>
-                                            </li>)}</ul>
-                                        </details>}
-                                    </>}
-                                    {!step.activity && paused && !isLocked && !isUnavailable && <a
-                                        href={planStepHref(resumeHref(paused), path.id, step.id)}
-                                        className="inline-flex min-h-control items-center rounded-control bg-brand px-4 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
-                                    >{l('resume')}</a>}
-                                    {!step.activity && step.start_href && !isLocked && !isUnavailable && (
-                                        <Link href={planStepHref(!inProgress && isDone && canRepeat ? redoHref! : resumeStepHref!, path.id, step.id)}>
-                                            <Button
-                                                variant={isCurrent ? 'accent' : 'secondary'}
-                                               
-                                            >
-                                                {inProgress && !paused ? l('resume') : canRepeat && (isDone || paused) ? l('redo') : isDone ? l('reopen') : l('start')}
-                                                <ArrowRight className="h-4 w-4" aria-hidden />
-                                            </Button>
-                                        </Link>
-                                    )}
-                                    {!step.activity && inProgress && !paused && canRepeat && redoHref && !isLocked && !isUnavailable && (
-                                        <Link href={planStepHref(redoHref, path.id, step.id)}><Button variant="secondary">{l('redo')}</Button></Link>
-                                    )}
-
-                                    {step.can_self_mark && step.step_type === 'forum' && !isUnavailable && !isLocked && (
-                                        <label className="inline-flex min-h-control cursor-pointer items-center gap-2 text-sm font-semibold">
-                                            <input type="checkbox" checked={isDone} disabled={isActionBusy} onChange={() => void handleToggleDone(step)} />
-                                            {pathForumText(lang, 'studentDone')}
-                                        </label>
-                                    )}
-                                    {step.can_self_mark && step.step_type !== 'forum' && !isUnavailable && !isLocked && (
-                                        <Button
-                                            variant={isDone ? 'ghost' : 'secondary'}
-                                           
-                                            disabled={isActionBusy}
-                                            onClick={() => void handleToggleDone(step)}
-                                        >
-                                            {isDone ? l('markUndone') : l('markDone')}
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
+            {expanded && <div id={stepsId} className="space-y-6">
+                {/* One clear next step with the card's only filled button. */}
+                {nextView && (
+                    <div data-testid="class-path-do-now" className="space-y-3 border-l-2 border-ochre-600 pl-4">
+                        <p className="text-sm font-semibold text-ochre-700">{l('doNow')}</p>
+                        <div>
+                            <p className="text-base font-semibold text-ink">{nextView.presentation.title}</p>
+                            <p className="text-xs text-ink-muted">{l(STATUS_KEY[nextView.status])}</p>
                         </div>
-                    );
-                })}
+                        {renderOptions(nextView)}
+                        <div className="flex flex-wrap items-center gap-2">
+                            {nextView.primary ? (nextView.needsChoice
+                                ? <Button disabled className="w-full sm:w-auto">{nextView.primary.label}<ArrowRight className="h-4 w-4" aria-hidden /></Button>
+                                : actionLink(nextView.primary, buttonClasses('primary', 'md', 'w-full sm:w-auto'),
+                                    <>{nextView.primary.label}<ArrowRight className="h-4 w-4" aria-hidden /></>))
+                                : nextOnly ? <Link href={`/profilo/piani-operativi#class-step-${nextView.step.id}`} className={buttonClasses('primary', 'md', 'w-full sm:w-auto')}>{l('showDetails')}</Link>
+                                : <Button className="w-full sm:w-auto" onClick={() => {
+                                    toggleStep(nextView.step.id, true);
+                                    requestAnimationFrame(() => document.getElementById(`class-step-${nextView.step.id}`)?.scrollIntoView({block: 'center'}));
+                                }}>{l('showDetails')}</Button>}
+                            {renderSelfMark(nextView)}
+                        </div>
+                    </div>
+                )}
+
+                {/* Compact rows: status, title and one action; details on demand. */}
+                {!nextOnly && <div className="divide-y divide-line">
+                    {views.map(view => {
+                        const {step, number, status, isDone} = view;
+                        const isCurrent = view === nextView;
+                        const detailsOpen = openSteps.has(step.id);
+                        const detailsId = `${stepsId}-step-${step.id}`;
+                        return (
+                            <div key={step.id} id={`class-step-${step.id}`} className="py-3">
+                                <div className="flex items-start gap-3">
+                                    <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden>
+                                        {isDone ? (
+                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white">
+                                                <Check className="h-3 w-3" />
+                                            </span>
+                                        ) : view.isLocked ? (
+                                            <Lock className="h-4 w-4 text-slate-500" />
+                                        ) : view.isUnavailable ? (
+                                            <AlertCircle className="h-4 w-4 text-slate-500" />
+                                        ) : (
+                                            <span className={`flex h-5 w-5 items-center justify-center rounded-full text-2xs font-bold ${isCurrent ? 'bg-ochre-600 text-white ring-4 ring-ochre-600/15' : 'border border-line-strong text-ink-muted'}`}>
+                                                {number}
+                                            </span>
+                                        )}
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="text-base font-semibold text-ink">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleStep(step.id)}
+                                                aria-expanded={detailsOpen}
+                                                aria-controls={detailsOpen ? detailsId : undefined}
+                                                className="group flex min-h-control w-full items-center gap-2 rounded-control text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                            >
+                                                <span className="sr-only">{`${number}. `}</span>
+                                                <span className="min-w-0 group-hover:text-link">{view.presentation.title}</span>
+                                                <ChevronRight className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${detailsOpen ? 'rotate-90' : ''}`} aria-hidden />
+                                            </button>
+                                        </h3>
+                                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" data-step-status>
+                                            <span className={STATUS_TEXT[status]}>{l(STATUS_KEY[status])}</span>
+                                            {view.primary && <>
+                                                <span aria-hidden className="text-ink-muted">·</span>
+                                                {view.needsChoice
+                                                    ? <button type="button" className="inline-flex min-h-control items-center font-semibold text-link underline" onClick={() => toggleStep(step.id, true)}>{view.primary.label}</button>
+                                                    : actionLink(view.primary, 'inline-flex min-h-control items-center font-semibold text-link underline', view.primary.label)}
+                                            </>}
+                                        </p>
+                                    </div>
+                                </div>
+                                {detailsOpen && <div id={detailsId}>{renderDetails(view)}</div>}
+                            </div>
+                        );
+                    })}
+                </div>}
             </div>}
         </Card>
     );

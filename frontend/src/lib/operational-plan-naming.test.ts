@@ -39,12 +39,13 @@ test('the feature is called «Piano operativo» in every language and place', ()
         assert.equal(classPathText(lang, 'pathsTitle'), plural[index]);
         assert.equal(teacherAreaName(lang, 'piani-operativi'), plural[index]);
         assert.equal(teacherAreaText(lang, 'breadcrumbPercorsi'), plural[index]);
-        assert.equal(personalAreaName(lang, 'piani-operativi'), plural[index]);
         assert.equal(classSettingsText(lang, 'paths'), plural[index]);
         assert.equal(classSettingsText(lang, 'classPaths'), plural[index]);
     });
     assert.equal(classPathText('it', 'newPath'), 'Nuovo piano operativo');
-    assert.equal(classPathText('it', 'yourClassPath'), 'Il tuo piano operativo');
+    // Students read the plans as the activities their teacher assigned (owner decision, 16 Nov 2026).
+    assert.deepEqual(languages.map(lang => personalAreaName(lang, 'piani-operativi')),
+        ['Attività assegnate', 'Assigned activities', 'Actividades asignadas', 'Activités attribuées', 'Zugewiesene Aktivitäten', 'Tilldelade aktiviteter']);
     assert.equal(classPathText('fr', 'publishedSuccess'), 'Plan opérationnel publié');
 });
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
@@ -74,8 +74,9 @@ export function StudentClassPathsPage() {
 
     if (paths.length === 0) {
         return (
-            <Card variant="flat" className="py-12 text-center">
+            <Card variant="flat" className="space-y-4 py-12 text-center">
                 <p className="text-sm text-ink-muted">{l('studentPathsEmpty')}</p>
+                <ButtonLink href="/profilo">{l('goToStudentArea')}</ButtonLink>
             </Card>
         );
     }
