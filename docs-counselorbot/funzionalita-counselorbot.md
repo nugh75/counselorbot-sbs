@@ -1957,6 +1957,20 @@ configurare variabili, modificare file o eseguire comandi sul server. Le chiavi
 sono conservate dopo riavvii e aggiornamenti; l’archivio protetto va incluso
 nei backup insieme al database.
 
+**Quale chiave è in uso (#1020).** Nella barra in alto, accanto al counselor,
+un piccolo gruppo di icone mostra con quale chiave AI si sta parlando: una
+chiave con il distintivo del proprietario (amministratore per la **chiave di
+sistema**, studente o docente per **la tua chiave** o **il tuo abbonamento
+ChatGPT**, docente per la **chiave del docente** condivisa con la classe) e il
+logo del provider (OpenAI, Anthropic, Google Gemini, Ollama; per gli altri
+un’icona neutra). Al passaggio del mouse, con il tasto Tab o al tocco si apre il
+dettaglio: chi possiede la chiave, collegamento (API o abbonamento), provider,
+modello, chi paga e il collegamento **Gestisci le tue API**. In una chat vale il
+counselor di quella chat; altrove la scelta predefinita. Se la scelta personale
+non è utilizzabile (funzione spenta, classe che non la consente, ChatGPT non
+collegato) compare un segnale di attenzione e il dettaglio avvisa che si sta
+usando la chiave di sistema. La chiave non viene mai mostrata.
+
 La persona può salvare **più connessioni AI**, ciascuna con nome riconoscibile,
 provider, chiave API e modello, anche dello stesso provider o di account esterni
 diversi. Il modello si sceglie solo dall’elenco che il provider restituisce per
