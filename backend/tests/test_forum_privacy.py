@@ -166,17 +166,41 @@ def test_forum_metadata_reader_is_isolated_from_ai_rag_context_and_exports():
         found = {name for name, targets in graph.items() if name not in reach and targets & reach}
         reach |= found
         changed = bool(found)
+    # The reader returns metadata only (checked above), so reach grows with the
+    # class-path features that import path_step_types. The gate that matters is
+    # the closed list of forbidden consumers below plus the exact set, so any new
+    # importer is a deliberate, reviewed change.
+    forbidden = {"backend.chat_logic", "backend.ai_service", "backend.rag_index", "backend.pdf_generator",
+                 "backend.routes.site_chat", "backend.routes.survey", "backend.routes.chat", "backend.routes.forum"}
+    assert not reach & forbidden, sorted(reach & forbidden)
     assert reach == {
         "backend.forum_completion",
         "backend.path_step_types",
-        "backend.routes.class_paths",
         "backend.results_deep_dive",
         "backend.questionnaire_entry",
-        "backend.routes.administration_plans",
-        # Path templates (#172) are class paths too; forum writes stay in routes/forum.py.
         "backend.path_templates",
-        "backend.routes.path_templates",
+        "backend.path_activity",
+        "backend.class_council",
+        "backend.class_noticing",
+        "backend.orientation_recommendation",
+        "backend.prompt_health",
+        "backend.prompt_health_llm",
+        "backend.telegram_state",
         "backend.main",
+        "backend.routes.admin",
+        "backend.routes.administration_plans",
+        "backend.routes.assignment_work",
+        "backend.routes.assignments",
+        "backend.routes.class_council",
+        "backend.routes.class_meetings",
+        "backend.routes.class_paths",
+        "backend.routes.frozen_sessions",
+        "backend.routes.goals",
+        "backend.routes.groups",
+        "backend.routes.orientation_recommendation",
+        "backend.routes.path_templates",
+        "backend.routes.prompt_health",
+        "backend.routes.telegram",
     }
 
 
