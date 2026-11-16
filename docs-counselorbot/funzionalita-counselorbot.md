@@ -1965,8 +1965,9 @@ sistema**, studente o docente per **la tua chiave** o **il tuo abbonamento
 ChatGPT**, docente per la **chiave del docente** condivisa con la classe) e il
 logo del provider (OpenAI, Anthropic, Google Gemini, Ollama; per gli altri
 un’icona neutra). Al passaggio del mouse, con il tasto Tab o al tocco si apre il
-dettaglio: chi possiede la chiave, collegamento (API o abbonamento), provider,
-modello, chi paga e il collegamento **Gestisci le tue API**. In una chat vale il
+dettaglio, in due righe: «Gestito da» (la piattaforma, te, o il tuo docente con
+il suo nome) e «Provider API · modello» (o «ChatGPT (abbonamento) · modello»),
+più il collegamento **Gestisci le tue API**. In una chat vale il
 counselor di quella chat; altrove la scelta predefinita. Se la scelta personale
 non è utilizzabile (funzione spenta, classe che non la consente, ChatGPT non
 collegato) compare un segnale di attenzione e il dettaglio avvisa che si sta
