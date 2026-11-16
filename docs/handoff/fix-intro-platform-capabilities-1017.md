@@ -1,7 +1,7 @@
 # fix/intro-platform-capabilities-1017 (#1017)
 
 ## Stato
-Fix e test verdi; commit e PR in corso.
+Completo: PR #1018 aperta, CI verde (build desktop non vincolanti).
 
 ## Fatto
 - Causa: `backend/chat_logic.py` saltava il blocco `[PLATFORM CAPABILITIES]`
@@ -22,7 +22,7 @@ Fix e test verdi; commit e PR in corso.
 - Container `cb-1017-pg` rimosso.
 
 ## Prossimi passi
-- Commit, merge origin/main, PR.
+- Merge di #1018 da parte dell'utente; deploy solo backend.
 
 ## Blocchi e rischi
 - Nessuno.
