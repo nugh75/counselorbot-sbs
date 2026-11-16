@@ -7521,6 +7521,9 @@ def test_concluding_keeps_the_result_where_the_person_chose():
     _set_idea_feature("true")
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
     session_id = "idea-conclude"
+    # The portfolio writes images under a storage dir that defaults to /app, absent on CI runners.
+    original_storage = idea_map_routes.PORTFOLIO_STORAGE_DIR
+    idea_map_routes.PORTFOLIO_STORAGE_DIR = tempfile.mkdtemp(prefix="idea-portfolio-")
     try:
         client.post("/idea/map/patch", json={
             "session_id": session_id,
@@ -7557,6 +7560,8 @@ def test_concluding_keeps_the_result_where_the_person_chose():
         assert research["notebook"].get("skipped")
         assert research["portfolio"]["item_id"]
     finally:
+        shutil.rmtree(idea_map_routes.PORTFOLIO_STORAGE_DIR, ignore_errors=True)
+        idea_map_routes.PORTFOLIO_STORAGE_DIR = original_storage
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
         _set_idea_feature("false")
         # Taccuino e portfolio sono condivisi con altri test: quello che questo

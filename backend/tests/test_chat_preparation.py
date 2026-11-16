@@ -32,8 +32,20 @@ def test_all_steps_and_languages_use_identical_runtime_and_audit_preparation():
         class FixedAI:
             def __new__(cls, _db):
                 return ai
-        steps = db.query(models.GuidedStep).all()
-        # Existing installations may have additional admin-defined interview steps.
+        # The database is shared with the rest of the suite, which adds its own steps:
+        # only the factory steps are checked here.
+        from backend import chat_logic
+        factory_ids = {
+            step["id"]
+            for steps_list in (
+                chat_logic.DEFAULT_GUIDED_STEPS, chat_logic.DEFAULT_QSAR_GUIDED_STEPS,
+                chat_logic.DEFAULT_ZTPI_GUIDED_STEPS, chat_logic.DEFAULT_SAVICKAS_GUIDED_STEPS,
+                chat_logic.DEFAULT_QPCS_GUIDED_STEPS, chat_logic.DEFAULT_QPCC_GUIDED_STEPS,
+                chat_logic.DEFAULT_QAP_GUIDED_STEPS, chat_logic.DEFAULT_IDEA_GUIDED_STEPS,
+            )
+            for step in steps_list
+        }
+        steps = [s for s in db.query(models.GuidedStep).all() if s.id in factory_ids]
         # 71 = i percorsi di fabbrica, con la lettura del profilo aggiunta a
         # QPCS, QPCC e QAP e il passo «Strategie e consigli» nei sei percorsi a
         # fattori (#749).
