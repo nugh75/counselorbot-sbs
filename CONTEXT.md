@@ -751,6 +751,7 @@ frontend/
   src/lib/
     auth.ts                 Identity from /auth/me
     chat-stream.ts          SSE consumer (throws on {error})
+    streamed-message.ts     Streamed assistant message shared by guided/free/site chats (deltas at most every 50 ms, flush on abort)
     i18n.ts                 Student-facing strings
     i18n-admin.ts           Admin strings (IT + EN blocks)
     i18n-factors.ts         Factor descriptions
