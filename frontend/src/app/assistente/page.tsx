@@ -35,6 +35,7 @@ import { ChatMenuSection } from '@/components/ui/ChatOptionsMenu';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { diagramContentForSpeech } from '@/lib/diagram-content';
+import { createStreamedMessage } from '@/lib/streamed-message';
 import { SkeletonText } from '@/components/ui/Skeleton';
 
 // Anteprima dei documenti: tabelle con bordi + scroll orizzontale. Le risposte
@@ -288,37 +289,24 @@ export default function AssistentePage() {
         setLoading(true);
         scrollToBottom();
 
-        const updateLast = (text: string, sources?: string[]) => {
-            setMessages((m) => {
-                const next = [...m];
-                next[next.length - 1] = { role: 'assistant', content: text, sources };
-                return next;
-            });
-            scrollToBottom();
-        };
-
         requestRef.current?.abort();
         const controller = new AbortController();
         requestRef.current = controller;
+        const reply = createStreamedMessage<Msg>((update) => { setMessages(update); scrollToBottom(); }, controller.signal);
 
         try {
             const result = await streamChat(
                 { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection, counselor_id: counselorId ?? undefined, response_length: responseLength, response_format: responseFormat },
-                (full) => { updateLast(full); onPartial?.(full); },
+                (full) => { reply.stream({ content: full }); onPartial?.(full); },
                 controller.signal,
                 undefined,
                 '/api/site-chat/stream',
             );
-            setMessages((m) => {
-                const next = [...m];
-                next[next.length - 1] = {
-                    role: 'assistant',
-                    content: result.response,
-                    sources: result.sources,
-                    responseId: result.response_id,
-                    audience,
-                };
-                return next;
+            reply.set({
+                content: result.response,
+                sources: result.sources,
+                responseId: result.response_id,
+                audience,
             });
             if (result.session_id) setSessionId(result.session_id);
             if (result.conversation_id) setConversationId(result.conversation_id);
@@ -327,9 +315,10 @@ export default function AssistentePage() {
             // Interruzione chiesta dal lettore: il testo già arrivato resta, non
             // viene sostituito dal messaggio d'errore.
             if (!controller.signal.aborted) {
-                updateLast(t('assistant.error', { message: e instanceof Error ? e.message : t('assistant.errorGeneric') }));
+                reply.set({ content: t('assistant.error', { message: e instanceof Error ? e.message : t('assistant.errorGeneric') }) });
             }
         } finally {
+            reply.finish();
             if (requestRef.current === controller) requestRef.current = null;
             setLoading(false);
         }

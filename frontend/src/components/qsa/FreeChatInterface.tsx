@@ -33,6 +33,7 @@ import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { apiFetch } from '@/lib/auth';
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/lib/auto-freeze';
 import { ChatProviderError } from '@/lib/chat-stream';
+import { createStreamedMessage } from '@/lib/streamed-message';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { chatErrorText } from '@/lib/i18n-personal-api';
@@ -151,11 +152,7 @@ export function FreeChatInterface({
         requestRef.current?.abort();
         const controller = new AbortController();
         requestRef.current = controller;
-        const updateLast = (patch: Partial<FrozenSessionMessage>) => setMessages(prev => {
-            const copy = [...prev];
-            copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', ...patch };
-            return copy;
-        });
+        const reply = createStreamedMessage(setMessages, controller.signal);
         try {
             // Nessuna `phase` e mode `free`: il server usa il prompt e il
             // contratto della chat libera. Il profilo viaggia come contesto.
@@ -173,23 +170,24 @@ export function FreeChatInterface({
                 response_format: responseFormat,
                 reasoning_effort: reasoningEffort,
                 counselor_id: counselorId,
-            }, (full) => { updateLast({ content: stripControlMarkersForDisplay(full) }); onPartial?.(full); },
+            }, (full) => { reply.stream({ content: stripControlMarkersForDisplay(full) }); onPartial?.(full); },
             controller.signal,
-            (reasoning) => { if (reasoningEffort !== 'off') updateLast({ reasoning }); });
+            (reasoning) => { if (reasoningEffort !== 'off') reply.stream({ reasoning }); });
             if (result.conversation_id) setConversationId(result.conversation_id);
             if (result.recommendations) setRecommendations(normalizeRecommendationCatalog(result.recommendations));
             const text = (result.response || '').trim();
-            if (text) updateLast({
+            if (text) reply.set({
                 content: text,
                 ...(result.strategy_ids?.length ? { strategyIds: result.strategy_ids } : {}),
                 ...(result.response_id ? { responseId: result.response_id } : {}),
             });
-            else setMessages(prev => prev.slice(0, -1));
+            else reply.drop();
             return text || undefined;
         } catch (error) {
             if (controller.signal.aborted) return;
-            updateLast({ content: (error instanceof ChatProviderError ? chatErrorText(activeLocale, error.code) : null) ?? t('guided.connError') });
+            reply.set({ content: (error instanceof ChatProviderError ? chatErrorText(activeLocale, error.code) : null) ?? t('guided.connError') });
         } finally {
+            reply.finish();
             if (requestRef.current === controller) {
                 requestRef.current = null;
                 setIsLoading(false);
