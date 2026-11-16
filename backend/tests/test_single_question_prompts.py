@@ -80,12 +80,16 @@ def test_interview_step_prompts_enforce_single_question():
         "qpcc-sintesi", "qap-sintesi", "qpcs-sintesi", "qsar-synthesis",
         "ztpi-btp", "savickas-final", "evstudio-final", "evprof-final",
         "obbstudio-final", "obbdocenza-final", "sl-synthesis",
+        # Profile-reading steps: they interpret scores, they are not interviews.
+        "qsar-cognitive", "qsar-affective", "ztpi-t1", "ztpi-t2", "ztpi-t3",
+        "ztpi-t4", "ztpi-t5", "cognitive", "affective",
     }
 
     for instrument, steps in ALL_STEP_LISTS:
         for step in steps:
             step_id = step["id"]
-            if step_id in skip_step_ids:
+            # The Strategies and advice step proposes actions, it is not an interview.
+            if step_id in skip_step_ids or re.search(r"-strateg(ie|ies)$", step_id):
                 continue
             prompt = step.get("prompt", "")
             assert single_q_indicator.search(prompt), (

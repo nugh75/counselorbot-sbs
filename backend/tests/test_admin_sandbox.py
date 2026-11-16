@@ -94,7 +94,7 @@ def test_admin_sandbox_ephemeral_no_logs(make_client, db_session):
     """Admin con preview=True testa chat anche su strumento is_active=False senza salvare log né response memory."""
     client = make_client(is_admin=True)
 
-    with patch("backend.ai_service.AIService.get_response", return_value="Risposta simulata dal counselor in sandbox"):
+    with patch.object(chat.AIService, "get_response", return_value="Risposta simulata dal counselor in sandbox"):
         r = client.post("/chat", json={
             "message": "Messaggio di prova admin",
             "questionnaire_type": "BOZZA_SANDBOX",

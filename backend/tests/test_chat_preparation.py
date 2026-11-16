@@ -107,7 +107,7 @@ def test_live_audit_fallback_receives_original_history(monkeypatch, tmp_path):
     monkeypatch.setattr(chat_logic, 'session_memory', memory)
     with artifact_session() as db:
         ai = AIService(db)
-        ai.config.update(active_provider='ollama', model_name='small', ai_fallback_targets=json.dumps([{'provider':'ollama','model':'large'}]), model_context_profiles=json.dumps({'ollama/small': {'context_tokens':2048}, 'ollama/large':{'context_tokens':16384}}))
+        ai.config.update(active_provider='ollama', model_name='small', ai_fallback_targets=json.dumps([{'provider':'ollama','model':'large'}]), model_context_profiles=json.dumps({'ollama/small': {'context_tokens':2048}, 'ollama/large':{'context_tokens':32768}}))
         def answer(message, system, model, **kwargs):
             assert model == 'large'
             assert 'EARLY_EVIDENCE' in kwargs['history'][0]['content']

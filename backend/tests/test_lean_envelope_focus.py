@@ -6,6 +6,7 @@ Verifies:
 (c) Deactivation of site guide RAG (corpus guida/documenti sito) in guided questionnaire and path chats, preserving certified strategies/readings.
 (d) Strict no-bullet rule enforced in interview and guided path contracts and envelope.
 """
+import re
 import pytest
 from backend import models, schemas
 from backend.ai_service import AIService
@@ -100,7 +101,8 @@ def test_absence_of_redundancies_and_duplicate_blocks(runtime_db):
     )
     final_prompt = prepared.system_prompt_final
 
-    # Check that structural sentinels appear at most once
+    # Structural sentinels open a block at most once; instructions may still
+    # mention a block by name mid-sentence, so only count line-start headers.
     sentinels = [
         ROLE_BLOCK,
         "[STUDENT]",
@@ -117,7 +119,7 @@ def test_absence_of_redundancies_and_duplicate_blocks(runtime_db):
         "[VISIBLE RESPONSE FORMAT]",
     ]
     for sentinel in sentinels:
-        count = final_prompt.count(sentinel)
+        count = len(re.findall(rf"(?m)^{re.escape(sentinel)}", final_prompt))
         assert count <= 1, f"Sentinel {sentinel} appears {count} times in assembled prompt!"
 
 

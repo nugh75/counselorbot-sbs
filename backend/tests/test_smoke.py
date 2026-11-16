@@ -17,9 +17,16 @@ import json
 import os
 import re
 import shutil
+import sys
 import tempfile
 import uuid
 from urllib.parse import urlsplit, urlunsplit
+
+# Other suites import this module as `backend.tests.test_smoke` while pytest loads
+# it as `tests.test_smoke`: without a shared entry the module-level patches below
+# (fake AI service, dependency overrides) run twice and the two copies fight.
+for _alias in ("tests.test_smoke", "backend.tests.test_smoke"):
+    sys.modules.setdefault(_alias, sys.modules[__name__])
 
 # Disabilita la traduzione async dei counselor durante i test: usa una propria
 # sessione DB (engine di prod) e non deve mai toccare il DB di produzione.
@@ -36,6 +43,7 @@ from backend import database, models, auth
 import backend.main as main
 import backend.routes.chat as chat_routes
 import backend.chat_preparation as chat_preparation
+import backend.rag_index as rag_index
 import backend.routes.diagram as diagram_routes
 import backend.routes.idea_map as idea_map_routes
 import backend.routes.survey as survey_routes
@@ -1258,8 +1266,8 @@ def test_guided_step_questions_seed_and_public_payload():
 def test_guided_step_questions_crud():
     # Create
     r = client.post("/admin/guided-step-questions", json={
-        "questionnaire_type": "QSA",
-        "step_id": "cognitive",
+        "questionnaire_type": "QPCS",
+        "step_id": "qpcs-emozioni",
         "language": "en",
         "text": "Do you prefer maps or text?",
         "sort_order": 99,
@@ -1269,17 +1277,18 @@ def test_guided_step_questions_crud():
     qid = r.json()["id"]
     assert r.json()["text"] == "Do you prefer maps or text?"
 
-    # Compare public endpoint
-    r_public = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=en")
+    # Compare public endpoint (descriptive phases show fixed comprehension questions instead,
+    # so the custom question is checked on an interview step).
+    r_public = client.get("/qsa/guided-ui-texts?questionnaire_type=QPCS&lang=en")
     assert r_public.status_code == 200
-    cognitive = next(s for s in r_public.json()["guided_steps"] if s["id"] == "cognitive")
+    cognitive = next(s for s in r_public.json()["guided_steps"] if s["id"] == "qpcs-emozioni")
     assert "Do you prefer maps or text?" in cognitive["suggested_questions"]
 
     # Update -> deactivate: should disappear from public endpoint
     r_update = client.put(f"/admin/guided-step-questions/{qid}", json={"is_active": False})
     assert r_update.status_code == 200
-    r_public2 = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=en")
-    cognitive2 = next(s for s in r_public2.json()["guided_steps"] if s["id"] == "cognitive")
+    r_public2 = client.get("/qsa/guided-ui-texts?questionnaire_type=QPCS&lang=en")
+    cognitive2 = next(s for s in r_public2.json()["guided_steps"] if s["id"] == "qpcs-emozioni")
     assert "Do you prefer maps or text?" not in cognitive2["suggested_questions"]
 
     # Delete
@@ -1477,6 +1486,16 @@ def test_existing_extended_guided_modes_resolve_saved_prompt_keys():
     assert MODE_TO_SYSTEM_PROMPT_KEY["qap-summary"] == "prompt_qap_summary"
 
 
+def _is_never_recited(text, phrase):
+    """True when `phrase` appears only inside a "do NOT say ..." prohibition."""
+    start = text.find(phrase)
+    while start != -1:
+        if not re.search(r"(do not say|never say)", text[max(0, start - 300):start], re.IGNORECASE):
+            return False
+        start = text.find(phrase, start + 1)
+    return True
+
+
 def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
     intros = [
         ("QSA", "intro", "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- A1: 8/9"),
@@ -1543,7 +1562,7 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         assert "C1 (" not in system_prompt
         assert "A1 (" not in system_prompt
         assert "cognitive and affective components" not in system_prompt
-        assert "there are no right or wrong answers" not in system_prompt
+        assert _is_never_recited(system_prompt, "there are no right or wrong answers")
         assert "without asking anything" not in system_prompt
         assert "not required to answer counsellor questions" not in system_prompt
         assert "the student can move forward when ready" in system_prompt
@@ -1657,7 +1676,7 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     assert "C1 (Strategie elaborative)" in system_prompt
     assert "C7 (Autointerrogazione)" in system_prompt
     assert "A1 (Ansietà di base)" not in system_prompt
-    assert "Analyse only the cognitive factors of my QSA profile" in body["inputs"]["effective_user_message"]
+    assert "Read the cognitive factors of my QSA profile" in body["inputs"]["effective_user_message"]
     assert "- C1" in body["inputs"]["scoped_scores_context"]
     assert "- A1" not in body["inputs"]["scoped_scores_context"]
     assert body["envelope"]["history"] == []
@@ -1699,7 +1718,7 @@ def test_prompt_audit_followup_includes_guided_path_for_next_step():
     assert "[id: sl-motivation]" not in system_prompt
     assert "sort_order" not in system_prompt
     assert "[[AVANZA_STEP]]" in system_prompt
-    assert "do not say that you do not know the path" in system_prompt
+    assert "reply with exactly [[AVANZA_STEP]] so the interface can advance" in system_prompt
 
 
 def test_platform_catalog_is_short_in_analysis_and_full_when_asked():
@@ -2009,15 +2028,12 @@ def test_startup_migration_updates_intro_question_contract():
         db.refresh(cfg)
         db.refresh(step)
 
-        assert "there are no right or wrong answers" not in cfg.value
+        assert _is_never_recited(cfg.value, "there are no right or wrong answers")
         assert "not a test or a grade" in cfg.value
         assert "without asking anything" not in cfg.value
         assert "guiding the reading of the profile results already provided" in cfg.value
-        assert "will not normally ask me questions" not in step.prompt
-        assert "without asking anything" not in step.prompt
-        assert "explore my full QSA profile step by step" in step.prompt
-        assert "move forward when ready" in step.prompt
-        assert "how we'll explore my profile together" not in step.prompt
+        # Stored intro step prompts are no longer matched by phrase (f07008ed replaced
+        # that migration with the universal-rules list), so only the config text is checked.
     finally:
         if cfg is not None and original_cfg is not None:
             cfg.value = original_cfg
@@ -3185,6 +3201,7 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
         )
         assert upload.status_code == 200, upload.text
         assert upload.json()["stats"]["n_chunks"] >= 1
+        assert rag_index.get_index(slug).wait_for_build()
 
         listed = client.get(f"/admin/rag/docs?collection={slug}")
         assert listed.status_code == 200, listed.text
@@ -3207,6 +3224,8 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
         assert scoped_out.status_code == 200, scoped_out.text
         assert scoped_out.json()["scope"]["in_scope"] is False
         assert scoped_out.json()["scope"]["forced"] is True
+        # The rebuild runs in the background and is published atomically.
+        assert rag_index.get_index(slug).wait_for_build()
 
         listed_out = client.get(f"/admin/rag/docs?collection={slug}")
         assert listed_out.status_code == 200, listed_out.text
@@ -3224,6 +3243,8 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
         assert scoped_in.status_code == 200, scoped_in.text
         assert scoped_in.json()["scope"]["in_scope"] is True
         assert scoped_in.json()["scope"]["forced"] is True
+        # The rebuild runs in the background and is published atomically.
+        assert rag_index.get_index(slug).wait_for_build()
 
         listed_in = client.get(f"/admin/rag/docs?collection={slug}")
         assert listed_in.status_code == 200, listed_in.text
@@ -3281,8 +3302,8 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
 def test_site_chat_stream_grounded_mocked():
     # Patcha la retrieval per non toccare embeddings/rete: contesto fittizio.
     canned = [{"score": 0.9, "source": "fonti/qsa.md", "title": "Doc QSA", "text": "Contenuto di prova sul QSA."}]
-    original_search = site_chat_routes.site_rag_index.search
-    site_chat_routes.site_rag_index.search = lambda svc, q, k, *a, **kw: canned
+    original_search = rag_index.site_rag_index.search
+    rag_index.site_rag_index.search = lambda svc, q, k, *a, **kw: canned
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
         r = client.post("/site-chat/stream", json={
@@ -3314,7 +3335,7 @@ def test_site_chat_stream_grounded_mocked():
         assert fb.status_code == 200, fb.text
         assert fb.json()["recorded"] >= 1
     finally:
-        site_chat_routes.site_rag_index.search = original_search
+        rag_index.site_rag_index.search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
@@ -3324,8 +3345,8 @@ def test_site_chat_single_instrument_filters_other_instrument_sources():
         {"score": 0.92, "source": "fonti/qsa.md", "title": "Questionario QSA", "text": "Il QSA rileva strategie di apprendimento."},
         {"score": 0.91, "source": "fonti/qpcs.md", "title": "Questionario QPCS", "text": "Il QPCS riguarda la progettualita professionale."},
     ]
-    original_search = site_chat_routes.site_rag_index.search
-    site_chat_routes.site_rag_index.search = lambda *a, **kw: canned
+    original_search = rag_index.site_rag_index.search
+    rag_index.site_rag_index.search = lambda *a, **kw: canned
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
         response = client.post("/site-chat/stream", json={
@@ -3337,7 +3358,7 @@ def test_site_chat_single_instrument_filters_other_instrument_sources():
         done = _done_sse_event(response)
         assert done["sources"] == ["fonti/qsa.md"]
     finally:
-        site_chat_routes.site_rag_index.search = original_search
+        rag_index.site_rag_index.search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
@@ -3391,7 +3412,7 @@ def _done_sse_event(response):
 
 def test_response_length_helpers_and_validation():
     directive = chat_logic._apply_response_length_directive("BASE", "short")
-    assert "no more than 80 words" in directive
+    assert "within 35-80 words" in directive
     assert chat_logic._response_length_max_tokens("medium", 900) == 2000
     assert chat_logic._response_length_max_tokens(None, 900) == 900
 
@@ -3409,7 +3430,7 @@ def test_response_length_helpers_and_validation():
 
 def test_response_length_is_enforced_on_both_web_streams():
     original_stream = _FakeAIService.stream_response
-    original_search = site_chat_routes.site_rag_index.search
+    original_search = rag_index.site_rag_index.search
     long_answer = " ".join(f"parola{i}" for i in range(1, 121))
 
     def long_stream(self, *args, **kwargs):
@@ -3421,7 +3442,7 @@ def test_response_length_is_enforced_on_both_web_streams():
         yield {"type": "content", "text": long_answer}
 
     _FakeAIService.stream_response = long_stream
-    site_chat_routes.site_rag_index.search = lambda *a, **kw: [
+    rag_index.site_rag_index.search = lambda *a, **kw: [
         {"score": 0.9, "source": "fonti/qsa.md", "title": "Doc QSA", "text": "Contenuto di prova sul QSA."}
     ]
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
@@ -3439,7 +3460,7 @@ def test_response_length_is_enforced_on_both_web_streams():
         assert len(chat_logic._VISIBLE_WORD_RE.findall(chat_done["response"])) == 80
         assert chat_done["response"].endswith("…")
         assert _FakeAIService.last_stream_args["max_tokens"] == 1000
-        assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
+        assert "within 35-80 words" in _FakeAIService.last_stream_args["system_prompt"]
 
         site_response = client.post("/site-chat/stream", json={
             "message": "Cos'è il QSA?",
@@ -3454,10 +3475,10 @@ def test_response_length_is_enforced_on_both_web_streams():
         assert len(chat_logic._VISIBLE_WORD_RE.findall(site_done["response"])) == 80
         assert site_done["response"].endswith("…")
         assert _FakeAIService.last_stream_args["max_tokens"] == 1000
-        assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
+        assert "within 35-80 words" in _FakeAIService.last_stream_args["system_prompt"]
     finally:
         _FakeAIService.stream_response = original_stream
-        site_chat_routes.site_rag_index.search = original_search
+        rag_index.site_rag_index.search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
@@ -3536,7 +3557,7 @@ def test_idea_stream_finishes_and_applies_the_hidden_patch_after_visible_limit()
         assert done["response"].endswith("…")
         assert "```idea" not in done["response"]
         assert done["idea_revision_id"] is not None
-        assert _FakeAIService.last_stream_args["max_tokens"] == 1456
+        assert _FakeAIService.last_stream_args["max_tokens"] == 2200  # short (1000) + 1200 reserved for the private map
 
         current = client.get("/idea/map", params={"session_id": session_id})
         assert current.status_code == 200, current.text
@@ -3998,7 +4019,7 @@ def test_an_open_access_pdf_is_not_fetched_from_an_address_of_the_internal_netwo
 def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
     original_stream = _FakeAIService.stream_response
     original_response = _FakeAIService.get_response
-    original_search = site_chat_routes.site_rag_index.search
+    original_search = rag_index.site_rag_index.search
     original_retrieval = chat_preparation._retrieved_context
 
     def assent_stream(self, *args, **kwargs):
@@ -4010,7 +4031,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
     _FakeAIService.stream_response = assent_stream
     _FakeAIService.get_response = assent_response
     chat_preparation._retrieved_context = lambda *a, **kw: ("", [], [], [], [], {})
-    site_chat_routes.site_rag_index.search = lambda *a, **kw: [
+    rag_index.site_rag_index.search = lambda *a, **kw: [
         {"score": 0.9, "source": "fonti/qsa.md", "title": "QSA", "text": "Materiale QSA."}
     ]
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
@@ -4038,7 +4059,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
         _FakeAIService.stream_response = original_stream
         _FakeAIService.get_response = original_response
         chat_preparation._retrieved_context = original_retrieval
-        site_chat_routes.site_rag_index.search = original_search
+        rag_index.site_rag_index.search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
@@ -4086,9 +4107,10 @@ def test_reasoning_resolve_plan():
                            requested_max_tokens=None, budget_override=3000)
     assert plan.enabled is True and plan.reasoning_budget == 3000
 
-    # max_tokens richiesto piu' grande del calcolato -> viene mantenuto.
+    # max_tokens richiesto piu' grande della riserva di risposta -> resta tutto alla
+    # risposta, il budget di ragionamento si aggiunge sopra.
     plan = rp.resolve_plan("deepseek-v4-flash", disable_thinking=False, requested_max_tokens=20000)
-    assert plan.max_tokens == 20000
+    assert plan.max_tokens == plan.reasoning_budget + 20000
 
     assert rp.is_reasoning_model("qwen3.5:9b") is True
     assert rp.is_reasoning_model("gemma3:1b") is False
@@ -5407,7 +5429,8 @@ def test_build_context_envelope_component_flags_disable_parts():
     assert "META QSA" in system_final
     assert "KNOWLEDGE_BLOCK" not in system_final
     assert "SCORES" not in full_message
-    assert full_message == ""
+    # The student's own message is never an ablatable component.
+    assert full_message == "domanda"
     assert history == []
     assert components["system_prompt"] == ""
     assert components["meta_system_prompt"] == "META QSA"
@@ -6620,7 +6643,9 @@ def test_skills_behaviour_reaches_the_prompt_without_rag_knowledge():
 
 
 def test_explicit_reading_request_receives_certified_catalog_when_rag_is_off():
-    """Il catalogo editoriale richiesto esplicitamente non dipende dal RAG."""
+    """Il catalogo editoriale richiesto esplicitamente non dipende dal RAG.
+
+    Le letture si danno solo nello step Strategie e consigli o nella fase Domande."""
     from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
 
     _ensure_guided_steps("QSA")
@@ -6655,7 +6680,7 @@ def test_explicit_reading_request_receives_certified_catalog_when_rag_is_off():
         response = client.post("/admin/prompt-audit/live", json={
             "questionnaire_type": "QSA",
             "language": "it",
-            "phase": "cognitive",
+            "phase": "questions",
             "mode": "factor-qa",
             "message": "Puoi darmi dei consigli di lettura?",
             "scores_context": "C3: 8/9\nC6: 9/9",
