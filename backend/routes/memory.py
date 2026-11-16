@@ -99,6 +99,11 @@ async def memory_event(
 
 
 @router.get("/memory/user/{session_id}")
-async def get_user_session_memory(session_id: str):
-    """Restituisce lo stato essenziale necessario a ripristinare la sessione guidata."""
+async def get_user_session_memory(
+    session_id: str,
+    db: Session = Depends(database.get_db),
+    identity: dict = Depends(auth.get_current_user),
+):
+    """Restituisce lo stato essenziale necessario a ripristinare la sessione guidata, solo al proprietario."""
+    _require_session_owner(db, session_id, identity.get("username") or "")
     return {"session_id": session_id, **session_memory.get_progress(session_id)}
