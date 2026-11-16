@@ -2055,6 +2055,16 @@ fascia di copertina (#953) resta.
 compresi) ricevono 422. Il caricamento ignora il Content-Type del client e riconosce PNG, JPEG,
 WebP o GIF dai byte iniziali (massimo 5 MB); la risposta porta `X-Content-Type-Options: nosniff`.
 
+**Pagina di classe: bozze salve alla ricarica, scheda nell'URL (#983, novembre 2026).** In
+`/docente/classi/[id]` (e `/admin/classi/[id]`) il caricamento a pagina intera appare solo la
+prima volta: cambiare la copertina, ricaricare la Panoramica o un blocco admin aggiornano i dati
+in background (`useTeacherResource` espone `refreshing`) senza smontare le schede, quindi le
+bozze non salvate di Strumenti, Piani e Forum restano. L'editor Strumenti si riallinea solo
+quando cambia davvero la revisione delle impostazioni; un errore di aggiornamento compare sopra
+le schede senza toglierle. La scheda aperta si scrive nell'URL (`?tab=`, assente per la
+Panoramica), così ricaricando il browser o copiando il link si torna alla stessa scheda;
+valori sconosciuti ricadono sulla Panoramica.
+
 **Filetti di sezione più netti e ritorni come testo (#952, novembre 2026).** Il filetto
 sotto i titoli di sezione delle pagine usa il token della linea forte (`border-line-strong`):
 in tema chiaro passa dal grigio più tenue a quello leggibile, in tema scuro al valore
