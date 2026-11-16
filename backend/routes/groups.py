@@ -724,8 +724,19 @@ async def upload_group_image(
 @router.get("/api/groups/{group_id}/image")
 async def get_group_image(
     group_id: int,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db),
 ):
-    """Serve l'immagine di copertina caricata per la classe."""
+    """Serve l'immagine di copertina solo a iscritti, docenti della classe e admin."""
+    username = _username(current_user)
+    allowed = (
+        _visible_group_query(db, current_user).filter(models.StudentGroup.id == group_id).first() is not None
+        or db.query(models.GroupMembership.id).filter(
+            models.GroupMembership.group_id == group_id, models.GroupMembership.username == username,
+        ).first() is not None
+    )
+    if not allowed:
+        raise HTTPException(status_code=404, detail="Immagine di classe non trovata")
     for ext, mime in [
         (".jpg", "image/jpeg"),
         (".jpeg", "image/jpeg"),
@@ -735,7 +746,7 @@ async def get_group_image(
     ]:
         path = os.path.join(CLASS_IMAGES_STORAGE_DIR, f"group_{group_id}{ext}")
         if os.path.isfile(path):
-            return FileResponse(path, media_type=mime, headers={"Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff"})
+            return FileResponse(path, media_type=mime, headers={"Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff"})
     raise HTTPException(status_code=404, detail="Immagine di classe non trovata")
 
 
@@ -1330,22 +1341,6 @@ async def send_teacher_message(
 
 
 # --- Lato studente ------------------------------------------------------------
-
-@router.get("/groups/info")
-async def get_group_info(code: str, db: Session = Depends(get_db)):
-    """Info pubbliche minime su una classe (per la pagina di invito)."""
-    group = (
-        db.query(models.StudentGroup)
-        .filter(
-            func.upper(models.StudentGroup.code) == code.strip().upper(),
-            models.StudentGroup.is_active.is_(True),
-        )
-        .first()
-    )
-    if not group:
-        raise HTTPException(status_code=404, detail="Classe non trovata")
-    return {"code": group.code, "name": group.name}
-
 
 @router.post("/groups/join")
 async def join_group(
