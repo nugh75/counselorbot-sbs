@@ -45,3 +45,27 @@ export function formatPlanDay(iso: string, lang: string): string {
     const date = new Date(`${iso}T00:00:00`);
     return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString(lang, { dateStyle: 'medium' });
 }
+
+function localDay(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export type DueHint = { kind: 'late' | 'today' | 'soon'; days: number };
+
+/** Relative hint for a step deadline (YYYY-MM-DD): late, today, or due in N days. */
+export function dueHint(dueIso: string | null | undefined, now: Date = new Date()): DueHint | null {
+    if (!dueIso) return null;
+    const due = new Date(`${dueIso}T00:00:00`);
+    if (Number.isNaN(due.getTime())) return null;
+    const today = new Date(`${localDay(now)}T00:00:00`);
+    const days = Math.round((due.getTime() - today.getTime()) / 86_400_000);
+    if (days < 0) return { kind: 'late', days: -days };
+    return { kind: days === 0 ? 'today' : 'soon', days };
+}
+
+/** True when the step deadline falls on a day before the linked administration's planned day. */
+export function dueBeforePlanned(step: PlannedDayStep & { due_date?: string | null }): boolean {
+    if (step.step_type !== 'questionnaire_administration' || !step.due_date) return false;
+    const planned = new Date(step.target_summary?.scheduled_at || '');
+    return !Number.isNaN(planned.getTime()) && step.due_date < localDay(planned);
+}
