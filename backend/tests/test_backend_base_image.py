@@ -14,7 +14,11 @@ DEFAULT = "python:3.12-slim"
 
 
 def _read(relative):
-    return (ROOT / relative).read_text(encoding="utf-8")
+    path = ROOT / relative
+    if not path.exists():
+        # Inside the backend image the repository root files are not copied.
+        pytest.skip(f"{relative} not available in this environment")
+    return path.read_text(encoding="utf-8")
 
 
 def test_dockerfile_defaults_to_python_312():
