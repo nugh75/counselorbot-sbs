@@ -794,3 +794,5 @@ Makefile                    Prompt testing shortcuts
 - **Reasoning profiles**: `backend/reasoning_profiles.py` maps model families (qwen3, deepseek, gemini thinking, claude thinking, o-series) to reasoning budgets and `disable_thinking` behavior — a cross-provider reasoning architecture.
 - **PII redaction**: `log_pii_redact` config key (default: true) — emails, phones, fiscal codes redacted from conversation logs before storage via `backend/pii.py`.
 - **Counselor auto-translation**: `POST /api/admin/counselors/{id}/translate` triggers Ollama-based i18n for counselor descriptions (stored in `description_i18n` JSON field).
+
+- **Frontend CI (#982)**: `.github/workflows/frontend-lint.yml` runs i18n check, `next typegen` + `tsc --noEmit`, `npm run test:ci` (Node tests without Playwright/Chromium or an isolated Next server) and ESLint. Browser tests and `request-origin`/`stream-proxy` `.mjs` stay manual.
