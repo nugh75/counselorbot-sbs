@@ -2050,6 +2050,11 @@ copertina e la conferma di eliminazione della classe usano il `Dialog` condiviso
 e pulsante di chiusura, mai durante un salvataggio). Funzioni, testi e dati invariati; la
 fascia di copertina (#953) resta.
 
+**Copertina di classe validata (#984).** `image_url` accetta solo vuoto, un'immagine predefinita
+(`/images/classes/*.svg`) o l'URL del caricamento della classe stessa; altri valori (URL esterni
+compresi) ricevono 422. Il caricamento ignora il Content-Type del client e riconosce PNG, JPEG,
+WebP o GIF dai byte iniziali (massimo 5 MB); la risposta porta `X-Content-Type-Options: nosniff`.
+
 **Pagina di classe: bozze salve alla ricarica, scheda nell'URL (#983, novembre 2026).** In
 `/docente/classi/[id]` (e `/admin/classi/[id]`) il caricamento a pagina intera appare solo la
 prima volta: cambiare la copertina, ricaricare la Panoramica o un blocco admin aggiornano i dati
