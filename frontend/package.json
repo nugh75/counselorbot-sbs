@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "npm run i18n:check && eslint",
     "test": "node --test --experimental-strip-types src/lib/*.test.ts",
+    "test:ci": "node --test --experimental-strip-types $(grep -LE 'playwright|chromium|STREAM_PROXY_BASE_URL' tests/*.test.mjs src/lib/*.test.ts)",
     "test:offline": "node --test tests/offline-page.test.mjs",
     "test:account": "node --test tests/account-onboarding.test.mjs",
     "test:recovery": "node --test tests/chat-recovery.test.mjs",
