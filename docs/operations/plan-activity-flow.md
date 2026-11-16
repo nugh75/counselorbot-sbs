@@ -15,6 +15,17 @@ rimangono compatibili.
 
 - Mai iniziato: Inizia; in corso: Riprendi e Fai un altro tentativo; concluso:
   Rivedi e Fai un altro tentativo. Per i questionari il comando è Nuova compilazione.
+- Ripetere chiede conferma: con `?attempt=new` la pagina dell’attività mostra
+  un `Dialog` e non crea nulla; solo la conferma esegue `POST .../attempts`
+  (chat e questionari) o avvia l’analisi. Annulla torna al piano.
+- Tentativo che conta: `PUT .../counted-attempt {session_id}` registra la scelta
+  dello studente fra i propri tentativi completati (404 se non è suo, 409 se non
+  è completato) in `class_path_counted_attempts` (una riga per passo e studente,
+  tabella additiva creata dall’inizializzazione dello schema). Senza scelta conta
+  l’ultimo completato. Ogni tentativo espone `counted`; il completamento del
+  passo (data mostrata al docente) usa quello che conta.
+  `GET /teacher/paths/{path}/steps/{step}/attempts/{username}` restituisce al
+  docente tutti i tentativi dello studente (sessione, inizio, stato, `counted`).
 - Il completamento già ottenuto conserva il progresso. Un nuovo tentativo aperto
   mostra «Nuovo tentativo in corso» e Riprendi; lo storico rimane consultabile.
 - Le nuove chat autonome e le bozze hanno una riga in
