@@ -15,6 +15,11 @@ Endpoint:
 - POST /pqbl/sessions/{sid}/answer       → verifica server-side, ritorna feedback
 - POST /pqbl/sessions/{sid}/final-test   → submit unico del test finale
 - GET  /pqbl/sessions/{sid}/summary      → metriche (primo tentativo, per skill, tempo)
+
+Tutte le rotte richiedono login (401). Documenti e sessioni sono del loro
+proprietario: le scritture solo sue, le letture anche di chi è autorizzato dal
+livello privacy (`_can_read`); per gli altri 404. Upload max 25 MB letto a
+blocchi, un solo upload alla volta per utente (429).
 """
 import hashlib
 import logging
@@ -36,7 +41,7 @@ from fastapi import (
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import auth, class_access, database, models, personal_api
+from .. import auth, class_access, database, file_lock, models, personal_api
 from ..ai_service import AIError, AIService
 from ..anonymous_codes import code_for_identity, get_or_create_anonymous_research_code
 from ..api_models import (
@@ -71,7 +76,8 @@ if not logger.handlers:
     logger.addHandler(logging.StreamHandler())
     logger.propagate = False
 
-MAX_UPLOAD_BYTES = 100 * 1024 * 1024  # 100 MB
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
+UPLOAD_CHUNK_BYTES = 1024 * 1024  # PDF letto e scritto su disco a blocchi da 1 MB
 INACTIVITY_CAP_SECONDS = 300
 # Cartella dove salvare i PDF durante la generazione (pulita dopo).
 PQBL_STORAGE_DIR = os.environ.get("PQBL_STORAGE_DIR", "/tmp/pqbl_pdfs")
@@ -81,6 +87,34 @@ def _config_value(db: Session, key: str, default: str) -> str:
     row = db.query(models.Config).filter(models.Config.key == key).first()
     value = (row.value or "").strip() if row else ""
     return value or default
+
+
+def _can_read(db: Session, identity: dict, owner: str | None) -> bool:
+    """Owner, or whoever the privacy layer lets read the owner's data.
+
+    pQBL work is not shared with a class, so teachers have no grant here; an
+    admin follows the privacy level (local: allowed; L1: break-glass only).
+    """
+    from ..privacy.authz import authorize_data_access, principal_from_identity
+    from ..privacy.types import ResourceRef
+
+    if _owned(identity, owner):
+        return True
+    decision = authorize_data_access(
+        principal_from_identity(identity), "read_clear",
+        ResourceRef(kind="result", subject=owner or ""), purpose="teaching", db=db,
+    )
+    return decision.allowed
+
+
+def _owned(identity: dict, owner: str | None) -> bool:
+    return bool(owner) and owner == identity.get("username")
+
+
+def _upload_lock_path(username: str) -> str:
+    """Per-user lock file: one upload at a time across all uvicorn workers."""
+    digest = hashlib.sha256(username.encode("utf-8")).hexdigest()[:32]
+    return os.path.join(PQBL_STORAGE_DIR, f".upload-{digest}.lock")
 
 
 # ---------------------------------------------------------------------------
@@ -332,7 +366,7 @@ async def upload_pqbl_document(
     counselor_id: int = Form(0),
     language: str = Form(""),
     db: Session = Depends(get_db),
-    identity: dict = Depends(auth.get_identity),
+    identity: dict = Depends(auth.get_current_user),
 ):
     class_access.require_tool(db, identity, "pqbl")
     if size not in ALLOWED_SESSION_SIZES:
@@ -341,21 +375,50 @@ async def upload_pqbl_document(
     if suffix != ".pdf":
         raise HTTPException(status_code=400, detail="Formato non supportato. Carica un PDF.")
 
-    contents = await file.read(MAX_UPLOAD_BYTES + 1)
-    await file.close()
-    if not contents:
-        raise HTTPException(status_code=400, detail="Il file è vuoto.")
-    if len(contents) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Il file supera la dimensione massima di 100 MB.")
+    os.makedirs(PQBL_STORAGE_DIR, exist_ok=True)
+    # Il lock si rilascia chiudendo il file, anche se il processo muore.
+    with open(_upload_lock_path(identity["username"]), "a+b") as lockf:
+        if not file_lock.lock(lockf, blocking=False):
+            raise HTTPException(status_code=429, detail="Hai già un caricamento in corso: attendi che finisca.")
+        return await _store_upload(background_tasks, file, size, counselor_id, language, db, identity)
 
+
+async def _store_upload(background_tasks, file, size, counselor_id, language, db, identity):
+    # PDF scritto su disco a blocchi (mai tutto in RAM), hash calcolato al volo.
+    file_path = os.path.join(PQBL_STORAGE_DIR, f"{uuid.uuid4().hex}.pdf")
+    hasher = hashlib.sha256()
+    total = 0
+    keep_file = False
+    try:
+        with open(file_path, "wb") as f:
+            while chunk := await file.read(UPLOAD_CHUNK_BYTES):
+                total += len(chunk)
+                if total > MAX_UPLOAD_BYTES:
+                    raise HTTPException(status_code=413, detail="Il file supera la dimensione massima di 25 MB.")
+                hasher.update(chunk)
+                f.write(chunk)
+        await file.close()
+        if total == 0:
+            raise HTTPException(status_code=400, detail="Il file è vuoto.")
+        result = _register_upload(
+            background_tasks, file.filename, file_path, hasher.hexdigest(), size, counselor_id, language, db, identity,
+        )
+        keep_file = not result["reused"]
+        return result
+    finally:
+        if not keep_file and os.path.exists(file_path):
+            os.remove(file_path)
+
+
+def _register_upload(background_tasks, filename, file_path, file_hash, size, counselor_id, language, db, identity):
     # Provider+modello dal preset del counselor scelto nella schermata iniziale
     # (stesso meccanismo degli altri strumenti, via counselor_id).
     provider_val, model_val = _resolve_counselor_preset(db, counselor_id)
     language_val = language.strip().lower() if language.strip().lower() in ("it", "en") else None
-    file_hash = hashlib.sha256(contents).hexdigest()
 
-    # Riuso: stesso file + stesso provider + stessa lingua già generato.
+    # Riuso: stesso utente + stesso file + stesso provider + stessa lingua già generato.
     reuse_filters = [
+        models.PqblDocument.username == identity["username"],
         models.PqblDocument.text_hash == file_hash,
         models.PqblDocument.provider == provider_val,
         models.PqblDocument.status == "ready",
@@ -372,18 +435,13 @@ async def upload_pqbl_document(
         logger.info(f"pQBL: riuso del bank esistente {existing.id} per lo stesso file")
         return {"document_id": existing.id, "status": "ready", "reused": True}
 
-    # Salva il PDF su disco per la generazione in background (nessuna
+    # Il PDF resta su disco per la generazione in background (nessuna
     # estrazione testo qui: tutto viene fatto in _generate_all_chunks).
-    os.makedirs(PQBL_STORAGE_DIR, exist_ok=True)
-    file_path = os.path.join(PQBL_STORAGE_DIR, f"{uuid.uuid4().hex}.pdf")
-    with open(file_path, "wb") as f:
-        f.write(contents)
-
     doc = models.PqblDocument(
         id=str(uuid.uuid4()),
         counselor_id=counselor_id or None,
-        username=identity.get("username") or None,
-        filename=file.filename,
+        username=identity["username"],
+        filename=filename,
         text_hash=file_hash,
         language="it",
         size=size,
@@ -397,10 +455,10 @@ async def upload_pqbl_document(
     db.add(models.Log(
         session_id=doc.id,
         action="pqbl_upload",
-        username=identity.get("username") or None,
+        username=identity["username"],
         anonymous_research_code=code_for_identity(db, identity),
         details={
-            "filename": file.filename, "size": size, "counselor_id": counselor_id or None,
+            "filename": filename, "size": size, "counselor_id": counselor_id or None,
             "provider": provider_val, "model": model_val, "language": language_val,
         },
     ))
@@ -416,9 +474,14 @@ async def upload_pqbl_document(
 
 
 @router.get("/pqbl/documents/{document_id}")
-async def get_pqbl_document(document_id: str, lang: str = "it", db: Session = Depends(get_db)):
+async def get_pqbl_document(
+    document_id: str,
+    lang: str = "it",
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_current_user),
+):
     doc = db.query(models.PqblDocument).filter(models.PqblDocument.id == document_id).first()
-    if not doc:
+    if not doc or not _can_read(db, identity, doc.username):
         raise HTTPException(status_code=404, detail="Documento non trovato.")
     questions = (
         db.query(models.PqblQuestion)
@@ -473,9 +536,14 @@ def _session_questions(db: Session, session: models.PqblSession):
     return list(first_by_skill.values())
 
 
-def _get_session_or_404(db: Session, session_id: str) -> models.PqblSession:
+def _get_session_or_404(db: Session, session_id: str, identity: dict, *, write: bool = False) -> models.PqblSession:
+    """Session visible to `identity`: writes only by the owner, reads also by
+    whoever `_can_read` allows. Any other caller gets 404 (no existence leak)."""
     session = db.query(models.PqblSession).filter(models.PqblSession.id == session_id).first()
-    if not session:
+    allowed = session and (
+        _owned(identity, session.username) if write else _can_read(db, identity, session.username)
+    )
+    if not allowed:
         raise HTTPException(status_code=404, detail="Sessione non trovata.")
     return session
 
@@ -484,13 +552,13 @@ def _get_session_or_404(db: Session, session_id: str) -> models.PqblSession:
 async def create_pqbl_session(
     request: PqblSessionCreate,
     db: Session = Depends(get_db),
-    identity: dict = Depends(auth.get_identity),
+    identity: dict = Depends(auth.get_current_user),
 ):
     class_access.require_tool(db, identity, "pqbl")
     if request.mode not in ("learning", "final_test"):
         raise HTTPException(status_code=400, detail="Modalità non valida (learning | final_test).")
     doc = db.query(models.PqblDocument).filter(models.PqblDocument.id == request.document_id).first()
-    if not doc:
+    if not doc or not _owned(identity, doc.username):
         raise HTTPException(status_code=404, detail="Documento non trovato.")
     if doc.status != "ready":
         raise HTTPException(status_code=409, detail="Il question bank non è ancora pronto.")
@@ -498,7 +566,7 @@ async def create_pqbl_session(
     session = models.PqblSession(
         id=str(uuid.uuid4()),
         document_id=doc.id,
-        username=identity.get("username") or None,
+        username=identity["username"],
         mode=request.mode,
     )
     db.add(session)
@@ -508,10 +576,14 @@ async def create_pqbl_session(
 
 
 @router.get("/pqbl/sessions/{session_id}/questions")
-async def get_pqbl_session_questions(session_id: str, db: Session = Depends(get_db)):
+async def get_pqbl_session_questions(
+    session_id: str,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_current_user),
+):
     """Domande SENZA flag `correct` né feedback (anti-cheating: verifica solo
     server-side). Ordine delle opzioni rimescolato a ogni richiesta (R6)."""
-    session = _get_session_or_404(db, session_id)
+    session = _get_session_or_404(db, session_id, identity)
     questions = _session_questions(db, session)
     payload = []
     for q in questions:
@@ -532,11 +604,11 @@ async def answer_pqbl_question(
     session_id: str,
     request: PqblAnswerRequest,
     db: Session = Depends(get_db),
-    identity: dict = Depends(auth.get_identity),
+    identity: dict = Depends(auth.get_current_user),
 ):
     # Continuing a session is a new write: blocked once the class disables pQBL.
     class_access.require_tool(db, identity, "pqbl")
-    session = _get_session_or_404(db, session_id)
+    session = _get_session_or_404(db, session_id, identity, write=True)
     if session.mode != "learning":
         raise HTTPException(status_code=400, detail="Nel test finale usa l'invio unico (/final-test).")
 
@@ -588,13 +660,13 @@ async def submit_pqbl_final_test(
     session_id: str,
     request: PqblFinalTestRequest,
     db: Session = Depends(get_db),
-    identity: dict = Depends(auth.get_identity),
+    identity: dict = Depends(auth.get_current_user),
 ):
     """Submit unico del test finale (R7): una risposta per domanda, feedback
     solo dopo l'invio, non ripetibile."""
     # Continuing a session is a new write: blocked once the class disables pQBL.
     class_access.require_tool(db, identity, "pqbl")
-    session = _get_session_or_404(db, session_id)
+    session = _get_session_or_404(db, session_id, identity, write=True)
     if session.mode != "final_test":
         raise HTTPException(status_code=400, detail="Questa sessione non è un test finale.")
     if session.finished_at is not None:
@@ -654,10 +726,14 @@ async def submit_pqbl_final_test(
 
 
 @router.get("/pqbl/sessions/{session_id}/summary")
-async def get_pqbl_session_summary(session_id: str, db: Session = Depends(get_db)):
+async def get_pqbl_session_summary(
+    session_id: str,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_current_user),
+):
     """Metriche della sessione (R8): % corrette al primo tentativo, dettaglio
     per skill, tempo stimato con cap di inattività a 5 minuti."""
-    session = _get_session_or_404(db, session_id)
+    session = _get_session_or_404(db, session_id, identity)
     questions = _session_questions(db, session)
     attempts = (
         db.query(models.PqblAttempt)

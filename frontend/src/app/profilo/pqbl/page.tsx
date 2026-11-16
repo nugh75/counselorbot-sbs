@@ -83,17 +83,35 @@ interface PersistedPqblProgress {
 const SESSION_SIZES = [10, 20, 30] as const;
 const POLL_INTERVAL_MS = 4000;
 
+class PqblHttpError extends Error {
+    constructor(message: string, readonly status: number) {
+        super(message);
+    }
+}
+
+// Statuses with a localized message: login required, file over 25 MB, upload already running.
+const STATUS_MESSAGES: Record<number, 'pqbl.error.auth' | 'pqbl.error.tooLarge' | 'pqbl.error.busy'> = {
+    401: 'pqbl.error.auth',
+    413: 'pqbl.error.tooLarge',
+    429: 'pqbl.error.busy',
+};
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
     const res = await fetch(url, init);
     if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { detail?: string } | null;
-        throw new Error(body?.detail ?? `Request failed (${res.status})`);
+        throw new PqblHttpError(body?.detail ?? `Request failed (${res.status})`, res.status);
     }
     return res.json() as Promise<T>;
 }
 
 export default function PqblPage() {
     const { t, lang } = useI18n();
+    const errorMessage = (e: unknown) => {
+        const key = e instanceof PqblHttpError ? STATUS_MESSAGES[e.status] : undefined;
+        if (key) return t(key);
+        return e instanceof Error ? e.message : t('pqbl.error.title');
+    };
     const [phase, setPhase] = useState<Phase>('setup');
     const [size, setSize] = useState<number>(10);
     const [isDragging, setIsDragging] = useState(false);
@@ -279,7 +297,7 @@ export default function PqblPage() {
                 startPolling(data.document_id);
             }
         } catch (e) {
-            setError(e instanceof Error ? e.message : t('pqbl.error.title'));
+            setError(errorMessage(e));
         } finally {
             setIsUploading(false);
         }
@@ -327,7 +345,7 @@ export default function PqblPage() {
 
             setPhase('quiz');
         } catch (e) {
-            setError(e instanceof Error ? e.message : t('pqbl.error.title'));
+            setError(errorMessage(e));
         }
     };
 
@@ -348,7 +366,7 @@ export default function PqblPage() {
             setOptionResults((prev) => ({ ...prev, [optionKey]: result }));
             setLastSelected(optionKey);
         } catch (e) {
-            setError(e instanceof Error ? e.message : t('pqbl.error.title'));
+            setError(errorMessage(e));
         }
     };
 
@@ -364,7 +382,7 @@ export default function PqblPage() {
             setSummary(data);
             setPhase('summary');
         } catch (e) {
-            setError(e instanceof Error ? e.message : t('pqbl.error.title'));
+            setError(errorMessage(e));
         }
     };
 
@@ -386,7 +404,7 @@ export default function PqblPage() {
             setFinalWarning(false);
             setPhase('final');
         } catch (e) {
-            setError(e instanceof Error ? e.message : t('pqbl.error.title'));
+            setError(errorMessage(e));
         }
     };
 
@@ -409,7 +427,7 @@ export default function PqblPage() {
             setFinalResult(result);
             setPhase('finalResults');
         } catch (e) {
-            setError(e instanceof Error ? e.message : t('pqbl.error.title'));
+            setError(errorMessage(e));
         }
     };
 

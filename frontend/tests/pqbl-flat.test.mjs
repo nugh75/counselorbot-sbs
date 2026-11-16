@@ -21,3 +21,15 @@ test('PDF study page keeps progress in localStorage', () => {
     assert.match(source, /savePqblProgress\(/);
     assert.match(source, /loadPqblProgress</);
 });
+
+test('PDF study page explains login, size and busy errors (#998)', () => {
+    assert.match(source, /401: 'pqbl\.error\.auth'/);
+    assert.match(source, /413: 'pqbl\.error\.tooLarge'/);
+    assert.match(source, /429: 'pqbl\.error\.busy'/);
+    assert.doesNotMatch(source, /setError\(e instanceof Error/);
+    const i18n = readFileSync(new URL('../src/lib/i18n.ts', import.meta.url), 'utf8');
+    for (const key of ['pqbl.error.auth', 'pqbl.error.tooLarge', 'pqbl.error.busy']) {
+        assert.equal(i18n.split(`'${key}':`).length - 1, 6, `${key} in six languages`);
+    }
+    assert.doesNotMatch(i18n, /'pqbl\.upload\.hint': '[^']*100/);
+});

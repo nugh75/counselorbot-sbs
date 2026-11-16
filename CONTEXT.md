@@ -547,12 +547,15 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 ### PQBL (Problem/Question-Based Learning)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `POST` | `/api/pqbl/upload` | — | Upload document for question generation |
-| `POST` | `/api/pqbl/sessions` | student | Start PQBL session |
-| `GET` | `/api/pqbl/sessions/{id}/questions` | student | Get generated questions |
-| `POST` | `/api/pqbl/sessions/{id}/answer` | student | Submit answer |
-| `POST` | `/api/pqbl/sessions/{id}/final-test` | student | Take final test |
-| `GET` | `/api/pqbl/sessions/{id}/summary` | student | Session summary |
+| `POST` | `/api/pqbl/upload` | login | Upload PDF (max 25 MB, streamed to disk; 413 over the limit, 429 if the user already has an upload running) |
+| `GET` | `/api/pqbl/documents/{id}` | owner/read | Document status and skills |
+| `POST` | `/api/pqbl/sessions` | owner | Start PQBL session on an own document |
+| `GET` | `/api/pqbl/sessions/{id}/questions` | owner/read | Get generated questions |
+| `POST` | `/api/pqbl/sessions/{id}/answer` | owner | Submit answer |
+| `POST` | `/api/pqbl/sessions/{id}/final-test` | owner | Take final test |
+| `GET` | `/api/pqbl/sessions/{id}/summary` | owner/read | Session summary |
+
+Every pQBL route returns 401 without login (#998). "owner/read": the owner, or whoever `authorize_data_access` allows (admin locally, break-glass on L1; teachers have no class grant for pQBL). Anyone else gets 404. A reused question bank is matched only among the same user's documents.
 
 ### Admin: Config
 | Method | Endpoint | Description |
