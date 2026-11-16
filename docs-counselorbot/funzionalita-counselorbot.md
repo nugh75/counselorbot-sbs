@@ -1275,6 +1275,7 @@ il profilo nel suo insieme. La sintesi resta qualitativa,
 distingue proposte e impegni della persona e conserva solo tempi concordati.
 Le vecchie analisi K1–K5 non sono profili canonici: restano nello storico ma
 non si riutilizzano o convertono per iniziare/riprendere il nuovo percorso.
+Le strategie certificate QPCC usano i fattori correnti (A1, A2, V1, C1, M1, M3) e si abbinano al profilo dello studente; all'avvio il seme riallinea in modo idempotente le righe già presenti con i vecchi codici K1–K5.
 Le nuove compilazioni richiedono un profilo completo con dieci stanine intere
 tra 1 e 9. Gli eventuali codici K in una
 vecchia bozza locale non entrano nel nuovo invio. Interfaccia, fattori e indicazioni
