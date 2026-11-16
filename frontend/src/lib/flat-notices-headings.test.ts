@@ -8,7 +8,7 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 const callouts = [
     'app/profilo/page.tsx', 'app/profilo/pqbl/page.tsx', 'app/docente/orientamento/page.tsx',
     'components/profile/MyGroupsCard.tsx', 'components/profile/PortfolioCard.tsx',
-    'components/flashcards/FlashcardsPage.tsx', 'components/visual/VisualPersonalTransfer.tsx',
+    'components/flashcards/FlashcardsPage.tsx',
     'components/visual/VisualTools.tsx',
     'components/teacher/ClassOverviewTab.tsx', 'components/teacher/ClassCouncilTab.tsx',
     'components/teacher/ClassImageModal.tsx', 'components/teacher/ClassNoticingTab.tsx',
