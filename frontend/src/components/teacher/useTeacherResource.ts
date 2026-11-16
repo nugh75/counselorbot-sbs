@@ -5,14 +5,18 @@ import { apiFetch, getViewAsAccount } from '@/lib/auth';
 
 // Component-local reads only: no user-data cache. Account/role switches already
 // reload the page; abort on unmount and reject responses from an old preview.
+// A reload of a path that already has data refreshes in the background
+// (`refreshing`) so callers keep their tree, and its unsaved drafts, mounted.
 export function useTeacherResource<T>(path: string, parse: (payload: unknown) => T) {
     const [data, setData] = useState<T>();
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [failed, setFailed] = useState(false);
     const [forbidden, setForbidden] = useState(false);
     const active = useRef(false);
     const account = useRef<string | undefined>(undefined);
     const pending = useRef<AbortController | null>(null);
+    const loadedPath = useRef<string | undefined>(undefined);
 
     const reload = useCallback(async () => {
         if (!active.current || pending.current) return;
@@ -20,7 +24,7 @@ export function useTeacherResource<T>(path: string, parse: (payload: unknown) =>
         pending.current = controller;
         const current = () => active.current && !controller.signal.aborted;
         const sameAccount = () => account.current === getViewAsAccount()?.username;
-        setLoading(true);
+        if (loadedPath.current === path) setRefreshing(true); else setLoading(true);
         setFailed(false);
         try {
             if (!sameAccount()) throw new Error('identity changed');
@@ -28,18 +32,20 @@ export function useTeacherResource<T>(path: string, parse: (payload: unknown) =>
             if (!current()) return;
             if (!sameAccount() || response.status === 401 || response.status === 403) {
                 setData(undefined);
+                loadedPath.current = undefined;
                 setForbidden(true);
                 return;
             }
             if (!response.ok) throw new Error('read failed');
             const payload: unknown = await response.json();
-            if (current() && sameAccount()) setData(parse(payload));
+            if (current() && sameAccount()) { setData(parse(payload)); loadedPath.current = path; }
         } catch {
             if (current()) setFailed(true);
         } finally {
             if (current()) {
-                if (!sameAccount()) { setData(undefined); setForbidden(true); }
+                if (!sameAccount()) { setData(undefined); loadedPath.current = undefined; setForbidden(true); }
                 setLoading(false);
+                setRefreshing(false);
                 pending.current = null;
             }
         }
@@ -56,5 +62,5 @@ export function useTeacherResource<T>(path: string, parse: (payload: unknown) =>
         };
     }, [reload]);
 
-    return { data, loading, failed, forbidden, reload };
+    return { data, loading, refreshing, failed, forbidden, reload };
 }
