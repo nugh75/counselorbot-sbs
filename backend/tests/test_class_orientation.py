@@ -35,6 +35,8 @@ def fixture(monkeypatch):
         app.dependency_overrides[database.get_personal_ai_db] = lambda: db
         ai = Mock()
         ai.return_value.config = {}
+        ai.return_value.chatgpt_model = None
+        ai.return_value.personal_target = None
         ai.return_value.get_response.return_value = json.dumps({"reply": "Choose a learning tool.", "recommendations": []})
         monkeypatch.setattr(orientation, "AIService", ai)
         monkeypatch.setattr(site_chat, "AIService", ai)

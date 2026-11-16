@@ -700,16 +700,16 @@ def test_practice_turns_are_logged_with_the_resolved_notebook():
     from backend.tests.test_class_counselors import _client, _mock_stream
     with artifact_session() as db:
         db.add(models.Instrument(code="QSA", is_active=True, tool_category="assessment", target_audience="student"))
-        notebook = _seed_teacher(db)
+        owned_id = _seed_teacher(db).id
         with _client(db, TEACHER) as client, \
                 patch.object(chat.AIService, "get_response", return_value="ok"), \
                 patch.object(chat.AIService, "stream_response", side_effect=_mock_stream):
             for route, session_id, notebook_id in (
-                ("/chat", "plain", notebook.id), ("/chat/stream", "stream", notebook.id), ("/chat", "foreign", 999999),
+                ("/chat", "plain", owned_id), ("/chat/stream", "stream", owned_id), ("/chat", "foreign", 999999),
             ):
                 body = {"message": "Ciao", "questionnaire_type": "QSA", "session_id": session_id,
                         "notebook_context": "practice", "practice_notebook_id": notebook_id}
                 assert client.post(route, json=body).status_code == 200
         logged = {row.session_id: (row.details or {}).get("practice_notebook_id")
                   for row in db.query(models.Log).filter(models.Log.action == "chat_message")}
-        assert logged == {"plain": notebook.id, "stream": notebook.id, "foreign": None}
+        assert logged == {"plain": owned_id, "stream": owned_id, "foreign": None}
