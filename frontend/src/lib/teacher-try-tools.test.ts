@@ -16,9 +16,9 @@ test('Try the tools texts exist in all six languages', () => {
     }
 });
 
-test('the student catalog excludes OBIETTIVO_DOCENZA, so the block adds it explicitly', () => {
+test('the student catalog excludes OBIETTIVO_DOCENZA and the block lists only catalog tools (it lives in Libreria)', () => {
     assert.ok(!resolveActiveStudentTools(null).some((q: { id: string }) => q.id === 'OBIETTIVO_DOCENZA'));
     const source = readFileSync(new URL('../components/teacher/TryToolsSection.tsx', import.meta.url), 'utf-8');
-    assert.match(source, /q\.id === 'OBIETTIVO_DOCENZA'/);
+    assert.doesNotMatch(source, /q\.id === 'OBIETTIVO_DOCENZA'/);
     assert.match(source, /`\/\?start=\$\{encodeURIComponent\(q\.id\)\}`/);
 });
