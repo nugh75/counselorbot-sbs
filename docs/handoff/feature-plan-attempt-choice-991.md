@@ -1,7 +1,7 @@
 # Handoff — feature/plan-attempt-choice-991 (#991)
 
 ## Stato
-Implementazione completa; PR #994 aperta contro main. CI backend rossa per causa esterna (vedi rischi): task NON chiuso.
+Completo. PR #994 aperta; dopo il merge di main (cap httpx2, PR #996) startup e tests (postgres) verdi.
 
 ## Fatto
 - Backend: tabella `class_path_counted_attempts` (create_all, additiva); `counted` su ogni tentativo; default = ultimo completato.
@@ -23,5 +23,6 @@ Implementazione completa; PR #994 aperta contro main. CI backend rossa per causa
 - Merge; deploy con backup DB, rebuild backend + frontend.
 
 ## Blocchi e rischi
-- CI `startup`/`tests (postgres)`: import `mistralai` fallisce su Python 3.12.16 del runner (SyntaxError forward reference), indipendente da questa PR; bug registrato nel Diario. Serve pin di mistralai o della patch Python, poi rilanciare i check.
+- Risolto: blocco CI mistralai/httpx2 superato col merge di main (#996).
+- Il run «documentation» su evento push confronta col push precedente (solo requirements.txt da main): falso positivo; il run pull_request passa.
 - Default questionario/analisi passa dal primo completato all'ultimo (data mostrata al docente può cambiare).
