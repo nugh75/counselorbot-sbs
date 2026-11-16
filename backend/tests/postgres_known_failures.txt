@@ -7,7 +7,6 @@
 # test_sse_heartbeat::test_sync_disconnect... also failed in run 40199013418 but
 # passed in 40201355383: flaky here, so it stays out of this list and visible.
 # Real bug: 15 QPCC certified strategies use the obsolete K1-K5 codes (journal bug a5cc0960).
-backend/tests/test_skills_specialized.py::test_certified_catalog_uses_existing_factor_codes
 # Real bug (next two): the intro never receives the [PLATFORM CAPABILITIES] block (journal bug f3a1242a).
 backend/tests/test_smoke.py::test_first_step_of_a_path_gets_the_full_catalog_even_without_intro_mode
 backend/tests/test_smoke.py::test_prompt_audit_intro_envelope_is_light_for_all_instruments

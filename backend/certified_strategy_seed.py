@@ -634,15 +634,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-public-speaking-rehearsal",
         "name_it": "Esporre per gradi",
-        "recommended_when_it": "Quando K1 (parlare in pubblico) e' un'area di crescita.",
+        "recommended_when_it": "Quando A1 (ansia di parlare in pubblico) e' un'area di crescita.",
         "description_it": (
             "Preparare l'esposizione per gradi: una scaletta di tre punti, una prova a voce "
             "alta da soli, poi una davanti a una persona di fiducia, spostando l'attenzione "
             "dal timore del giudizio al messaggio da far arrivare."
         ),
-        "factor_codes": ["K1"],
+        "factor_codes": ["A1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K1 parlare in pubblico esposizione presentazione ansia da prestazione",
+        "keywords": "A1 parlare in pubblico esposizione presentazione ansia da prestazione",
         "certified_by": "Import fonti competenze strategiche",
         "source_reference": QPCC_SOURCE,
         "sort_order": 130,
@@ -650,15 +650,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-pressure-and-responsibility",
         "name_it": "Separare cio' che dipende da se'",
-        "recommended_when_it": "Quando K2 (gestione dell'ansia e responsabilita') e' un'area di crescita.",
+        "recommended_when_it": "Quando A2 (senso di insicurezza) e' un'area di crescita.",
         "description_it": (
             "Davanti a una decisione che pesa, distinguere per iscritto cio' che dipende dalla "
             "propria scelta da cio' che non dipende, agire solo sulla prima colonna e fissare "
             "quando la decisione verra' rivista."
         ),
-        "factor_codes": ["K2"],
+        "factor_codes": ["A2"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K2 ansia pressione responsabilita decisioni stress controllo",
+        "keywords": "A2 ansia pressione responsabilita decisioni stress controllo",
         "certified_by": "Import fonti competenze strategiche",
         "source_reference": QPCC_SOURCE,
         "sort_order": 131,
@@ -666,15 +666,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-goal-monitoring",
         "name_it": "Obiettivo della settimana e verifica",
-        "recommended_when_it": "Quando K3 (volonta' e autoregolazione) e' un'area di crescita.",
+        "recommended_when_it": "Quando V1 (autoregolazione e perseveranza sul lavoro) e' un'area di crescita.",
         "description_it": (
             "Fissare un obiettivo verificabile per la settimana e un momento fisso di "
             "verifica in cui annotare che cosa ha funzionato, che cosa va cambiato e quale "
             "sara' l'aggiustamento concreto."
         ),
-        "factor_codes": ["K3"],
+        "factor_codes": ["V1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K3 autoregolazione obiettivi priorita monitoraggio riflessione",
+        "keywords": "V1 autoregolazione obiettivi priorita monitoraggio riflessione",
         "certified_by": "Import fonti competenze strategiche",
         "source_reference": QPCC_SOURCE,
         "sort_order": 132,
@@ -682,15 +682,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-elaboration-links",
         "name_it": "Collegare, esemplificare, verificare",
-        "recommended_when_it": "Quando K4 (strategie di elaborazione) e' un'area di crescita.",
+        "recommended_when_it": "Quando C1 (competenze elaborative) e' un'area di crescita.",
         "description_it": (
             "Collegare il nuovo contenuto a qualcosa di gia' noto con un esempio proprio e "
             "un'analogia, poi verificare la comprensione riformulandolo senza guardare il "
             "testo e controllando solo dopo."
         ),
-        "factor_codes": ["K4"],
+        "factor_codes": ["C1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K4 elaborazione collegamenti esempi analogie comprensione",
+        "keywords": "C1 elaborazione collegamenti esempi analogie comprensione",
         "certified_by": "Import fonti competenze strategiche",
         "source_reference": f"{QPCC_SOURCE} {EVIDENCE_SOURCE}",
         "sort_order": 133,
@@ -698,15 +698,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-effort-attribution",
         "name_it": "Cercare le cause su cui si puo' agire",
-        "recommended_when_it": "Quando K5 (convinzioni su di se') e' un'area di crescita.",
+        "recommended_when_it": "Quando M3 (attribuzioni causali) e' un'area di crescita.",
         "description_it": (
             "Rileggere un risultato recente cercando le cause modificabili — preparazione, "
             "strategia usata, tempo disponibile — invece delle sole abilita' considerate "
             "stabili, e indicare la variabile su cui intervenire alla prossima occasione."
         ),
-        "factor_codes": ["K5"],
+        "factor_codes": ["M3"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K5 convinzioni autoefficacia attribuzione impegno abilita fiducia",
+        "keywords": "M3 convinzioni autoefficacia attribuzione impegno abilita fiducia",
         "certified_by": "Import fonti competenze strategiche",
         "source_reference": QPCC_SOURCE,
         "sort_order": 134,
@@ -954,15 +954,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-speaking-question-first",
         "name_it": "Aprire con la domanda",
-        "recommended_when_it": "Quando K1 (parlare in pubblico) e' un'area di crescita.",
+        "recommended_when_it": "Quando A1 (ansia di parlare in pubblico) e' un'area di crescita.",
         "description_it": (
             "Cominciare l'esposizione enunciando la domanda a cui si risponde, non il titolo "
             "dell'argomento: chi ascolta capisce subito dove si va, e chi parla ha un filo a "
             "cui tornare se si perde."
         ),
-        "factor_codes": ["K1"],
+        "factor_codes": ["A1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K1 esposizione presentazione domanda apertura filo pubblico",
+        "keywords": "A1 esposizione presentazione domanda apertura filo pubblico",
         "certified_by": "Bozza da revisionare",
         "source_reference": QPCC_SOURCE,
         "status": "draft",
@@ -971,15 +971,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-speaking-recover-from-blank",
         "name_it": "Che cosa fare quando ci si blocca",
-        "recommended_when_it": "Quando K1 (parlare in pubblico) e' un'area di crescita.",
+        "recommended_when_it": "Quando A1 (ansia di parlare in pubblico) e' un'area di crescita.",
         "description_it": (
             "Preparare prima una frase-ponte da usare nel vuoto di memoria — \"riprendo dal "
             "punto in cui...\" — e tenere in vista una scaletta di tre voci: il blocco smette "
             "di essere una catastrofe quando esiste gia' la mossa successiva."
         ),
-        "factor_codes": ["K1"],
+        "factor_codes": ["A1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K1 blocco vuoto di memoria esposizione scaletta ansia recupero",
+        "keywords": "A1 blocco vuoto di memoria esposizione scaletta ansia recupero",
         "certified_by": "Bozza da revisionare",
         "source_reference": QPCC_SOURCE,
         "status": "draft",
@@ -988,15 +988,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-decision-worst-case-plan",
         "name_it": "Nominare il peggio e preparare il primo passo",
-        "recommended_when_it": "Quando K2 (gestione dell'ansia e responsabilita') e' un'area di crescita.",
+        "recommended_when_it": "Quando A2 (senso di insicurezza) e' un'area di crescita.",
         "description_it": (
             "Scrivere lo scenario peggiore che si teme, stimare quanto sia davvero probabile e "
             "definire il primo passo che si farebbe se accadesse: cio' che resta indefinito "
             "pesa piu' di cio' che e' stato guardato in faccia."
         ),
-        "factor_codes": ["K2"],
+        "factor_codes": ["A2"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K2 ansia decisioni scenario peggiore probabilita piano responsabilita",
+        "keywords": "A2 ansia decisioni scenario peggiore probabilita piano responsabilita",
         "certified_by": "Bozza da revisionare",
         "source_reference": QPCC_SOURCE,
         "status": "draft",
@@ -1005,15 +1005,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-responsibility-share-and-check",
         "name_it": "Dividere il peso e fissare la verifica",
-        "recommended_when_it": "Quando K2 (gestione dell'ansia e responsabilita') e' un'area di crescita.",
+        "recommended_when_it": "Quando A2 (senso di insicurezza) e' un'area di crescita.",
         "description_it": (
             "Individuare quale parte della responsabilita' e' davvero condivisa e con chi va "
             "concordata, dirlo esplicitamente alla persona coinvolta e fissare quando si "
             "verifichera' insieme, invece di portare da soli anche cio' che non compete."
         ),
-        "factor_codes": ["K2"],
+        "factor_codes": ["A2"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K2 responsabilita condivisione pressione accordo verifica confini",
+        "keywords": "A2 responsabilita condivisione pressione accordo verifica confini",
         "certified_by": "Bozza da revisionare",
         "source_reference": QPCC_SOURCE,
         "status": "draft",
@@ -1022,15 +1022,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-time-block-protection",
         "name_it": "Proteggere un blocco di tempo",
-        "recommended_when_it": "Quando K3 (volonta' e autoregolazione) e' un'area di crescita.",
+        "recommended_when_it": "Quando V1 (autoregolazione e perseveranza sul lavoro) e' un'area di crescita.",
         "description_it": (
             "Fissare un blocco settimanale sempre nello stesso giorno e nella stessa ora, "
             "dichiararlo a chi potrebbe interromperlo e non usarlo per altro: un tempo "
             "ricorrente e annunciato si difende meglio di un tempo deciso volta per volta."
         ),
-        "factor_codes": ["K3"],
+        "factor_codes": ["V1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K3 autoregolazione tempo blocco routine interruzioni pianificazione",
+        "keywords": "V1 autoregolazione tempo blocco routine interruzioni pianificazione",
         "certified_by": "Bozza da revisionare",
         "source_reference": QPCC_SOURCE,
         "status": "draft",
@@ -1039,15 +1039,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-start-ritual",
         "name_it": "Rito di avvio breve",
-        "recommended_when_it": "Quando K3 (volonta' e autoregolazione) e' un'area di crescita.",
+        "recommended_when_it": "Quando V1 (autoregolazione e perseveranza sul lavoro) e' un'area di crescita.",
         "description_it": (
             "Definire tre gesti sempre uguali che aprono la sessione — sgombrare il tavolo, "
             "scrivere l'obiettivo del blocco, mettere via il telefono — cosi' l'inizio diventa "
             "una sequenza da eseguire e non una decisione da prendere ogni volta."
         ),
-        "factor_codes": ["K3"],
+        "factor_codes": ["V1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K3 avvio rito abitudine procrastinazione sessione obiettivo",
+        "keywords": "V1 avvio rito abitudine procrastinazione sessione obiettivo",
         "certified_by": "Bozza da revisionare",
         "source_reference": QPCC_SOURCE,
         "status": "draft",
@@ -1056,15 +1056,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-transfer-to-new-case",
         "name_it": "Applicare a un caso nuovo",
-        "recommended_when_it": "Quando K4 (strategie di elaborazione) e' un'area di crescita.",
+        "recommended_when_it": "Quando C1 (competenze elaborative) e' un'area di crescita.",
         "description_it": (
             "Subito dopo aver capito una regola o un procedimento, applicarlo a un esempio non "
             "trattato a lezione e cercato da soli: e' il punto in cui si scopre se si e' capito "
             "davvero o si e' solo riconosciuto il caso gia' visto."
         ),
-        "factor_codes": ["K4"],
+        "factor_codes": ["C1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K4 elaborazione trasferimento esempio nuovo applicazione comprensione",
+        "keywords": "C1 elaborazione trasferimento esempio nuovo applicazione comprensione",
         "certified_by": "Bozza da revisionare",
         "source_reference": f"{QPCC_SOURCE} {EVIDENCE_SOURCE}",
         "status": "draft",
@@ -1073,15 +1073,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-compare-and-contrast",
         "name_it": "Confrontare due concetti vicini",
-        "recommended_when_it": "Quando K4 (strategie di elaborazione) e' un'area di crescita.",
+        "recommended_when_it": "Quando C1 (competenze elaborative) e' un'area di crescita.",
         "description_it": (
             "Prendere due nozioni che si tendono a confondere e scrivere dove coincidono, dove "
             "si separano e quale esempio le distingue: la distinzione tenuta a mente in modo "
             "vago e' la prima cosa che salta in una verifica."
         ),
-        "factor_codes": ["K4"],
+        "factor_codes": ["C1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K4 confronto concetti distinzione esempi elaborazione precisione",
+        "keywords": "C1 confronto concetti distinzione esempi elaborazione precisione",
         "certified_by": "Bozza da revisionare",
         "source_reference": f"{QPCC_SOURCE} {EVIDENCE_SOURCE}",
         "status": "draft",
@@ -1090,15 +1090,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-self-talk-rewrite",
         "name_it": "Riscrivere la frase che ci si ripete",
-        "recommended_when_it": "Quando K5 (convinzioni su di se') e' un'area di crescita.",
+        "recommended_when_it": "Quando M3 (attribuzioni causali) e' un'area di crescita.",
         "description_it": (
             "Trascrivere alla lettera il giudizio che si ripete su di se' dopo un insuccesso e "
             "riformularlo in termini di comportamento modificabile: da \"non sono portato\" a "
             "\"con questo metodo non ha funzionato, provo a cambiare X\"."
         ),
-        "factor_codes": ["K5"],
+        "factor_codes": ["M3"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K5 convinzioni giudizio su di se attribuzione insuccesso riformulare",
+        "keywords": "M3 convinzioni giudizio su di se attribuzione insuccesso riformulare",
         "certified_by": "Bozza da revisionare",
         "source_reference": QPCC_SOURCE,
         "status": "draft",
@@ -1107,15 +1107,15 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qpcc-mastery-model-peer",
         "name_it": "Guardare chi ci e' gia' passato",
-        "recommended_when_it": "Quando K5 (convinzioni su di se') e' un'area di crescita.",
+        "recommended_when_it": "Quando M1 (percezione di competenza) e' un'area di crescita.",
         "description_it": (
             "Individuare una persona vicina per eta' e condizione che ha superato la stessa "
             "difficolta' e chiederle che cosa ha cambiato in concreto: vedere riuscire "
             "qualcuno di simile a se' incide sulla fiducia piu' di un incoraggiamento."
         ),
-        "factor_codes": ["K5"],
+        "factor_codes": ["M1"],
         "questionnaire_types": ["QPCC"],
-        "keywords": "K5 fiducia modello esperienza vicaria compagni autoefficacia",
+        "keywords": "M1 fiducia modello esperienza vicaria compagni autoefficacia",
         "certified_by": "Bozza da revisionare",
         "source_reference": f"{QPCC_SOURCE} Bandura, esperienza vicaria e autoefficacia.",
         "status": "draft",
@@ -1572,8 +1572,13 @@ DEFAULT_CERTIFIED_STRATEGIES.extend([
 
 
 def seed_certified_strategies(db, models_module) -> int:
-    """Crea le strategie certificate mancanti e ritorna quante righe ha inserito."""
+    """Crea le strategie certificate mancanti e ritorna quante righe ha inserito.
+
+    Le righe QPCC gia' presenti con i vecchi codici K1-K5 (bozze) vengono
+    riallineate in modo idempotente ai fattori QPCC correnti, per slug.
+    """
     inserted = 0
+    updated = 0
     for spec in DEFAULT_CERTIFIED_STRATEGIES:
         exists = (
             db.query(models_module.CertifiedStrategy)
@@ -1581,13 +1586,20 @@ def seed_certified_strategies(db, models_module) -> int:
             .first()
         )
         if exists:
+            if any(str(code).upper().startswith("K") for code in (exists.factor_codes or [])) and any(
+                not code.startswith("K") for code in spec["factor_codes"]
+            ):
+                exists.factor_codes = list(spec["factor_codes"])
+                exists.recommended_when_it = spec["recommended_when_it"]
+                exists.keywords = spec["keywords"]
+                if exists.status == "draft":
+                    exists.status = spec.get("status", "certified")
+                updated += 1
             continue
         # Una voce puo' dichiarare il proprio stato: le bozze restano fuori dalla
         # chat finche' un admin non le certifica dal pannello.
         spec = dict(spec)
         status = spec.pop("status", "certified")
-        if "QPCC" in spec.get("questionnaire_types", []) and any(code.startswith("K") for code in spec.get("factor_codes", [])):
-            status = "draft"  # requires editorial review against canonical QPCC factors
         db.add(
             models_module.CertifiedStrategy(
                 match_mode="any",
@@ -1597,6 +1609,6 @@ def seed_certified_strategies(db, models_module) -> int:
             )
         )
         inserted += 1
-    if inserted:
+    if inserted or updated:
         db.commit()
     return inserted
