@@ -43,12 +43,34 @@ CLASS_IMAGES_STORAGE_DIR = os.getenv(
     os.path.join(database.DATA_DIR, "class_images"),
 )
 MAX_CLASS_IMAGE_BYTES = 5 * 1024 * 1024  # 5 MB
-ALLOWED_CLASS_IMAGE_TYPES = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/webp": ".webp",
-    "image/gif": ".gif",
-}
+
+CLASS_PRESET_IMAGE_RE = re.compile(r"^/images/classes/[a-z0-9-]+\.svg$")
+
+
+def _sniff_class_image(data: bytes) -> Optional[str]:
+    """Return the file extension for PNG/JPEG/WebP/GIF magic bytes, else None."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return ".webp"
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return ".gif"
+    return None
+
+
+def _valid_class_image_url(value: Optional[str], group_id: Optional[int] = None) -> Optional[str]:
+    """Accept only empty, a preset path or the group's own upload URL; 422 otherwise."""
+    url = (value or "").strip()
+    if not url:
+        return None
+    if CLASS_PRESET_IMAGE_RE.fullmatch(url):
+        return url
+    if group_id is not None and re.fullmatch(rf"/api/groups/{group_id}/image\?v=\d+", url):
+        return url
+    raise HTTPException(status_code=422, detail="URL immagine non valido: usa un'immagine predefinita o carica un file.")
+
 
 GROUP_CODE_RE = re.compile(r"^GR-[A-Z0-9][A-Z0-9-]{2,28}$")
 CODE_ALPHABET = string.ascii_uppercase + string.digits
@@ -600,7 +622,7 @@ async def create_group(
     store_user_display_name(db, current_user)
     school = (payload.school or "").strip() or None
     level = _valid_level(payload.school_level)
-    image_url = (payload.image_url or "").strip() or None
+    image_url = _valid_class_image_url(payload.image_url)
     group = models.StudentGroup(code=code, name=name, school=school, school_level=level,
                                 institution_id=payload.institution_id,
                                 description=(payload.description or "").strip() or None,
@@ -649,7 +671,7 @@ async def update_group(
     if "context_visible_to_students" in updates:
         group.context_visible_to_students = bool(updates["context_visible_to_students"])
     if "image_url" in updates:
-        group.image_url = (updates["image_url"] or "").strip() or None
+        group.image_url = _valid_class_image_url(updates["image_url"], group.id)
     db.commit()
     db.refresh(group)
     return _serialize_group(db, group)
@@ -665,19 +687,19 @@ async def upload_group_image(
 ):
     """Carica un'immagine di copertina personalizzata per la classe."""
     group = _require_visible_group(db, current_user, group_id)
-    content_type = (file.content_type or "").lower().split(";")[0].strip()
-    ext = ALLOWED_CLASS_IMAGE_TYPES.get(content_type)
-    if not ext:
-        raise HTTPException(
-            status_code=400,
-            detail="Formato non supportato. Usa PNG, JPG, WebP o GIF.",
-        )
     contents = await file.read(MAX_CLASS_IMAGE_BYTES + 1)
     await file.close()
     if not contents:
         raise HTTPException(status_code=400, detail="Il file e' vuoto.")
     if len(contents) > MAX_CLASS_IMAGE_BYTES:
         raise HTTPException(status_code=413, detail="L'immagine supera i 5 MB.")
+    # The client Content-Type is ignored: the real format comes from the magic bytes.
+    ext = _sniff_class_image(contents)
+    if not ext:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato non supportato. Usa PNG, JPG, WebP o GIF.",
+        )
 
     os.makedirs(CLASS_IMAGES_STORAGE_DIR, exist_ok=True)
     for existing in glob.glob(os.path.join(CLASS_IMAGES_STORAGE_DIR, f"group_{group_id}.*")):
@@ -713,7 +735,7 @@ async def get_group_image(
     ]:
         path = os.path.join(CLASS_IMAGES_STORAGE_DIR, f"group_{group_id}{ext}")
         if os.path.isfile(path):
-            return FileResponse(path, media_type=mime, headers={"Cache-Control": "public, max-age=3600"})
+            return FileResponse(path, media_type=mime, headers={"Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff"})
     raise HTTPException(status_code=404, detail="Immagine di classe non trovata")
 
 

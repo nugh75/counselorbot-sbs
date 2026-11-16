@@ -137,3 +137,48 @@ def test_upload_and_serve_class_image(client_env):
     bad_files = {"file": ("document.pdf", io.BytesIO(b"%PDF-1.4"), "application/pdf")}
     bad_res = client.post(f"/admin/groups/{group_id}/image", files=bad_files)
     assert bad_res.status_code == 400
+
+
+@pytest.mark.parametrize("bad", [
+    "https://evil.example/track.png",
+    "//evil.example/x.png",
+    "javascript:alert(1)",
+    "/images/classes/../../etc/passwd.svg",
+    "/api/groups/999/image?v=1",
+])
+def test_image_url_rejected_values(client_env, bad):
+    client, _ = client_env
+    assert client.post("/admin/groups", json={"name": "X", "image_url": bad}).status_code == 422
+    group_id = client.post("/admin/groups", json={"name": "Y"}).json()["id"]
+    assert client.put(f"/admin/groups/{group_id}", json={"image_url": bad}).status_code == 422
+
+
+def test_image_url_accepts_own_upload_url(client_env):
+    client, _ = client_env
+    group_id = client.post("/admin/groups", json={"name": "Z"}).json()["id"]
+    own = f"/api/groups/{group_id}/image?v=123"
+    res = client.put(f"/admin/groups/{group_id}", json={"image_url": own})
+    assert res.status_code == 200 and res.json()["image_url"] == own
+
+
+def test_upload_ignores_client_content_type(client_env):
+    client, _ = client_env
+    group_id = client.post("/admin/groups", json={"name": "S"}).json()["id"]
+    # Spoofed: HTML declared as image/png.
+    spoof = {"file": ("a.png", io.BytesIO(b"<script>alert(1)</script>"), "image/png")}
+    assert client.post(f"/admin/groups/{group_id}/image", files=spoof).status_code == 400
+    # Real JPEG declared with a wrong Content-Type is accepted and served as JPEG.
+    jpeg = b"\xff\xd8\xff\xe0" + b"\x00" * 20
+    ok = {"file": ("a.bin", io.BytesIO(jpeg), "application/octet-stream")}
+    assert client.post(f"/admin/groups/{group_id}/image", files=ok).status_code == 200
+    got = client.get(f"/groups/{group_id}/image")
+    assert got.headers["content-type"] == "image/jpeg"
+    assert got.headers["x-content-type-options"] == "nosniff"
+
+
+def test_upload_rejects_oversize(client_env):
+    client, _ = client_env
+    group_id = client.post("/admin/groups", json={"name": "B"}).json()["id"]
+    big = b"\x89PNG\r\n\x1a\n" + b"\x00" * (groups_routes.MAX_CLASS_IMAGE_BYTES + 1)
+    res = client.post(f"/admin/groups/{group_id}/image", files={"file": ("b.png", io.BytesIO(big), "image/png")})
+    assert res.status_code == 413

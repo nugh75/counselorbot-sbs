@@ -39,6 +39,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${COUNSELORBOT_PYTHON_BASE_IMAGE:-python:3.12-slim}
     container_name: counselorbot_backend
     expose:
       - "8000"

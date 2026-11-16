@@ -2050,6 +2050,11 @@ copertina e la conferma di eliminazione della classe usano il `Dialog` condiviso
 e pulsante di chiusura, mai durante un salvataggio). Funzioni, testi e dati invariati; la
 fascia di copertina (#953) resta.
 
+**Copertina di classe validata (#984).** `image_url` accetta solo vuoto, un'immagine predefinita
+(`/images/classes/*.svg`) o l'URL del caricamento della classe stessa; altri valori (URL esterni
+compresi) ricevono 422. Il caricamento ignora il Content-Type del client e riconosce PNG, JPEG,
+WebP o GIF dai byte iniziali (massimo 5 MB); la risposta porta `X-Content-Type-Options: nosniff`.
+
 **Pagina di classe: bozze salve alla ricarica, scheda nell'URL (#983, novembre 2026).** In
 `/docente/classi/[id]` (e `/admin/classi/[id]`) il caricamento a pagina intera appare solo la
 prima volta: cambiare la copertina, ricaricare la Panoramica o un blocco admin aggiornano i dati
@@ -3948,3 +3953,12 @@ dati, flussi o Guida interfaccia.
 A ogni modifica del frontend la verifica su GitHub controlla ora anche i tipi
 (`tsc`) e i test Node senza browser, oltre a lingue e ESLint. Nessuna modifica
 visibile all'app, ai dati o alla Guida interfaccia.
+
+### Python 3.12 nell'immagine backend (#981)
+
+L'immagine backend usa Python 3.12 come default (`PYTHON_BASE_IMAGE` in
+`backend/Dockerfile`, sovrascrivibile con `COUNSELORBOT_PYTHON_BASE_IMAGE` in
+entrambi i Compose). Il codice importa `datetime.UTC`, disponibile da Python 3.11:
+con il vecchio default 3.10 una nuova installazione non riusciva ad avviare il
+backend. Nessuna modifica a funzioni, dati o Guida interfaccia; un deploy già in
+esecuzione resta valido finché non si ricostruisce l'immagine.
