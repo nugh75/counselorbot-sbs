@@ -804,6 +804,9 @@ export function ClassOverviewTab({
                                 <p className="text-sm text-ink-muted">
                                     {l('deleteClassConfirmMessage')}
                                 </p>
+                                <p className="text-sm text-ink-muted">
+                                    {l('deleteClassWarning')}
+                                </p>
                                 {deleteError && <Callout variant="danger">{deleteError}</Callout>}
                             </DialogBody>
                             <DialogFooter className="justify-end">

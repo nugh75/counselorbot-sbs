@@ -664,11 +664,21 @@ class GoalCatalogTarget(Base):
     carry it."""
 
     __tablename__ = "goal_catalog_targets"
+    __table_args__ = (
+        CheckConstraint("group_id IS NOT NULL OR practice_notebook_id IS NOT NULL", name="ck_goal_catalog_target_recipient"),
+        Index("uq_goal_catalog_target_class", "catalog_id", "group_id", unique=True,
+              postgresql_where=text("username IS NULL AND practice_notebook_id IS NULL"),
+              sqlite_where=text("username IS NULL AND practice_notebook_id IS NULL")),
+        Index("uq_goal_catalog_target_student", "catalog_id", "group_id", "username", unique=True,
+              postgresql_where=text("username IS NOT NULL"), sqlite_where=text("username IS NOT NULL")),
+        Index("uq_goal_catalog_target_practice", "catalog_id", "practice_notebook_id", unique=True,
+              postgresql_where=text("practice_notebook_id IS NOT NULL"), sqlite_where=text("practice_notebook_id IS NOT NULL")),
+    )
     id = Column(Integer, primary_key=True)
     catalog_id = Column(Integer, ForeignKey("goal_catalog.id", ondelete="CASCADE"), nullable=False, index=True)
     group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=True, index=True)
     username = Column(String, nullable=True)
-    practice_notebook_id = Column(Integer, ForeignKey("teacher_practice_notebooks.id", ondelete="CASCADE"), nullable=True)
+    practice_notebook_id = Column(Integer, ForeignKey("teacher_practice_notebooks.id", ondelete="CASCADE"), nullable=True, index=True)
     created_at = Column(UTCDateTime, server_default=func.now())
 
 
@@ -1510,6 +1520,7 @@ class GroupMembership(Base):
     """Appartenenza di uno studente a una classe (link invito o codice classe)."""
 
     __tablename__ = "group_memberships"
+    __table_args__ = (UniqueConstraint("group_id", "username", name="uq_group_membership_user"),)
 
     id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, index=True, nullable=False)
@@ -1548,7 +1559,7 @@ class ClassPairingCode(Base):
         CheckConstraint("max_uses IS NULL OR max_uses > 0", name="ck_class_pairing_code_max_uses"),
     )
     id = Column(Integer, primary_key=True)
-    group_id = Column(Integer, ForeignKey("student_groups.id"), nullable=False, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
     key_hash = Column(String(64), nullable=False, unique=True)
     created_at = Column(UTCDateTime, nullable=False)
     expires_at = Column(UTCDateTime, nullable=False)
@@ -1572,7 +1583,7 @@ class LocalStudent(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(16), nullable=False, unique=True)
     pseudonym = Column(String(64), nullable=False)
-    group_id = Column(Integer, ForeignKey("student_groups.id"), nullable=False, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
     personal_code_hash = Column(String(64), nullable=False, unique=True)
     status = Column(String(16), nullable=False, default="active")
     created_at = Column(UTCDateTime, nullable=False)
