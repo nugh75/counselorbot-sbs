@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -57,7 +58,9 @@ const markdownComponents: Components = {
 
 // Diagrammi, errori del provider e testo arrivano nello stesso messaggio:
 // splitDiagramContent li separa e pulisce i metadati privati.
-export function ChatMarkdown({ content, locale, errorMessage }: { content: string; locale: string; errorMessage: string }) {
+// Memoizzato (le proprietà sono stringhe): durante lo streaming i messaggi
+// precedenti non vengono rianalizzati a ogni frammento.
+export const ChatMarkdown = memo(function ChatMarkdown({ content, locale, errorMessage }: { content: string; locale: string; errorMessage: string }) {
     return splitDiagramContent(content).map((segment, index) => (
         segment.kind === 'diagram' ? (
             <DiagramBlock key={`diagram-${index}`} spec={segment.spec} locale={locale} />
@@ -81,4 +84,4 @@ export function ChatMarkdown({ content, locale, errorMessage }: { content: strin
             </div>
         )
     ));
-}
+});
