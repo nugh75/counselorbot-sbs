@@ -1370,6 +1370,11 @@ anche se il modello li racchiude in un JSON diverso da quello richiesto. La
 protezione vale per le nuove risposte, i messaggi già salvati e la lettura vocale;
 lo storico originale è conservato. La protezione copre anche i blocchi privati
 parziali durante lo streaming.
+Durante lo streaming la risposta in arrivo si aggiorna a ritmo regolare (circa
+venti volte al secondo) invece che a ogni frammento, e i messaggi precedenti non
+vengono ridisegnati: le conversazioni lunghe restano fluide. Chat guidata, chat
+libera e Assistente condividono lo stesso percorso; «Ferma la risposta» conserva
+il testo già arrivato.
 
 Nella chat guidata si scrive sotto la conversazione. La barra dei passi mantiene
 i comandi indietro e avanti sempre visibili e raggiungibili: indietro è attivo se
