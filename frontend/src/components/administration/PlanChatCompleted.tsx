@@ -9,7 +9,7 @@ import { PlanActivityReview } from './PlanActivityReview';
 export function PlanChatCompleted({ sessionId, questionnaireType, embedded = false }: { sessionId: string; questionnaireType: string; embedded?: boolean }) {
   const { lang, t } = useI18n();
   return <div className="max-w-xl mx-auto">
-    <Card className="p-8 text-center space-y-6">
+    <Card variant="flat" className="p-8 text-center space-y-6">
       <div>
         <h2 className="text-2xl font-semibold text-ink">{t('completed.title')}</h2>
         <p className="text-ink-muted mt-2">{t('completed.body1')} <strong>{questionnaireType}</strong>.</p>
