@@ -53,13 +53,9 @@ export function HeaderAISource() {
             </button>
             {shown && (
                 <div id="ai-source-panel" role="group" aria-label={view.title}
-                    className="header-panel absolute right-0 top-full z-[60] mt-2 w-72 rounded-control border border-line bg-surface p-3 text-sm shadow-pop">
-                    <p className="font-semibold text-ink">{view.title}</p>
-                    <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                        {view.rows.map(([label, value]) => <div key={label} className="contents">
-                            <dt className="text-ink-muted">{label}</dt><dd className="break-words text-ink">{value}</dd>
-                        </div>)}
-                    </dl>
+                    className="header-panel absolute right-0 top-full z-[60] mt-2 w-64 rounded-control border border-line bg-surface p-3 text-sm shadow-pop">
+                    <p className="font-semibold text-ink">{view.managed}</p>
+                    <p className="text-ink-muted">{view.detail}</p>
                     {view.warning && <p className="mt-2 rounded-control bg-warning-soft px-2 py-1.5 text-warning-ink">{view.warning}</p>}
                     <Link href={view.manageHref} onClick={close}
                         className="mt-2 inline-flex min-h-control items-center font-semibold text-link underline">{view.manage}</Link>
