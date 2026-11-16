@@ -27,6 +27,14 @@ const text = {
     chooseResult: ['Scegli la compilazione', 'Choose a result', 'Elegir un resultado', 'Choisir un résultat', 'Ergebnis auswählen', 'Välj ett resultat'],
     pathOptions: ['Opzioni del percorso', 'Path options', 'Opciones del recorrido', 'Options du parcours', 'Optionen für den Ablauf', 'Alternativ för vägen'],
     newPathOptions: ['Opzioni per un altro tentativo', 'Options for another attempt', 'Opciones para otro intento', 'Options pour une autre tentative', 'Optionen für einen neuen Versuch', 'Alternativ för ett nytt försök'],
+    repeatTitle: ['Iniziare un nuovo tentativo?', 'Start a new attempt?', '¿Empezar un nuevo intento?', 'Commencer une nouvelle tentative ?', 'Einen neuen Versuch beginnen?', 'Börja ett nytt försök?'],
+    repeatBody: ['Il tentativo precedente resta salvato. Quando avrai finito, sceglierai quale tentativo conta per il piano: finché non scegli, conta l’ultimo completato.', 'Your previous attempt stays saved. When you finish, you choose which attempt counts for the plan; until you choose, the latest completed one counts.', 'Tu intento anterior queda guardado. Al terminar, eliges qué intento cuenta para el plan; hasta que elijas, cuenta el último completado.', 'Votre tentative précédente reste enregistrée. À la fin, vous choisissez celle qui compte pour le plan ; tant que vous ne choisissez pas, la dernière terminée compte.', 'Dein bisheriger Versuch bleibt gespeichert. Danach wählst du, welcher Versuch für den Plan zählt; bis dahin zählt der zuletzt abgeschlossene.', 'Ditt tidigare försök finns kvar. När du är klar väljer du vilket försök som räknas för planen; tills du väljer räknas det senast avslutade.'],
+    repeatConfirm: ['Inizia il nuovo tentativo', 'Start the new attempt', 'Empezar el nuevo intento', 'Commencer la nouvelle tentative', 'Neuen Versuch beginnen', 'Börja det nya försöket'],
+    cancel: ['Annulla', 'Cancel', 'Cancelar', 'Annuler', 'Abbrechen', 'Avbryt'],
+    countThis: ['Conta questo', 'Count this one', 'Contar este', 'Compter celle-ci', 'Diesen zählen', 'Räkna detta'],
+    counted: ['Conta per il piano', 'Counts for the plan', 'Cuenta para el plan', 'Compte pour le plan', 'Zählt für den Plan', 'Räknas för planen'],
+    countFailed: ['Non è stato possibile cambiare il tentativo che conta. Riprova.', 'The counted attempt could not be changed. Try again.', 'No se pudo cambiar el intento que cuenta. Inténtalo de nuevo.', 'Impossible de changer la tentative qui compte. Réessayez.', 'Der zählende Versuch konnte nicht geändert werden. Bitte erneut versuchen.', 'Det gick inte att byta försöket som räknas. Försök igen.'],
+    allAttempts: ['Tutti i tentativi', 'All attempts', 'Todos los intentos', 'Toutes les tentatives', 'Alle Versuche', 'Alla försök'],
 } as const;
 export type PathActivityTextKey = keyof typeof text;
 export function pathActivityText(lang: string, key: string): string {

@@ -7,6 +7,8 @@ export interface PathAttempt {
     resumable: boolean;
     href: string;
     revision: number;
+    /** The completed attempt that counts for the plan (chosen, else the latest). */
+    counted?: boolean;
     draft?: { scores?: Record<string, number>; answers?: Record<number, number> } | null;
     result?: AdministrationResult | null;
 }
@@ -39,6 +41,13 @@ export function parsePathActivity(value: unknown): PathActivity | null {
         || [row.primary, row.repeat].some(action => action && !local(action.href))
         || row.attempts.some(attempt => !validAttempt(attempt)) || (row.current && !validAttempt(row.current))) return null;
     return row;
+}
+
+/** Earlier attempts, or every attempt once two are completed so the student can pick the counted one (#991). */
+export function attemptHistory(activity: PathActivity | null | undefined): { attempts: PathAttempt[]; canChoose: boolean } {
+    const all = activity?.attempts ?? [];
+    const canChoose = all.filter(attempt => attempt.state === 'completed').length > 1;
+    return { canChoose, attempts: all.filter(attempt => canChoose || attempt.session_id !== activity?.current?.session_id) };
 }
 
 export function activityReturnHref(pathname: string, stepId: number): string {

@@ -3,7 +3,7 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { activityReturnHref, withActivityReturn, withActivityOptions } from '@/lib/path-activity';
+import { activityReturnHref, attemptHistory, withActivityReturn, withActivityOptions } from '@/lib/path-activity';
 import { chatPreferenceLabel, isEssentialInstrument } from '@/lib/chat-preferences';
 import { pathActivityText } from '@/lib/i18n-path-activity';
 import { Check, Lock, AlertCircle, ArrowRight, ChevronRight, CheckCircle2 } from 'lucide-react';
@@ -102,6 +102,23 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
     const progressLabel = l('progressCount')
         .replace('{done}', String(path.done))
         .replace('{total}', String(path.total));
+
+    // #991: the student picks which completed attempt counts for the plan.
+    const chooseCounted = async (step: StudentClassPathStep, sessionId: string) => {
+        if (actionStepId !== null) return;
+        setActionStepId(step.id);
+        try {
+            const res = await apiFetch(`/api/user/paths/${path.id}/steps/${step.id}/counted-attempt`, {
+                method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({session_id: sessionId}),
+            });
+            if (!res.ok) throw new Error('counted attempt');
+            if (onReload) await onReload();
+        } catch {
+            toast.error(pa('countFailed'));
+        } finally {
+            setActionStepId(null);
+        }
+    };
 
     const handleToggleDone = async (step: StudentClassPathStep) => {
         if (actionStepId !== null) return;
@@ -241,7 +258,7 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
         const hint = dueHint(dueDay);
         const returnTo = activityReturnHref(pathname, step.id);
         const isNext = view === nextView;
-        const previous = step.activity?.attempts.filter(attempt => attempt.session_id !== step.activity?.current?.session_id) ?? [];
+        const {attempts: previous, canChoose} = attemptHistory(step.activity);
         return <div className="space-y-2 pb-1 pl-9">
             {isUnavailable && <p className="text-sm text-ink-body">{pathPublicationText(lang, 'studentUnavailable')}</p>}
             {isLocked && <p className="text-sm text-ink-body">
@@ -296,10 +313,13 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
             {!blocked && previous.length > 0 && <details className="group text-sm">
                 <summary className="flex min-h-control cursor-pointer list-none items-center gap-2 font-semibold text-link [&::-webkit-details-marker]:hidden">
                     <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden />
-                    {`${pa('history')} (${previous.length})`}
+                    {`${pa(canChoose ? 'allAttempts' : 'history')} (${previous.length})`}
                 </summary>
                 <ul className="divide-y divide-line">{previous.map(attempt => <li key={attempt.session_id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                     <span>{attempt.started_at ? new Date(attempt.started_at).toLocaleString(lang, {dateStyle: 'medium', timeStyle: 'short'}) : ''} · {l(attempt.state === 'completed' ? 'statusDone' : 'statusUnfinished')}</span>
+                    {canChoose && attempt.state === 'completed' && (attempt.counted
+                        ? <span className="inline-flex items-center gap-1 font-semibold text-success"><CheckCircle2 className="h-4 w-4" aria-hidden />{pa('counted')}</span>
+                        : <Button variant="ghost" disabled={actionStepId === step.id} onClick={() => void chooseCounted(step, attempt.session_id)}>{pa('countThis')}</Button>)}
                     <Link className="inline-flex min-h-control items-center px-2 font-semibold text-link underline" href={withActivityReturn(attempt.href, returnTo)}>
                         {attempt.state === 'completed' ? actionLabel(lang, step.activity!.kind, 'review') : pa('resume')}
                     </Link>

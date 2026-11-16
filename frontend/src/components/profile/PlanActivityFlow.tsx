@@ -15,6 +15,7 @@ import { ChatViewport } from '@/components/qsa/ChatViewport';
 import { PlanActivityReview } from '@/components/administration/PlanActivityReview';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { Dialog, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { ArrowLeft } from 'lucide-react';
 
@@ -31,6 +32,9 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
     const [saveState, setSaveState] = useState<'saving' | 'saved' | 'error' | null>(null);
     const save = useRef<(() => Promise<void>) | null>(null);
     const token = useRef<string | null>(null);
+    // A repeat starts nothing on page load: the student confirms first (#991).
+    const confirmed = useRef(false);
+    const [confirmNew, setConfirmNew] = useState(false);
     const registerSave = useCallback<RegisterActivitySave>(callback => {
         save.current = callback;
         if (callback) setReadyToSave(true);
@@ -54,6 +58,10 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
             let selected = requested && requested !== 'new'
                 ? detail.attempts.find(item => item.session_id === requested) : detail.current;
             if (newAttempt && detail.kind === 'analysis') selected = null;
+            if (newAttempt && !confirmed.current && token.current === null && ['chat', 'questionnaire', 'analysis'].includes(detail.kind)) {
+                if (active) { setActivity(detail); setAttempt(null); setConfirmNew(true); }
+                return;
+            }
             if (['chat', 'questionnaire'].includes(detail.kind) && (newAttempt || (!requested && !selected && !params.has('review')) || (token.current !== null && requested === token.current))) {
                 token.current ??= requested && requested !== 'new' ? requested : crypto.randomUUID();
                 params.set('attempt', token.current);
@@ -102,7 +110,14 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
         </div>
         {error && <Callout variant="danger"><p>{l('error')}</p><Button onClick={() => setReload(value => value + 1)}>{l('retry')}</Button></Callout>}
         {!activity && !error && <p role="status">{l('loading')}</p>}
-        {activity?.kind === 'analysis' && <ChatViewport><ResultsDeepDiveFlow pathId={pathId} stepId={stepId}
+        {confirmNew && <Dialog title={l('repeatTitle')} closeLabel={l('cancel')} onClose={() => router.push(readActivityReturn(stepId))}>
+            <DialogBody><p className="text-sm text-ink-body">{l('repeatBody')}</p></DialogBody>
+            <DialogFooter>
+                <Button onClick={() => { confirmed.current = true; setConfirmNew(false); setReload(value => value + 1); }}>{l('repeatConfirm')}</Button>
+                <Button variant="secondary" onClick={() => router.push(readActivityReturn(stepId))}>{l('cancel')}</Button>
+            </DialogFooter>
+        </Dialog>}
+        {activity?.kind === 'analysis' && !confirmNew && <ChatViewport><ResultsDeepDiveFlow pathId={pathId} stepId={stepId}
             registerSave={registerSave} onExit={() => router.push(readActivityReturn(stepId))} onCompleted={() => setReload(value => value + 1)} onSaveState={setSaveState} embedded /></ChatViewport>}
         {activity?.kind === 'questionnaire' && attempt && <AdministrationStepFlow key={`${attempt.session_id}:${attempt.revision}`}
             pathId={pathId} stepId={stepId} activityAttempt={attempt} nextHref={activity.next_href}
