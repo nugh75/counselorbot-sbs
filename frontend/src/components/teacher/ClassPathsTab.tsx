@@ -5,13 +5,13 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { administrationStepText } from '@/lib/i18n-administration-steps';
 import { fetchInstruments } from '@/lib/instruments-api';
-import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, Circle, ExternalLink, Flag, Plus, Trash2, X } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, Circle, ExternalLink, Flag, Plus, Trash2, X } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
 import { resolveStepPresentation } from '@/lib/class-path-presentation';
 import { StepPresentationFields } from './StepPresentationFields';
-import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
+import { dueBeforePlanned, plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resultsChatText } from '@/lib/i18n-results-chats';
 import { deepDiveSources, pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
 import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from '@/lib/path-assignments';
@@ -788,6 +788,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                         {plannedLocation && <p className="text-xs text-ink-muted">{plannedLocation}</p>}
                                                     </div>
                                                 )}
+                                                {dueBeforePlanned(step) && <p role="status" className="flex items-start gap-1 text-xs font-semibold text-warning-ink"><AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />{l('dueBeforePlanned')}</p>}
                                                 {!open && <>
                                                     {isChat && plannedDay && <p className="text-xs text-ink-body">{`${l('plannedDay')}: ${plannedDay}`}</p>}
                                                     {presentation.showDueDate && presentation.dueDate && <p className="text-xs text-ink-body">{`${l('dueHeader')}: ${new Date(`${presentation.dueDate}T12:00:00`).toLocaleDateString(lang, { dateStyle: 'medium' })}`}</p>}
