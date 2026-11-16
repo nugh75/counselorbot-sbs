@@ -713,7 +713,9 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
     if affirmative_directive and affirmative_directive.strip() not in system_prompt:
         parts.append("\n\n" + affirmative_directive)
     plat_ctx = platform_context(db, full=platform_full)
-    if plat_ctx and "[PLATFORM CAPABILITIES]" not in system_prompt:
+    # Match the block header only: intro prompts mention "[PLATFORM CAPABILITIES]"
+    # mid-sentence to point at the block, which must still be appended.
+    if plat_ctx and not re.search(r"^\[PLATFORM CAPABILITIES\]", system_prompt, re.MULTILINE):
         parts.append("\n\n" + plat_ctx)
     return _apply_reasoning_directive(
         "".join(parts),
