@@ -416,15 +416,25 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
             noticing: 'noticing',
         } as const)[raw as 'students'] ?? 'overview';
     });
+    // Keep the open tab in the URL so a browser reload or a copied link lands on it.
+    const selectTab = (next: typeof tab) => {
+        setTab(next);
+        const url = new URL(window.location.href);
+        if (next === 'overview') url.searchParams.delete('tab'); else url.searchParams.set('tab', next);
+        window.history.replaceState(window.history.state, '', url);
+    };
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const [coverOpen, setCoverOpen] = useState(false);
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
+    // `loading` is first load only: later reloads refresh in the background and
+    // keep the tabs mounted, so unsaved drafts survive a cover change or a lock.
     if (groups.loading || settings.loading) return <TeacherLoading />;
-    if (groups.failed || settings.failed || !group || !settings.data || settings.data.group_id !== groupId) return <Callout variant="danger">
+    const loadError = <Callout variant="danger">
         <p>{l('loadError')}</p>
         <Button variant="secondary" onClick={() => { void groups.reload(); void settings.reload(); }}>{l('reload')}</Button>
     </Callout>;
+    if (!group || !settings.data || settings.data.group_id !== groupId) return loadError;
     const activeTabs = ['overview', 'students', 'noticing', 'paths', 'forum', 'council', 'orientation', 'audit', 'toolsTab'] as const;
     const breadcrumbItems = getClassBreadcrumbs(group.name, groupId, tab, lang, adminRoute);
     return <div className="space-y-6">
@@ -442,17 +452,18 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
             </div>
             <div><h1 className="break-words text-2xl font-semibold text-ink">{group.name}</h1><p className="text-sm text-ink-muted">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
         </header>
+        {(groups.failed || settings.failed) && loadError}
         {coverOpen && <ClassImageModal open={coverOpen} group={group} onClose={() => setCoverOpen(false)}
             onUpdated={() => { setCoverOpen(false); void groups.reload(); }} />}
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-line pb-2">
             {activeTabs.map((key, index) => <button key={key} ref={node => { tabRefs.current[index] = node; }}
                 id={`class-tab-${key}`} type="button" role="tab" aria-selected={tab === key} aria-controls={`class-panel-${key}`}
-                tabIndex={tab === key ? 0 : -1} onClick={() => setTab(key)}
+                tabIndex={tab === key ? 0 : -1} onClick={() => selectTab(key)}
                 onKeyDown={event => {
                     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                     event.preventDefault();
                     const next = event.key === 'Home' ? 0 : event.key === 'End' ? activeTabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + activeTabs.length) % activeTabs.length;
-                    setTab(activeTabs[next]); tabRefs.current[next]?.focus();
+                    selectTab(activeTabs[next]); tabRefs.current[next]?.focus();
                 }} className={`min-h-control rounded-control px-4 text-sm font-semibold ${tab === key ? 'bg-brand-soft text-link' : 'text-ink-muted hover:bg-surface-raised'}`}>{l(key)}</button>)}
         </div>
         <div id="class-panel-overview" role="tabpanel" aria-labelledby="class-tab-overview" hidden={tab !== 'overview'} tabIndex={0}>
@@ -461,7 +472,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
                     group={group}
                     settings={settings.data}
                     onReload={() => { void groups.reload(); void settings.reload(); }}
-                    onSelectTab={(newTab) => setTab(newTab)}
+                    onSelectTab={(newTab) => selectTab(newTab)}
                     admin={admin}
                     adminRoute={adminRoute}
                 />
@@ -491,7 +502,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
             {tab === 'audit' && <ClassSettingsAudit key={settings.data.revision} settings={settings.data} />}
         </div>
         <div id="class-panel-toolsTab" role="tabpanel" aria-labelledby="class-tab-toolsTab" hidden={tab !== 'toolsTab'} tabIndex={0}>
-            <ClassToolsEditor admin={admin} initial={settings.data} onReload={() => { void settings.reload(); }} />
+            <ClassToolsEditor key={settings.data.revision} admin={admin} initial={settings.data} onReload={() => { void settings.reload(); }} />
         </div>
     </div>;
 
