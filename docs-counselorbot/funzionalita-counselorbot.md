@@ -3997,3 +3997,5 @@ entrambi i Compose). Il codice importa `datetime.UTC`, disponibile da Python 3.1
 con il vecchio default 3.10 una nuova installazione non riusciva ad avviare il
 backend. Nessuna modifica a funzioni, dati o Guida interfaccia; un deploy già in
 esecuzione resta valido finché non si ricostruisce l'immagine.
+
+**Copertina di classe e memoria di sessione protette (#999).** `GET /groups/{id}/image` richiede l'accesso e risponde solo a iscritti, docenti proprietari o con cui la classe e condivisa e amministratori (404 agli altri), con `Cache-Control: private`. `GET /memory/user/{session_id}` risponde solo al proprietario della sessione (403 altrimenti). `GET /groups/info` e rimossa: nessuna schermata la usava. Nessuna modifica alla Guida interfaccia ne ai dati; il deploy richiede solo il backend.
