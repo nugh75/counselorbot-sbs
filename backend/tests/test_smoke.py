@@ -316,7 +316,6 @@ EXPECTED_ROUTES = {
     ("DELETE", "/admin/teacher-notes/{note_id}"),
     ("POST", "/admin/groups/{group_id}/messages"),
     ("GET", "/user/teacher-notes"),
-    ("GET", "/groups/info"),
     ("POST", "/groups/join"),
     ("GET", "/user/groups"),
     ("DELETE", "/user/groups/{membership_id}"),
@@ -2728,7 +2727,11 @@ def test_stream_memory_contract_for_all_active_questionnaires():
         memory = session_memory.get_summary(session_id)
         assert "- Step corrente: Conclusione" in memory
         assert "- Step completati: Conclusione" in memory
-        progress = client.get(f"/memory/user/{session_id}")
+        main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+        try:
+            progress = client.get(f"/memory/user/{session_id}")
+        finally:
+            main.app.dependency_overrides.pop(auth.get_current_user, None)
         assert progress.status_code == 200, progress.text
         assert progress.json()["current_phase"] == "conclusion"
         assert progress.json()["completed_phases"] == ["conclusion"]
@@ -5787,11 +5790,6 @@ def test_group_membership_web_flow():
     """Classe autonoma: join con codice, membro senza risultati, aggancio al piano, leave."""
     group = client.post("/admin/groups", json={"name": "3B Informatica"}).json()
     assert group["code"].startswith("GR-")
-
-    # Info pubbliche per la pagina invito (case-insensitive)
-    r = client.get(f"/groups/info?code={group['code'].lower()}")
-    assert r.status_code == 200 and r.json()["name"] == "3B Informatica"
-    assert client.get("/groups/info?code=GR-NOPE").status_code == 404
 
     student_override = lambda: _identity("web.student", "web.student@example.test", is_admin=False, is_researcher=False)  # noqa: E731
     main.app.dependency_overrides[auth.get_current_user] = student_override
