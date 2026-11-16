@@ -17,6 +17,8 @@ openai
 anthropic
 google-genai
 mistralai
+# httpx2 2.16.1 (16 Nov 2026) breaks `import mistralai` on Python 3.12 (SyntaxError: Forward reference must be an expression). Remove the cap once fixed upstream.
+httpx2<2.16.1
 requests
 pillow
 fpdf2
