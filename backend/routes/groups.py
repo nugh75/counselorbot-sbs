@@ -129,8 +129,51 @@ def _valid_level(value) -> str | None:
     return level
 
 
-def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
-    shares_count = db.query(models.GroupShare).filter(models.GroupShare.group_id == group.id).count()
+def _serialize_groups(db: Session, groups: list[models.StudentGroup]) -> list[dict]:
+    """Serialize many classes with a constant number of queries (counts via GROUP BY)."""
+    ids = [group.id for group in groups]
+    members: dict[int, int] = {}
+    shares: dict[int, int] = {}
+    institutions: dict[int, str] = {}
+    if ids:
+        members = dict(
+            db.query(models.GroupMembership.group_id, func.count())
+            .filter(models.GroupMembership.group_id.in_(ids), real_membership())
+            .group_by(models.GroupMembership.group_id)
+            .all()
+        )
+        shares = dict(
+            db.query(models.GroupShare.group_id, func.count())
+            .filter(models.GroupShare.group_id.in_(ids))
+            .group_by(models.GroupShare.group_id)
+            .all()
+        )
+    inst_ids = {group.institution_id for group in groups if group.institution_id is not None}
+    if inst_ids:
+        institutions = dict(
+            db.query(models.Institution.id, models.Institution.name)
+            .filter(models.Institution.id.in_(inst_ids))
+            .all()
+        )
+    return [
+        _serialize_group(
+            db, group,
+            members_count=members.get(group.id, 0),
+            shares_count=shares.get(group.id, 0),
+            institution_name=institutions.get(group.institution_id),
+        )
+        for group in groups
+    ]
+
+
+def _serialize_group(db: Session, group: models.StudentGroup, *, members_count: int | None = None,
+                     shares_count: int | None = None, institution_name: str | None = None) -> dict:
+    if shares_count is None:
+        shares_count = db.query(models.GroupShare).filter(models.GroupShare.group_id == group.id).count()
+    if members_count is None:
+        members_count = _members_count(db, group.id)
+    if institution_name is None and group.institution_id:
+        institution_name = db.get(models.Institution, group.institution_id).name
     return {
         "id": group.id,
         "code": group.code,
@@ -138,14 +181,14 @@ def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
         "school": group.school,
         "school_level": group.school_level,
         "institution_id": group.institution_id,
-        "institution_name": (db.get(models.Institution, group.institution_id).name if group.institution_id else None),
+        "institution_name": institution_name,
         "description": group.description,
         "methodologies": group.methodologies,
         "context_visible_to_students": bool(group.context_visible_to_students),
         "image_url": group.image_url,
         "owner_username": group.owner_username,
         "is_active": group.is_active,
-        "members_count": _members_count(db, group.id),
+        "members_count": members_count,
         "shares_count": shares_count,
         "created_at": group.created_at.isoformat() if group.created_at else None,
     }
@@ -603,7 +646,7 @@ async def list_groups(
     # che il contesto della chat docenza accetta.
     query = owned_or_shared_group_query(db, current_user) if own else _visible_group_query(db, current_user)
     groups = query.order_by(models.StudentGroup.created_at.desc()).all()
-    return [_serialize_group(db, group) for group in groups]
+    return _serialize_groups(db, groups)
 
 
 @router.post("/admin/groups")
@@ -1154,8 +1197,6 @@ async def get_group_students(
         principal_from_identity,
     )
     from ..privacy.types import ResourceRef
-    from .learner_profile import _latest_revision
-
     group = _require_visible_group(db, current_user, group_id)
     _require_institution_membership(db, current_user, group)
 
@@ -1166,14 +1207,42 @@ async def get_group_students(
         .order_by(models.GroupMembership.username)
         .all()
     )
-    students = []
-    for member in members:
-        all_results = (
+    usernames = [member.username for member in members]
+    results_by_user: dict[str, list] = {name: [] for name in usernames}
+    linked: set[str] = set()
+    profiles: dict[str, models.LearnerProfileRevision] = {}
+    if usernames:
+        for row in (
             db.query(models.QuestionnaireResult)
-            .filter(models.QuestionnaireResult.username == member.username)
+            .filter(models.QuestionnaireResult.username.in_(usernames))
             .order_by(models.QuestionnaireResult.submitted_at.desc())
             .all()
+        ):
+            results_by_user[row.username].append(row)
+        linked = {
+            name for (name,) in db.query(models.TelegramAccountLink.username)
+            .filter(
+                models.TelegramAccountLink.username.in_(usernames),
+                models.TelegramAccountLink.revoked_at.is_(None),
+            )
+            .all()
+        }
+        rank = func.row_number().over(
+            partition_by=models.LearnerProfileRevision.username,
+            order_by=(models.LearnerProfileRevision.created_at.desc(), models.LearnerProfileRevision.id.desc()),
+        ).label("rank")
+        latest = (
+            db.query(models.LearnerProfileRevision.id, rank)
+            .filter(models.LearnerProfileRevision.username.in_(usernames))
+            .subquery()
         )
+        for rev in db.query(models.LearnerProfileRevision).join(
+            latest, latest.c.id == models.LearnerProfileRevision.id
+        ).filter(latest.c.rank == 1):
+            profiles[rev.username] = rev
+    students = []
+    for member in members:
+        all_results = results_by_user[member.username]
         authorized_results = []
         for row in all_results:
             res_ref = ResourceRef(
@@ -1187,15 +1256,7 @@ async def get_group_students(
                 if dec.allowed:
                     authorized_results.append(row)
 
-        telegram_link = (
-            db.query(models.TelegramAccountLink)
-            .filter(
-                models.TelegramAccountLink.username == member.username,
-                models.TelegramAccountLink.revoked_at.is_(None),
-            )
-            .first()
-        )
-        profile = _latest_revision(db, member.username)
+        profile = profiles.get(member.username)
 
         # G5 fix: learner_profile is not exposed to teacher unless notebook category is granted
         notebook_dec = authorize_data_access(
@@ -1208,7 +1269,7 @@ async def get_group_students(
         students.append({
             "username": member.username,
             "joined_via": member.joined_via,
-            "telegram_linked": bool(telegram_link),
+            "telegram_linked": member.username in linked,
             "learner_profile": learner_profile_data,
             "results": [
                 {
