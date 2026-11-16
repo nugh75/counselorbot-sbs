@@ -1580,7 +1580,7 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         assert "QAP: career adaptability" in system_prompt
         assert "how we'll explore my profile together" not in system_prompt
         if questionnaire_type == "SAVICKAS":
-            assert "narrative interview path" in system_prompt
+            assert "this is a narrative path of five questions" in system_prompt
         else:
             assert "will not normally ask me questions" not in system_prompt
             assert "without asking anything" not in system_prompt
