@@ -102,7 +102,39 @@ def activity_attempts(db, step, username):
         if previous:
             found[row.session_id]["result_id"] = previous["result_id"]
             found[row.session_id]["result"] = previous["result"]
-    return sorted(found.values(), key=lambda row: (row["started_at"] or "", row["session_id"]), reverse=True)
+    attempts = sorted(found.values(), key=lambda row: (row["started_at"] or "", row["session_id"]), reverse=True)
+    completed = [row for row in attempts if row["state"] == "completed"]
+    chosen = chosen_session(db, step, username)
+    counted = next((row for row in completed if row["session_id"] == chosen), completed[0] if completed else None)
+    for row in attempts:
+        row["counted"] = row is counted
+    return attempts
+
+
+def chosen_session(db, step, username):
+    """The attempt the student picked to count; None means the latest completed one."""
+    row = db.query(models.ClassPathCountedAttempt.session_id).filter_by(step_id=step.id, username=username).first()
+    return row[0] if row else None
+
+
+def choose_counted_attempt(db, identity, path_id, step_id, session_id):
+    from .routes.class_paths import require_step_launch
+    _, step, _ = require_step_launch(db, identity, path_id, step_id, for_update=True)
+    username = identity["username"]
+    # Only the student's own attempts are listed, so another student's session is not found.
+    attempt = next((row for row in activity_attempts(db, step, username) if row["session_id"] == session_id), None)
+    if not attempt:
+        raise HTTPException(404, "activity_attempt_not_found")
+    if attempt["state"] != "completed":
+        raise HTTPException(409, "activity_attempt_not_completed")
+    row = db.query(models.ClassPathCountedAttempt).filter_by(step_id=step.id, username=username).first()
+    if row:
+        row.session_id, row.chosen_at = session_id, datetime.now(timezone.utc)
+    else:
+        db.add(models.ClassPathCountedAttempt(step_id=step.id, username=username, session_id=session_id,
+                                              chosen_at=datetime.now(timezone.utc)))
+    db.commit()
+    return {"session_id": session_id}
 
 
 def student_activity(db, path, step, username, descriptor, *, include_data=False):

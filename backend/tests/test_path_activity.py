@@ -149,3 +149,42 @@ def test_analysis_history_and_latest_compilation(api):
     assert detail["primary"]["label"] == "resume"
     assert len(detail["attempts"]) == 2
     assert detail["attempts"][1]["session_id"] == first["session_id"]
+
+
+def test_student_chooses_counted_attempt_and_teacher_sees_all(class_paths_api):
+    client, db, _, identity = class_paths_api
+    path, url = chat_path(class_paths_api)
+    step_id = path["steps"][0]["id"]
+    first = client.post(url + "/attempts", json={"attempt_id": str(uuid4())}).json()["session_id"]
+    marker(db, first, questionnaire_type="SAVICKAS")
+    second = client.post(url + "/attempts", json={"attempt_id": str(uuid4()), "new_attempt": True}).json()["session_id"]
+    # An unfinished attempt cannot count and does not change the counted one.
+    assert client.put(url + "/counted-attempt", json={"session_id": second}).status_code == 409
+    assert [(a["session_id"], a["counted"]) for a in client.get(url + "/activity").json()["attempts"]] == [
+        (second, False), (first, True)]
+    marker(db, second, questionnaire_type="SAVICKAS")
+    # By default the latest completed attempt counts.
+    assert [a["counted"] for a in client.get(url + "/activity").json()["attempts"]] == [True, False]
+    chosen = client.put(url + "/counted-attempt", json={"session_id": first})
+    assert chosen.status_code == 200, chosen.text
+    attempts = client.get("/user/paths").json()[0]["steps"][0]["activity"]["attempts"]
+    assert [(a["session_id"], a["counted"]) for a in attempts] == [(second, False), (first, True)]
+    assert client.put(url + "/counted-attempt", json={"session_id": second}).status_code == 200
+    assert client.put(url + "/counted-attempt", json={"session_id": first}).status_code == 200
+    assert db.query(models.ClassPathCountedAttempt).filter_by(step_id=step_id, username="student").count() == 1
+    # Another member cannot pick this student's attempt.
+    db.add(models.GroupMembership(group_id=path["group_id"], username="other")); db.commit()
+    identity.update(username="other")
+    assert client.put(url + "/counted-attempt", json={"session_id": first}).status_code == 404
+    # The teacher sees every attempt with the counted one, never transcripts or answers.
+    identity.update(username="owner", groups=["docenti"])
+    teacher_url = f"/teacher/paths/{path['id']}/steps/{step_id}/attempts"
+    rows = client.get(teacher_url + "/student").json()
+    assert [(row["session_id"], row["counted"], row["state"]) for row in rows] == [
+        (second, False, "completed"), (first, True, "completed")]
+    assert set(rows[0]) == {"session_id", "started_at", "state", "counted"}
+    assert client.get(teacher_url + "/stranger").status_code == 404
+    students = client.get(f"/teacher/paths/{path['id']}/progress").json()["students"]
+    cell = next(row for row in students if row["username"] == "student")["cells"][0]
+    first_started = next(row["started_at"] for row in rows if row["session_id"] == first)
+    assert cell["state"] == "done" and cell["completion_at"] == first_started

@@ -492,8 +492,7 @@ def forum_student_state(db, path, step, username):
 def completion_evidence(db, path, step, username):
     if step.step_type == "guided_chat":
         from .path_activity import activity_attempts
-        completed = next((attempt for attempt in activity_attempts(db, step, username)
-                          if attempt["state"] == "completed"), None)
+        completed = next((attempt for attempt in activity_attempts(db, step, username) if attempt["counted"]), None)
         return {"kind": "tool", "at": completed["started_at"]} if completed else None
     if step.step_type in ("tool", "guided_chat"):
         return (
@@ -502,7 +501,9 @@ def completion_evidence(db, path, step, username):
             else None
         )
     if step.step_type == "guided_results_chat":
-        return deep_dive_evidence(db, step, username)
+        from .path_activity import chosen_session
+        chosen = chosen_session(db, step, username)
+        return (chosen and deep_dive_evidence(db, step, username, session_id=chosen)) or deep_dive_evidence(db, step, username)
     if step.step_type == "assignment":
         return assignment_evidence(db, path, step, username)
     if step.step_type == "forum":
@@ -510,7 +511,12 @@ def completion_evidence(db, path, step, username):
     if step.step_type == "meeting":
         mark = attendance(db, step.meeting_id, username)
         return {"kind": "meeting_attendance", "at": mark.marked_at} if mark else None
-    return next(administration_evidence(db, step, username), None)
+    # The attempt the student chose counts, otherwise the latest completed one.
+    from .path_activity import chosen_session
+    chosen = chosen_session(db, step, username)
+    evidence = list(administration_evidence(db, step, username))
+    return next((row for row in evidence if chosen and db.get(models.QuestionnaireResult, row["result_id"]).session_id == chosen),
+                evidence[-1] if evidence else None)
 
 
 def deep_dive_evidence(db, step, username, session_id=None):
@@ -522,7 +528,7 @@ def deep_dive_evidence(db, step, username, session_id=None):
     for binding in (
         db.query(models.ClassPathDeepDiveSession)
         .filter_by(step_id=step.id, username=username)
-        .order_by(models.ClassPathDeepDiveSession.id)
+        .order_by(models.ClassPathDeepDiveSession.id.desc())  # latest completed counts by default
     ):
         if session_id is not None and binding.session_id != session_id:
             continue
