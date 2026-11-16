@@ -2,7 +2,6 @@
 import asyncio
 import json
 import socket
-from types import SimpleNamespace
 from unittest.mock import Mock
 
 import httpx
@@ -238,7 +237,7 @@ def test_default_engine_prefers_available_local_piper(monkeypatch, available, en
     monkeypatch.setattr(reader, "reader_events", events)
 
     async def run():
-        response = await reader.stream(reader.ReaderRequest(text="student@example.org"), SimpleNamespace())
+        response = await reader.stream(reader.ReaderRequest(text="student@example.org"), Mock())
         return [event async for event in response.body_iterator]
 
     asyncio.run(run())
