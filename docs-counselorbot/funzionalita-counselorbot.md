@@ -3947,3 +3947,12 @@ un solo colore con il loro nome, senza l'arcobaleno viola/ciano/verde. Nelle cha
 i pulsanti di scelta e le risposte rapide arrivano a 44 px e i colori passano dai
 token del tema, così il tema scuro non dipende più dal remap. Nessuna modifica a
 dati, flussi o Guida interfaccia.
+
+### Python 3.12 nell'immagine backend (#981)
+
+L'immagine backend usa Python 3.12 come default (`PYTHON_BASE_IMAGE` in
+`backend/Dockerfile`, sovrascrivibile con `COUNSELORBOT_PYTHON_BASE_IMAGE` in
+entrambi i Compose). Il codice importa `datetime.UTC`, disponibile da Python 3.11:
+con il vecchio default 3.10 una nuova installazione non riusciva ad avviare il
+backend. Nessuna modifica a funzioni, dati o Guida interfaccia; un deploy già in
+esecuzione resta valido finché non si ricostruisce l'immagine.
