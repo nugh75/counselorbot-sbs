@@ -95,7 +95,7 @@ def test_launch_describes_in_app_runner_without_external_link(inapp):
     assert launch.status_code == 200, launch.text
     body = launch.json()
     assert (body["delivery_mode"], body["locale"], body["external_href"]) == ("in_app", "en", None)
-    assert "password" not in str(body)
+    assert body["institution"]["institution_password"] is None
 
 
 def test_runner_result_alone_stays_undone_then_guided_entry_completes_without_duplicates(inapp):
