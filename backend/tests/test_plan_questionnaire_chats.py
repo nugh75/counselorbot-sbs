@@ -101,7 +101,8 @@ def test_personal_analysis_publishes_without_result_or_institute(api):
     assert db.query(models.AdministrationPlan).count() == 0
     identity.update(STUDENT)
     options = client.get(endpoint(path)).json()
-    assert options == {"personal": True, "ready": False, "source_href": "/?start=QSA", "results": [], "session": None}
+    assert options == {"personal": True, "ready": False, "source_href": "/?start=QSA", "results": [], "session": None,
+                       "attempts": [], "completed": False, "legacy_profile": False}
     assert client.post(endpoint(path)).json()["detail"] == "results_selection_required"
 
 
