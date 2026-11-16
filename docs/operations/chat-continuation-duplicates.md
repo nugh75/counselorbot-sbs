@@ -68,7 +68,7 @@ docker run --rm \
 ```
 
 Nel portabile la build usa
-`--build-arg PYTHON_BASE_IMAGE=mirror.gcr.io/library/python:3.10-slim`.
+`--build-arg PYTHON_BASE_IMAGE=mirror.gcr.io/library/python:3.12-slim`.
 La suite controlla chunk da 1, 17 e 4096 caratteri, ripartenze esatte e
 riscritture, eco senza progresso, errori a metà ripresa, salvataggio singolo
 di testo e candidato, segnali di controllo e cronologia.

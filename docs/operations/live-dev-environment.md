@@ -655,4 +655,4 @@ riservati alle verifiche e non sostituiscono i servizi di produzione.
 - Copertura: telefono/desktop e tema scuro, conteggio unico, filtri, origine codice/prompt, confronto, copia del riepilogo e ripiego manuale, inglese ed errore di caricamento. Nessuna chiamata a modelli reali.
 - Su SSH: `ssh -N -L 3186:127.0.0.1:3186 <utente>@<server>`, poi `http://localhost:3186`.
 - Arresto dello script: Ctrl-C nel terminale che lo esegue. Per i container S1: `docker stop counselorbot-s1-prompt-health-frontend counselorbot-s1-prompt-health-postgres`.
-- Build backend di verifica: `docker build --build-arg PYTHON_BASE_IMAGE=python:3.12-slim -f backend/Dockerfile -t counselorbot-s1-prompt-health-backend:test .`. Il default Python 3.10 non supporta l’importazione preesistente di `datetime.UTC`; non usare immagini o dati di produzione.
+- Build backend di verifica: `docker build -f backend/Dockerfile -t counselorbot-s1-prompt-health-backend:test .`. L’immagine usa Python 3.12 di default; non usare immagini o dati di produzione.
