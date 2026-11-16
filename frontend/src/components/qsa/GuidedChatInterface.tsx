@@ -16,6 +16,7 @@ import { ZTPIFactorCode, ZTPI_FACTORS } from '@/lib/ztpi-model';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { ChatProviderError } from '@/lib/chat-stream';
+import { createStreamedMessage, type StreamedMessage } from '@/lib/streamed-message';
 import { canSelectPhase, emptyCheckpoint, emptyNavigation, explorationPayload, type ExplorationEvent, type GuidedCheckpoint } from '@/lib/guided-navigation';
 import { navigationCopy } from '@/lib/guided-navigation-copy';
 import { chatErrorText } from '@/lib/i18n-personal-api';
@@ -994,24 +995,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         const controller = beginRequest();
         setIsLoading(true);
         const scoresContext = scoresContextOverride ?? formatScoresForPrompt(scores);
-        const updateLast = (content: string) => {
-            setMessages(prev => {
-                const copy = [...prev];
-                copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', content };
-                return copy;
-            });
-        };
+        const reply = createStreamedMessage(setMessages, controller.signal);
         const updateReasoning = (reasoning: string) => {
             // Un <think> che sfugge al provider non deve riaprire il pannello
             // quando lo studente ha scelto «Nessuno».
             if (effortForPhase(FIXED_QUESTIONS_ID) === 'off') return;
-            setMessages(prev => {
-                const copy = [...prev];
-                copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
-                return copy;
-            });
+            reply.stream({ reasoning });
         };
-        const dropLast = () => setMessages(prev => prev.slice(0, -1));
 
         setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
         try {
@@ -1037,17 +1027,19 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 ...notebookPayload,
                 idea_budget: isIdea ? ideaBudget : undefined,
                 preview: preview ? true : undefined,
-            }, (full) => { updateLast(full); voice?.onPartial(full); }, controller.signal, (r) => updateReasoning(r));
+            }, (full) => { reply.stream({ content: full }); voice?.onPartial(full); }, controller.signal, (r) => updateReasoning(r));
+            reply.finish();
             if (result.conversation_id) setConversationId(result.conversation_id);
             adoptRecommendations(result.recommendations);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
             if (isIdea) setIdeaDrew(result.idea_revision_id != null);
             opening = result.response?.trim() || undefined;
-            if (!opening) dropLast();
+            if (!opening) reply.drop();
         } catch {
-            if (!controller.signal.aborted) dropLast();
+            if (!controller.signal.aborted) reply.drop();
         } finally {
+            reply.finish();
             voice?.resolve(opening);
             if (requestRef.current === controller) {
                 requestRef.current = null;
@@ -1121,26 +1113,16 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             let advanceSignal = false;
             let streamOk = false;
             let stepErrorCode: string | undefined;
-            const updateLast = (content: string) => {
-                setMessages(prev => {
-                    const copy = [...prev];
-                    copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', content };
-                    return copy;
-                });
-            };
+            const reply = createStreamedMessage(setMessages, controller.signal);
             const updateReasoning = (reasoning: string) => {
                 if (effortForPhase(step.id) === 'off') return;
-                setMessages(prev => {
-                    const copy = [...prev];
-                    copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
-                    return copy;
-                });
+                reply.stream({ reasoning });
             };
-            const dropLast = () => setMessages(prev => prev.slice(0, -1));
 
             setMessages(prev => [...prev, { role: 'assistant', content: '', phaseId: step.id }]);
             try {
-                const result = await streamChat(buildPayload(false), (full) => { updateLast(full); voice?.onPartial(full); }, controller.signal, (r) => updateReasoning(r));
+                const result = await streamChat(buildPayload(false), (full) => { reply.stream({ content: full }); voice?.onPartial(full); }, controller.signal, (r) => updateReasoning(r));
+                reply.finish();
                 responseText = result.response || '';
                 advanceSignal = result.control_signals.includes(ADVANCE_STEP);
                 if (result.conversation_id) setConversationId(result.conversation_id);
@@ -1154,14 +1136,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             } catch (error) {
                 if (controller.signal.aborted) return;
                 if (error instanceof ChatProviderError) stepErrorCode = error.code;
-                dropLast();
+                reply.drop();
             }
 
             const cleanText = responseText.trim();
             if (streamOk && cleanText) {
                 const shouldAdvance = advanceSignal;
                 opening = cleanText;
-                updateLast(cleanText);
+                reply.set({ content: cleanText });
                 // Obiettivi: la sintesi è l'ultima fase, il percorso è concluso.
                 if (!essential && isGoalInstrument(questionnaireType) && step.id === phases[phases.length - 1]) {
                     void recordMemoryEvent(step.id, true);
@@ -1178,12 +1160,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 }
             } else if (streamOk && advanceSignal && !essential && advancesOnSignal(questionnaireType) && autoAdvancesOnGenerate(questionnaireType, step.id)) {
                 // Apertura fatta del solo segnale: la fase era gia' compiuta.
-                dropLast();
+                reply.drop();
                 await advancePhase();
             } else if (streamOk) {
                 // Stream ok ma nessun testo di risposta (es. reasoning ha esaurito il budget):
                 // non lasciare il vuoto, segnala l'errore così l'utente può ripetere lo step.
-                dropLast();
+                reply.drop();
                 setMessages(prev => [...prev, {
                     role: 'assistant',
                     content: t('guided.stepError')
@@ -1289,6 +1271,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         setIsLoading(true);
         setShowAdvanceSuggestion(false);
         const controller = beginRequest();
+        let reply: StreamedMessage<ChatMessage> | undefined;
 
         try {
             const currentStep = isAnalysisStep(currentPhase) ? getStepDef(currentPhase) : undefined;
@@ -1296,22 +1279,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
             // Placeholder dell'assistente, riempito in streaming
             setMessages(prev => [...prev, { role: 'assistant', content: '', phaseId: currentPhase, explorationId: activeExploration?.id }]);
-            const updateLast = (content: string) => {
-                setMessages(prev => {
-                    const copy = [...prev];
-                    copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', content };
-                    return copy;
-                });
-            };
+            reply = createStreamedMessage(setMessages, controller.signal);
             const updateReasoning = (reasoning: string) => {
                 if (effortForPhase(currentPhase) === 'off') return;
-                setMessages(prev => {
-                    const copy = [...prev];
-                    copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
-                    return copy;
-                });
+                reply?.stream({ reasoning });
             };
-            const dropLast = () => setMessages(prev => prev.slice(0, -1));
 
             const chatPayload: Record<string, unknown> = {
                 message: effectiveMessage,
@@ -1343,10 +1315,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             }
             const result = await streamChat(
                 chatPayload,
-                (full) => { updateLast(full); onPartial?.(full); },
+                (full) => { reply?.stream({ content: full }); onPartial?.(full); },
                 controller.signal,
                 (r) => updateReasoning(r),
             );
+            reply.finish();
             const { response } = result;
             if (result.conversation_id) setConversationId(result.conversation_id);
             adoptRecommendations(result.recommendations);
@@ -1362,9 +1335,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const cleanText = (response || '').trim();
             const shouldAdvance = result.control_signals.includes(ADVANCE_STEP);
             if (cleanText) {
-                updateLast(cleanText);
+                reply.set({ content: cleanText });
             } else {
-                dropLast();
+                reply.drop();
             }
             if (result.exploration) {
                 applyExplorationEvent(result.exploration);
@@ -1405,6 +1378,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             }
             return cleanText || undefined;
         } catch (error) {
+            reply?.finish();
             if (controller.signal.aborted) return;
             setMessages(prev => [...prev, { role: 'assistant', phaseId: currentPhase, explorationId: activeExploration?.id, content: (error instanceof ChatProviderError ? chatErrorText(activeLocale as Lang, error.code) : null) ?? t('guided.connError') }]);
         } finally {

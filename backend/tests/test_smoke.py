@@ -5010,6 +5010,7 @@ def test_pqbl_upload_and_learning_flow():
         lambda path, start, end, **kwargs: extract_kwargs.append(kwargs) or canned_text)
     pqbl_routes.split_text_into_chunks = lambda text: [canned_text]
     pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None, model=None: _pqbl_canned_bank(4)
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity  # pQBL richiede login (#998)
     try:
         # dimensione non ammessa -> 400
         r = client.post("/pqbl/upload", files={"file": ("dispensa.pdf", b"%PDF-1.4 x", "application/pdf")},
@@ -5121,6 +5122,7 @@ def test_pqbl_upload_and_learning_flow():
         pqbl_routes.extract_pdf_text_range = original_extract_range
         pqbl_routes.generate_batch_for_chunk = original_generate
         pqbl_routes.split_text_into_chunks = original_split
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_pqbl_early_break_aligns_chunks():
@@ -5135,6 +5137,7 @@ def test_pqbl_early_break_aligns_chunks():
     pqbl_routes.extract_pdf_text_range = lambda path, start, end, **kwargs: canned_text
     pqbl_routes.split_text_into_chunks = lambda text: [canned_text, canned_text]  # 2 chunk per segmento
     pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None, model=None: _pqbl_canned_bank(4)
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity  # pQBL richiede login (#998)
     try:
         r = client.post("/pqbl/upload", files={"file": ("dispensa_early.pdf", b"%PDF-1.4 early_break", "application/pdf")},
                         data={"size": "10"})
@@ -5157,6 +5160,7 @@ def test_pqbl_early_break_aligns_chunks():
         pqbl_routes.extract_pdf_text_range = original_extract_range
         pqbl_routes.generate_batch_for_chunk = original_generate
         pqbl_routes.split_text_into_chunks = original_split
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_pqbl_json_repair_and_question_salvaging():

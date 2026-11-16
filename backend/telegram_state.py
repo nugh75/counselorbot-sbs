@@ -1105,7 +1105,7 @@ async def _pqbl_start_session(db: Session, state: models.TelegramConversationSta
             PqblSessionCreate(document_id=document_id, mode="learning"),
             db, identity,
         )
-        fetched = await get_pqbl_session_questions(created["session_id"], db)
+        fetched = await get_pqbl_session_questions(created["session_id"], db, identity)
     except Exception:
         logger.exception("Telegram pQBL: avvio sessione fallito (documento %s)", document_id)
         await telegram_bot.send_message(state.telegram_chat_id, _t("error", state.language))
@@ -1178,7 +1178,7 @@ async def _pqbl_finish(db: Session, state: models.TelegramConversationState) -> 
     summary = None
     if session_id:
         try:
-            summary = await get_pqbl_session_summary(session_id, db)
+            summary = await get_pqbl_session_summary(session_id, db, _identity_for(state.username, db))
         except Exception:
             logger.exception("Telegram pQBL: riepilogo non disponibile (sessione %s)", session_id)
     _reset_state(state)

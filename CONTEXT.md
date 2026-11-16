@@ -4,6 +4,7 @@
 
 ## Quick Reference
 - **Noticing dell’intero percorso (#890)**: `docs/operations/whole-journey-noticing.md` — the class Noticing tab reads every source of each member’s journey (chats without questionnaires, notebook, portfolio metadata, goals/reviews, visual tools, flashcards, Idea maps, tables, submitted assignments, meetings, teacher notes, pQBL, own published forum posts); results tied to another class stay out. Batch analysis on explicit request, quotes re-verified on each read, sources openable; caches in `teacher_noticing_artifacts`, outside logs. Orientation recommendation (#664) stays separate.
+- **Integrità dati di classe (#1000)**: `group_memberships` ha il vincolo unico `uq_group_membership_user (group_id, username)`; `ensure_membership` usa `INSERT … ON CONFLICT DO NOTHING`. `delete_group` (`_delete_group_data` in `backend/routes/groups.py`) cancella anche le tabelle senza FK (`group_shares`, `class_council_links`, `goal_catalog`, `teacher_assignments` dopo la riga classe per il RESTRICT dei passi), azzera `personal_goals.shared_group_id`, toglie l’id da `teacher_practice_notebooks.group_ids` e rimuove la copertina; `class_pairing_codes`/`local_students` hanno FK `ON DELETE CASCADE`. `goal_catalog_targets`: CHECK destinatario e indici unici parziali. Migrazione idempotente `backend/migrations/20261116_class_data_integrity.py`. Test: `backend/tests/test_class_data_integrity.py`.
 - **Studente aggiunto per email (#836)**: tabella `group_invitations` (email minuscola, unica per classe, `sent_at`, `accepted_at`; creata da `create_all`, nessuna migrazione). Rotte docente `/admin/groups/{id}/invitations` (GET in attesa, POST, `POST …/{inv}/sent`, DELETE) 404 con `AUTH_PROVIDER=local`. `accept_invitation` in `backend/routes/groups.py` iscrive (`joined_via="teacher"`) chi apre il link della classe (`/groups/join`) con `Remote-Email` uguale; solo lì, perché la registrazione ai4auth con password non verifica l’email; salta proprietario e account demo. Nessuna email inviata dal server: `mailto:` dal client del docente. UI `ClassEmailInvitations.tsx` (campo e elenco in attesa) composta da `ClassStudentsTab.tsx` (#838: studenti reali, inviti in attesa, studenti di prova, in questo ordine nella scheda «Partecipanti e risultati»). Test: `backend/tests/test_group_invitations.py`.
 - **Dati di prova fuori dai dati reali (#835)**: `backend/test_accounts.py` è l’unico punto (`real_membership()` per le query su `GroupMembership`, `real_log()` per statistiche/export dei log, `is_test_member`). Esclusi in lettura account demo dell’anteprima e proprietario della classe; il link d’invito non li iscrive (403). Nessuna migrazione: le righe esistenti restano.
 - **Salute dei prompt (S1)**: problemi in primo piano, nomi leggibili e due strade: modifica del prompt nell’istanza o riepilogo copiabile per un agente sul repository. Origini codice distinte dalla fabbrica, anche contraddizioni codice/codice; mappa, modello e statistiche espandibili. Fixture senza backend su 3186: `docs/operations/live-dev-environment.md`. Handoff: `docs/handoff/feature-prompt-health-management.md`.
@@ -547,12 +548,15 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 ### PQBL (Problem/Question-Based Learning)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `POST` | `/api/pqbl/upload` | — | Upload document for question generation |
-| `POST` | `/api/pqbl/sessions` | student | Start PQBL session |
-| `GET` | `/api/pqbl/sessions/{id}/questions` | student | Get generated questions |
-| `POST` | `/api/pqbl/sessions/{id}/answer` | student | Submit answer |
-| `POST` | `/api/pqbl/sessions/{id}/final-test` | student | Take final test |
-| `GET` | `/api/pqbl/sessions/{id}/summary` | student | Session summary |
+| `POST` | `/api/pqbl/upload` | login | Upload PDF (max 25 MB, streamed to disk; 413 over the limit, 429 if the user already has an upload running) |
+| `GET` | `/api/pqbl/documents/{id}` | owner/read | Document status and skills |
+| `POST` | `/api/pqbl/sessions` | owner | Start PQBL session on an own document |
+| `GET` | `/api/pqbl/sessions/{id}/questions` | owner/read | Get generated questions |
+| `POST` | `/api/pqbl/sessions/{id}/answer` | owner | Submit answer |
+| `POST` | `/api/pqbl/sessions/{id}/final-test` | owner | Take final test |
+| `GET` | `/api/pqbl/sessions/{id}/summary` | owner/read | Session summary |
+
+Every pQBL route returns 401 without login (#998). "owner/read": the owner, or whoever `authorize_data_access` allows (admin locally, break-glass on L1; teachers have no class grant for pQBL). Anyone else gets 404. A reused question bank is matched only among the same user's documents.
 
 ### Admin: Config
 | Method | Endpoint | Description |
@@ -748,6 +752,7 @@ frontend/
   src/lib/
     auth.ts                 Identity from /auth/me
     chat-stream.ts          SSE consumer (throws on {error})
+    streamed-message.ts     Streamed assistant message shared by guided/free/site chats (deltas at most every 50 ms, flush on abort)
     i18n.ts                 Student-facing strings
     i18n-admin.ts           Admin strings (IT + EN blocks)
     i18n-factors.ts         Factor descriptions

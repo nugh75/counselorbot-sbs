@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from .. import auth, database, models, schemas
 from ..class_access import FORUM_OPTIONS, active_view_group_ids, forum_option
 from ..class_tools import ALWAYS_ON, tool_catalog
+from ..db_compat import dialect_insert
 from ..group_visibility import (
     _is_admin,
     _username,
@@ -165,22 +166,24 @@ def _serialize_note(note: models.TeacherNote) -> dict:
 
 
 def ensure_membership(db: Session, group_id: int, username: str, joined_via: str) -> models.GroupMembership:
-    """Iscrizione idempotente di uno studente a una classe."""
+    """Iscrizione idempotente di uno studente a una classe.
+
+    INSERT ... ON CONFLICT DO NOTHING sul vincolo (group_id, username): due
+    ingressi concorrenti producono una sola riga e nessun errore.
+    """
+    db.execute(
+        dialect_insert(db, models.GroupMembership.__table__)
+        .values(group_id=group_id, username=username, joined_via=joined_via)
+        .on_conflict_do_nothing(index_elements=["group_id", "username"])
+    )
     membership = (
         db.query(models.GroupMembership)
         .filter(
             models.GroupMembership.group_id == group_id,
             models.GroupMembership.username == username,
         )
-        .first()
+        .one()
     )
-    if membership:
-        from ..privacy.authz import sync_grants_for_membership
-        sync_grants_for_membership(db, group_id, username, created_at=membership.created_at)
-        return membership
-    membership = models.GroupMembership(group_id=group_id, username=username, joined_via=joined_via)
-    db.add(membership)
-    db.flush()
     from ..privacy.authz import sync_grants_for_membership
     sync_grants_for_membership(db, group_id, username, created_at=membership.created_at)
     return membership
@@ -762,11 +765,48 @@ async def delete_group(
     linked_plans = db.query(models.AdministrationPlan).filter(models.AdministrationPlan.group_id == group.id).count()
     if linked_plans:
         raise HTTPException(status_code=409, detail="La classe e' agganciata a piani di somministrazione: disattivarla invece di eliminarla")
-    db.query(models.GroupMembership).filter(models.GroupMembership.group_id == group.id).delete()
-    db.query(models.TeacherNote).filter(models.TeacherNote.group_id == group.id).delete()
-    db.delete(group)
+    _delete_group_data(db, group)
     db.commit()
+    _remove_group_image(group_id)
     return {"ok": True, "deleted": group_id}
+
+
+def _delete_group_data(db: Session, group: models.StudentGroup) -> None:
+    """Remove the class and everything linked to it (#1000).
+
+    Tables with a cascading foreign key follow the class row; the rest hold
+    a bare group id and are cleaned here. Assignments go after the class row:
+    its path steps reference them with RESTRICT and leave with the paths.
+    """
+    gid = group.id
+    for model, column in [
+        (models.GroupMembership, models.GroupMembership.group_id),
+        (models.TeacherNote, models.TeacherNote.group_id),
+        (models.GroupShare, models.GroupShare.group_id),
+        (models.ClassCouncilLink, models.ClassCouncilLink.group_id),
+        (models.GoalCatalogEntry, models.GoalCatalogEntry.group_id),
+    ]:
+        db.query(model).filter(column == gid).delete(synchronize_session=False)
+    db.query(models.PersonalGoal).filter(models.PersonalGoal.shared_group_id == gid).update(
+        {models.PersonalGoal.shared_group_id: None}, synchronize_session=False
+    )
+    for notebook in db.query(models.TeacherPracticeNotebook).all():
+        group_ids = schemas.normalize_practice_group_ids(notebook.group_ids)
+        if gid in group_ids:
+            notebook.group_ids = [g for g in group_ids if g != gid]
+    db.delete(group)
+    db.flush()
+    db.query(models.TeacherAssignment).filter(models.TeacherAssignment.group_id == gid).delete(
+        synchronize_session=False
+    )
+
+
+def _remove_group_image(group_id: int) -> None:
+    for path in glob.glob(os.path.join(CLASS_IMAGES_STORAGE_DIR, f"group_{group_id}.*")):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
 
 
 # --- Condivisione classe con altri docenti -----------------------------------

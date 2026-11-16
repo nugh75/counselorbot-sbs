@@ -1370,6 +1370,11 @@ anche se il modello li racchiude in un JSON diverso da quello richiesto. La
 protezione vale per le nuove risposte, i messaggi già salvati e la lettura vocale;
 lo storico originale è conservato. La protezione copre anche i blocchi privati
 parziali durante lo streaming.
+Durante lo streaming la risposta in arrivo si aggiorna a ritmo regolare (circa
+venti volte al secondo) invece che a ogni frammento, e i messaggi precedenti non
+vengono ridisegnati: le conversazioni lunghe restano fluide. Chat guidata, chat
+libera e Assistente condividono lo stesso percorso; «Ferma la risposta» conserva
+il testo già arrivato.
 
 Nella chat guidata si scrive sotto la conversazione. La barra dei passi mantiene
 i comandi indietro e avanti sempre visibili e raggiungibili: indietro è attivo se
@@ -1761,7 +1766,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | --- | --- | --- |
 | Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo (in creazione restano visibili titolo, motivazione e data di revisione; criteri, priorità, stato e condivisione sono sotto «Più dettagli»); scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
 | Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. Gli incontri della classe o del gruppo che il docente mostra nella linea del tempo (opzione «Mostra nella linea del tempo degli studenti», attiva di default) compaiono sull’asse e nel calendario come «Incontro della classe o del gruppo», con data, ora e luogo oppure «Online», segnati se annullati, e hanno un proprio filtro; quelli individuali compaiono solo alla fascia prenotata dallo studente; non vengono copiati nei dati personali. Sopra la linea, chi è in una classe o in un gruppo trova «Incontri delle tue classi o gruppi»: data, luogo o link, con chi è l’incontro, incontri annullati, la prenotazione delle fasce degli incontri individuali e il pulsante «Ho partecipato» dall’inizio dell’incontro o della propria fascia, quando il docente lascia allo studente la conferma della presenza; a pagina aperta il pulsante compare da solo all’ora d’inizio, perché la pagina ricontrolla l’ora ogni mezzo minuto (lo stesso vale per il conteggio delle presenze nell’elenco incontri del docente). |
-| Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB; un PDF scansionato richiede OCR/visione su host locale fidato, senza invio di immagini a provider esterni; senza OCR utilizzabile compare un errore nella lingua scelta), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. Il codice del servizio pQBL è incluso nel controllo automatico di lint della piattaforma. |
+| Studiare da un PDF (pQBL) | `/profilo/pqbl` | Richiede l’accesso; documenti, domande e riepiloghi sono visibili solo al proprietario (e a un admin autorizzato dal livello privacy). Caricare un PDF con testo selezionabile (massimo 25 MB, un caricamento alla volta per utente; un PDF scansionato richiede OCR/visione su host locale fidato, senza invio di immagini a provider esterni; senza OCR utilizzabile compare un errore nella lingua scelta), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. Il codice del servizio pQBL è incluso nel controllo automatico di lint della piattaforma. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli (il nome del mazzo si cambia direttamente nella pagina: Invio salva, Esc annulla) e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. In cima c’è «I tuoi tavoli salvati» (aprire, rinominare nella riga, eliminare); sotto, in «Crea un nuovo tavolo», la creazione manuale, la composizione con AI e la scelta di counselor e modello, che contano solo per la creazione con AI. |
 | Carte da ordinare | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento; mazzi e colonne si rinominano direttamente nella pagina. Non sono le Flashcard per il ripasso. |
@@ -3999,3 +4004,21 @@ backend. Nessuna modifica a funzioni, dati o Guida interfaccia; un deploy già i
 esecuzione resta valido finché non si ricostruisce l'immagine.
 
 **Copertina di classe e memoria di sessione protette (#999).** `GET /groups/{id}/image` richiede l'accesso e risponde solo a iscritti, docenti proprietari o con cui la classe e condivisa e amministratori (404 agli altri), con `Cache-Control: private`. `GET /memory/user/{session_id}` risponde solo al proprietario della sessione (403 altrimenti). `GET /groups/info` e rimossa: nessuna schermata la usava. Nessuna modifica alla Guida interfaccia ne ai dati; il deploy richiede solo il backend.
+
+### Integrità dei dati di classe (#1000)
+
+«Elimina classe» cancella ora la classe e tutto ciò che è collegato: iscrizioni,
+note docente, condivisioni con altri docenti, link per il consiglio di classe,
+voci del catalogo obiettivi e assegnazioni della classe, percorsi, forum,
+incontri, codici di abbinamento e studenti locali (profilo desktop, prima davano
+errore 500), immagine di copertina. Gli obiettivi personali condivisi con la
+classe restano agli studenti (perdono solo il collegamento) e i taccuini degli
+studenti di prova perdono la classe dall'elenco. La finestra di conferma elenca
+cosa viene cancellato, nelle sei lingue. Con piani di somministrazione collegati
+l'eliminazione resta bloccata (409): «Disattiva» resta l'azione normale.
+
+Uno studente risulta iscritto una sola volta per classe: all'avvio la migrazione
+`20261116_class_data_integrity` unisce le iscrizioni doppie tenendo la più vecchia
+e aggiunge il vincolo unico `(group_id, username)`; due ingressi contemporanei
+non creano più righe doppie. I destinatari del catalogo obiettivi
+(`goal_catalog_targets`) non ammettono più doppioni né righe senza destinatario.
