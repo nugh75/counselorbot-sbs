@@ -36,7 +36,7 @@ _admin_url = urlunsplit((_prod.scheme, _prod.netloc, "/postgres", _prod.query, _
 # che questo modulo sorveglia perche' non torni a scendere.
 THIN_INSTRUMENT_FACTORS = {
     "QPCS": ["S1", "S2", "S3", "S4", "S5"],
-    "QPCC": ["K1", "K2", "K3", "K4", "K5"],
+    "QPCC": ["A1", "A2", "V1", "C1"],
     "QAP": ["AD1", "AD2", "AD3", "AD4"],
     "ZTPI": ["T1", "T2", "T3", "T4", "T5"],
 }
@@ -117,6 +117,26 @@ def test_every_thin_instrument_factor_has_enough_strategies():
                 f"{instrument}/{code}: {counts[code]} strategie, "
                 f"minimo {MIN_STRATEGIES_PER_FACTOR}"
             )
+
+
+def test_seed_realigns_legacy_k_codes_idempotently():
+    db = _TestSession()
+    try:
+        seed_certified_strategies(db, models)
+        slug = "qpcc-goal-monitoring"
+        row = db.query(models.CertifiedStrategy).filter_by(slug=slug).one()
+        row.factor_codes = ["K3"]
+        row.recommended_when_it = "Quando K3 (volonta' e autoregolazione) e' un'area di crescita."
+        row.status = "draft"
+        db.commit()
+        seed_certified_strategies(db, models)
+        db.expire_all()
+        row = db.query(models.CertifiedStrategy).filter_by(slug=slug).one()
+        assert row.factor_codes == ["V1"]
+        assert "K3" not in row.recommended_when_it and "V1" in row.recommended_when_it
+        assert row.status == "certified"
+    finally:
+        db.close()
 
 
 def test_no_seeded_strategy_is_a_global_wildcard():
