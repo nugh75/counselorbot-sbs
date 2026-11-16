@@ -20,7 +20,7 @@ import { ActivityToolsList } from './ActivityTools';
 import { useClientValue } from '@/lib/use-client-value';
 
 // F31: l'interfaccia è esportata per il blocco "Assegnazioni della classe"
-// dentro la scheda gruppo di /docente/classi (GroupAssignments).
+// dentro la scheda gruppo di /docente/classi.
 export interface Assignment {
     intent?: 'proposal' | 'requested'; due_date?: string | null; response_prompt?: string;
     id: number; author_name: string; group_name: string; source_kind: 'goal' | 'strategy' | 'reading';

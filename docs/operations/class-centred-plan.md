@@ -109,7 +109,7 @@ guided chat reached its final step (the frontend only deletes the frozen
 snapshot).
 
 **Teacher area.** `/docente/classi` renders `GroupsPanel`: one page of
-collapsible class cards (editor, students, `GroupAssignments`). No per-class
+collapsible class cards (editor, students). No per-class
 detail route. Shared hooks: `useTeacherAccessState`, `TeacherAreaPage`,
 `TeacherAreaHeader`.
 
