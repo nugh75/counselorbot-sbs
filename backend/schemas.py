@@ -17,6 +17,10 @@ class PathActivityStart(BaseModel):
     new_attempt: bool = False
 
 
+class PathCountedAttempt(BaseModel):
+    session_id: str = Field(min_length=1, max_length=64)
+
+
 class PathActivityDraft(BaseModel):
     revision: int = Field(ge=0)
     scores: Dict[str, float] = Field(default_factory=dict, max_length=200)

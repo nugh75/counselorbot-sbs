@@ -1,8 +1,8 @@
 'use client';
 
 import { stepKindText } from '@/lib/i18n-step-kinds';
-import { useState } from 'react';
-import { Check, Lock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, CheckCircle2, Lock } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import {
     filterProgressStudents,
@@ -15,6 +15,7 @@ import {
 } from '@/lib/class-paths';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
 import { useI18n } from '@/lib/i18n-context';
+import { pathActivityText } from '@/lib/i18n-path-activity';
 import { unavailableAction } from '@/lib/path-publication';
 import { unavailableActionText } from '@/lib/i18n-path-publication';
 import { Button } from '@/components/ui/Button';
@@ -47,6 +48,9 @@ function cellClass(cell: ClassPathProgressCell, selected: boolean): string {
     return `flex h-control min-w-control items-center justify-center rounded-control border px-2 font-mono text-sm ${tone} ${ring} hover:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-focus`;
 }
 
+// #991: every attempt of the selected student on the step, the counted one marked.
+interface StudentAttempt { session_id: string; started_at: string | null; state: 'in_progress' | 'completed'; counted: boolean }
+
 interface Props {
     pathId: number;
     toolName: (toolKey: string) => string;
@@ -62,6 +66,19 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
     const [reason, setReason] = useState('');
     const [saving, setSaving] = useState(false);
     const [notice, setNotice] = useState<'saved' | 'error' | null>(null);
+    const [attempts, setAttempts] = useState<{ key: string; rows: StudentAttempt[] } | null>(null);
+    const selectedKey = selected ? `${selected.stepId}:${selected.username}` : null;
+    useEffect(() => {
+        if (!selected) return;
+        let active = true;
+        const key = `${selected.stepId}:${selected.username}`;
+        void apiFetch(`/api/teacher/paths/${pathId}/steps/${selected.stepId}/attempts/${encodeURIComponent(selected.username)}`)
+            .then(response => (response.ok ? response.json() : []))
+            .then(rows => { if (active) setAttempts({ key, rows: Array.isArray(rows) ? rows : [] }); })
+            .catch(() => { if (active) setAttempts({ key, rows: [] }); });
+        return () => { active = false; };
+    }, [pathId, selected]);
+    const selectedAttempts = attempts && attempts.key === selectedKey ? attempts.rows : [];
 
     if (resource.forbidden) return <TeacherForbidden />;
     const progress = resource.data;
@@ -280,6 +297,20 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                         )}
                         {selectedCell.teacher_state && selectedCell.reason && (
                             <p className="text-xs italic text-ink-muted">{selectedCell.reason}</p>
+                        )}
+                        {selectedAttempts.length > 0 && (
+                            <div className="mt-2">
+                                <p className="text-xs font-semibold text-ink">{pathActivityText(lang, 'allAttempts')}</p>
+                                <ul className="text-xs text-ink-body">
+                                    {selectedAttempts.map(row => (
+                                        <li key={row.session_id} className="flex flex-wrap items-center gap-x-2">
+                                            <span>{row.started_at ? new Date(row.started_at).toLocaleString(lang, { dateStyle: 'medium', timeStyle: 'short' }) : ''}</span>
+                                            <span>{row.state === 'completed' ? l('completed') : l('statusUnfinished')}</span>
+                                            {row.counted && <span className="inline-flex items-center gap-1 font-semibold text-success"><CheckCircle2 className="h-3 w-3" aria-hidden />{pathActivityText(lang, 'counted')}</span>}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         )}
                         {selectedCell.state === 'locked' && (
                             <p className="text-xs text-ink-muted">{l('lockedOverrideHint')}</p>

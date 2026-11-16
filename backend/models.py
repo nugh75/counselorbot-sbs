@@ -2541,6 +2541,21 @@ class ClassPathActivityAttempt(Base):
     revision = Column(Integer, nullable=False, default=0)
 
 
+class ClassPathCountedAttempt(Base):
+    """The student's choice of which completed attempt counts for a plan step.
+
+    Without a row the most recent completed attempt counts; create_all adds the
+    table on existing installations as well as fresh ones.
+    """
+    __tablename__ = "class_path_counted_attempts"
+    __table_args__ = (UniqueConstraint("step_id", "username", name="uq_class_path_counted_attempt"),)
+    id = Column(Integer, primary_key=True)
+    step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False)
+    session_id = Column(String(64), nullable=False)
+    chosen_at = Column(UTCDateTime, nullable=False, server_default=func.now())
+
+
 class TeacherNoticingArtifact(Base):
     """Append-only teacher noticing caches (student and class), outside log exports.
 

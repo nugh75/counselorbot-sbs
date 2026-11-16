@@ -767,6 +767,33 @@ async def get_class_path_progress(
     }
 
 
+@router.get("/teacher/paths/{path_id}/steps/{step_id}/attempts/{username}")
+async def get_student_step_attempts(
+    path_id: int,
+    step_id: int,
+    username: str,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Every attempt of one student on one step, the counted one marked; no answers or transcripts."""
+    from ..path_activity import activity_attempts
+    path = _require_visible_path(db, current_user, path_id)
+    _require_published(path)
+    step = db.query(models.ClassPathStep).filter(
+        models.ClassPathStep.id == step_id,
+        models.ClassPathStep.path_id == path.id,
+        models.ClassPathStep.removed_at.is_(None),
+    ).first()
+    if not step:
+        raise HTTPException(status_code=404, detail="Class path step not found")
+    if not db.query(models.GroupMembership.id).filter(
+        models.GroupMembership.group_id == path.group_id, models.GroupMembership.username == username
+    ).first():
+        raise HTTPException(status_code=404, detail="Student is not a member of this class")
+    return [{key: row[key] for key in ("session_id", "started_at", "state", "counted")}
+            for row in activity_attempts(db, step, username)]
+
+
 @router.put("/teacher/paths/{path_id}/steps/{step_id}/progress/{username}")
 async def override_class_path_progress(
     path_id: int,
@@ -1094,6 +1121,13 @@ async def create_activity_attempt(path_id: int, step_id: int, payload: schemas.P
                                   current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
     from ..path_activity import start_attempt
     return start_attempt(db, current_user, path_id, step_id, payload.attempt_id, new_attempt=payload.new_attempt)
+
+
+@router.put("/user/paths/{path_id}/steps/{step_id}/counted-attempt")
+async def choose_counted_attempt(path_id: int, step_id: int, payload: schemas.PathCountedAttempt,
+                                 current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
+    from ..path_activity import choose_counted_attempt
+    return choose_counted_attempt(db, current_user, path_id, step_id, payload.session_id)
 
 
 @router.put("/user/paths/{path_id}/steps/{step_id}/attempts/{session_id}/draft")

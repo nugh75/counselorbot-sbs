@@ -1781,11 +1781,22 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 Nei piani operativi ogni passo espone lo stato del proprio tentativo dal server.
 **Inizia** apre l’attività, **Continua** recupera la stessa conversazione o bozza,
 **Vedi i risultati** (questionario) o **Rileggi la conversazione** (chat e analisi)
-mostrano in sola lettura ciò che è stato svolto; **Ricomincia da capo** crea una
-nuova attività e conserva le volte precedenti, elencate nei dettagli del passo
-(«Le volte precedenti (n)», senza contare quella corrente). Nei questionari il
-comando si chiama **Compila di nuovo**. Un completamento precedente resta valido:
-il passo resta «Completata» e i dettagli dicono che lo studente ha ricominciato. La barra dell’attività identifica piano e passo; **Salva ed esci** attende
+mostrano in sola lettura ciò che è stato svolto; **Ricomincia da capo** chiede
+prima conferma in una finestra («Iniziare un nuovo tentativo?»: il tentativo
+precedente resta salvato e lo studente sceglierà quale conta) e solo con
+**Inizia il nuovo tentativo** crea una nuova attività; **Annulla** torna al
+piano senza creare nulla. Aprire un indirizzo `?attempt=new` mostra la stessa
+conferma. Le volte precedenti sono elencate nei dettagli del passo («Le volte
+precedenti (n)», senza contare quella corrente). Nei questionari il comando si
+chiama **Compila di nuovo**. Un completamento precedente resta valido: il passo
+resta «Completata» e i dettagli dicono che lo studente ha ricominciato.
+Con due o più tentativi completati i dettagli elencano «Tutti i tentativi (n)»:
+quello che conta per il piano porta l’etichetta «Conta per il piano», gli altri
+completati il pulsante **Conta questo**. Finché lo studente non sceglie conta
+l’ultimo completato. Il tentativo che conta determina data e risultato del
+completamento visti dal docente. Nell’avanzamento del piano il docente,
+selezionando la casella di uno studente, vede tutti i suoi tentativi del passo
+(data, stato) con quello che conta segnato; mai risposte o conversazioni. La barra dell’attività identifica piano e passo; **Salva ed esci** attende
 il salvataggio e riporta allo stesso passo nella pagina da cui si era partiti.
 Un errore nel recupero offre Riprova senza aprire una conversazione vuota.
 Anche il menu **Da riprendere** usa lo stato dei tentativi del piano: include le
