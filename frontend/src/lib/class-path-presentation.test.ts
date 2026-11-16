@@ -181,3 +181,12 @@ test('meeting calendar days follow the reader timezone, including midnight and D
         else process.env.TZ = previous;
     }
 });
+
+test('students read an analysis step as a conversation about their results, not the editor configuration', () => {
+    const step = {step_type: 'guided_results_chat', tool_key: 'QSAr'};
+    assert.equal(resolveStepPresentation('it', step).title, 'Analizza un questionario · QSAr · Da una compilazione personale');
+    const student = resolveStepPresentation('it', step, {student: true});
+    assert.equal(student.title, 'Conversazione guidata sui tuoi risultati (QSAr)');
+    const titled = resolveStepPresentation('en', {...step, title: 'Analyse your QSAr'}, {student: true});
+    assert.equal(titled.derivedTitle, 'Guided conversation about your results (QSAr)');
+});

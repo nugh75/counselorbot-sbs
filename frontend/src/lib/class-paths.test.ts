@@ -3,7 +3,7 @@ import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath, orderClassPaths, planStepHref } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { plannedDayIso, plannedDayLocation, plannedDayText } from './class-path-schedule.ts';
+import { formatPlanDay, plannedDayIso, plannedDayLocation, plannedDayText } from './class-path-schedule.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
@@ -141,8 +141,8 @@ test('class paths translations cover six languages and fallback to English', () 
     assert.equal(classPathText('sv', 'pathsTitle'), 'Arbetsplaner');
     assert.equal(classPathText('unknown', 'pathsTitle'), 'Operational plans');
 
-    assert.equal(classPathText('it', 'current'), 'In corso');
-    assert.equal(classPathText('en', 'current'), 'Current');
+    assert.equal(classPathText('it', 'statusUnfinished'), 'Da finire');
+    assert.equal(classPathText('en', 'statusUnfinished'), 'To finish');
     assert.equal(classPathText('it', 'markDone'), 'Segna come completato');
     assert.equal(classPathText('it', 'notAvailable'), 'Non disponibile');
 });
@@ -174,8 +174,22 @@ test('strict locked steps unlock after the current step, not the previous one', 
     assert.equal(lockedStepUnlockNumber({ ...path, next_step_id: 999 }), null);
 });
 
-test('class paths translations name the automatic source in six languages', () => {
-    assert.equal(classPathText('en', 'sourceAutomatic'), 'detected automatically');
+test('student plan wording is plain and translated in six languages', () => {
+    const keys = ['assignedEyebrow', 'studentIntro', 'doNow', 'statusTodo', 'statusUnfinished', 'statusDone', 'statusUnavailable',
+        'markedByTeacher', 'markedByYou', 'showDetails', 'planComplete', 'analysisSubtitle', 'goToStudentArea'] as const;
+    for (const key of keys) for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
+        assert.ok(classPathText(lang, key).length > 0, `${key}/${lang}`);
+        assert.notEqual(classPathText(lang, key), classPathText(lang, key).toUpperCase(), `${key}/${lang}`);
+    }
+    assert.equal(classPathText('it', 'assignedEyebrow').replace('{name}', 'Tutor'), 'Attività assegnate · classe Tutor');
+    assert.equal(classPathText('it', 'progressCount').replace('{done}', '1').replace('{total}', '4'), '1 su 4 attività completate');
+    assert.equal(classPathText('it', 'doNow'), 'Da fare adesso');
+    assert.deepEqual(['statusTodo', 'statusUnfinished', 'statusDone', 'statusUnavailable'].map(key => classPathText('it', key as 'doNow')),
+        ['Da fare', 'Da finire', 'Completata', 'Non ancora disponibile']);
+    // Deadlines read as a human date, never raw ISO.
+    assert.equal(formatPlanDay('2026-10-26', 'it'), '26 ott 2026');
+    assert.equal(formatPlanDay('not-a-date', 'it'), 'not-a-date');
+    // The teacher's progress legend still names the automatic source.
     assert.equal(classPathText('it', 'sourceAutomatic'), 'rilevato automaticamente');
 });
 

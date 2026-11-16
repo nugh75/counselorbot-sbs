@@ -12,6 +12,7 @@ import { enabledResumeItems, personalSlugEnabled } from '@/lib/personal-tool-acc
 import { useUserAccess } from '@/lib/use-user-access';
 import { isClassContentHidden, type UserAccess as FullUserAccess } from '@/lib/user-access';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import ToolIllustration from '@/components/ui/ToolIllustration';
 import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
@@ -99,6 +100,7 @@ export function PersonalAreaHome() {
     const [lastCompiledAt, setLastCompiledAt] = useState<Record<string, string>>({});
     const [unreadTotal, setUnreadTotal] = useState(0);
     const [paths, setPaths] = useState<StudentClassPath[]>([]);
+    const [pathsError, setPathsError] = useState(false);
     const pathsVersion = useRef(0);
     const { access } = useUserAccess();
     const groups = personalAreaGroups
@@ -124,12 +126,12 @@ export function PersonalAreaHome() {
         const version = ++pathsVersion.current;
         try {
             const res = await apiFetch('/api/user/paths');
-            if (res.ok) {
-                const data = await res.json();
-                if (version === pathsVersion.current) setPaths(parseStudentClassPaths(data));
-            }
+            if (!res.ok) throw new Error('Failed to load student paths');
+            const data = await res.json();
+            if (version === pathsVersion.current) { setPaths(parseStudentClassPaths(data)); setPathsError(false); }
         } catch {
-            // Ignore network failure
+            // A failed load says so instead of hiding the plan; loaded cards stay.
+            if (version === pathsVersion.current) setPathsError(true);
         }
     }, []);
 
@@ -173,12 +175,18 @@ export function PersonalAreaHome() {
 
     return (
         <div className="space-y-12" data-personal-area-home>
+            {!isClassContentHidden(access) && pathsError && !currentPath && (
+                <Callout variant="danger">
+                    <p>{classPathText(lang, 'loadError')}</p>
+                    <Button variant="secondary" onClick={() => void loadPaths()}>{classPathText(lang, 'reload')}</Button>
+                </Callout>
+            )}
             {!isClassContentHidden(access) && currentPath && (
                 <section aria-labelledby="profile-class-path-title">
                     <h2 id="profile-class-path-title" className="sr-only">
-                        {classPathText(lang, 'yourClassPath')}
+                        {personalAreaName(lang, 'piani-operativi')}
                     </h2>
-                    <ClassPathHeroList paths={paths} onReload={loadPaths} />
+                    <ClassPathHeroList paths={paths} onReload={loadPaths} nextOnly />
                 </section>
             )}
 

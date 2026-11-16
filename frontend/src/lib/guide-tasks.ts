@@ -62,7 +62,9 @@ export function searchGuideTasks(tasks: GuideTask[], query: string, lang: string
     const terms = normalize(query).split(/\s+/).filter(Boolean);
     return tasks.filter(task => {
         const text = guideTaskCopy(lang, task.id);
-        const alias = task.id === 'repeat' ? 'rifai ripeti ricomincia redo restart repeat' : '';
+        // Old button names stay searchable after the plain-wording rename (#989).
+        const alias = task.id === 'repeat' ? 'rifai ripeti ricomincia redo restart repeat'
+            : task.id === 'resume' ? 'riprendi riprendere resume' : '';
         const haystack = normalize([text.title, text.intro, ...text.steps, text.note, alias].join(' '));
         return terms.every(term => haystack.includes(term));
     });

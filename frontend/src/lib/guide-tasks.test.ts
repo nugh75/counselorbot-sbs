@@ -7,8 +7,8 @@ import { GUIDE_GROUPS, GUIDE_TASKS, guideTaskHref, legacyGuideTask, searchGuideT
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { pathActivityText } from './i18n-path-activity.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { classPathText } from './i18n-class-paths.ts';
-const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'];
+import { personalAreaName } from './i18n-personal-area.ts';
+const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'] as const;
 const disabled = {personalAPI: false, chatgpt: false};
 
 test('every task has three concise instructions and a real translation in six languages', () => {
@@ -62,8 +62,8 @@ test('plan instructions quote the actual action labels in every language', () =>
     for (const lang of languages) {
         const resume = guideTaskCopy(lang, 'resume').steps.join(' ');
         const repeat = guideTaskCopy(lang, 'repeat').steps.join(' ');
-        assert.ok(resume.includes(classPathText(lang,'pathsTitle')), `${lang}/plan title`);
+        assert.ok(resume.includes(personalAreaName(lang,'piani-operativi')), `${lang}/student plan name`);
         for (const key of ['start','resume','saveExit']) assert.ok(resume.includes(pathActivityText(lang,key)), `${lang}/${key}`);
-        for (const key of ['anotherAttempt','newCompilation','review']) assert.ok(repeat.includes(pathActivityText(lang,key)), `${lang}/${key}`);
+        for (const key of ['anotherAttempt','newCompilation','history','seeResults','rereadConversation']) assert.ok(repeat.includes(pathActivityText(lang,key)), `${lang}/${key}`);
     }
 });

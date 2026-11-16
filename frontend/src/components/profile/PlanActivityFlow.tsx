@@ -89,7 +89,11 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
             <div className="min-w-0">
                 <Button variant="ghost" onClick={() => void leave()} disabled={busy}><ArrowLeft className="h-4 w-4" aria-hidden="true" /> {l('back')}</Button>
                 <GuideHelpLink task="resume" />
-                {activity && <p className="px-4 text-sm text-ink-muted">{activity.path_title} · {activity.position}. {activity.title}</p>}
+                {activity && <p className="px-4 text-sm text-ink-muted">{activity.path_title}</p>}
+                {/* The questionnaire flow carries its own h1; chat and analysis take the step title. */}
+                {activity && (activity.kind === 'questionnaire'
+                    ? <p className="px-4 text-sm font-semibold text-ink">{activity.position}. {activity.title}</p>
+                    : <h1 className="px-4 text-xl font-semibold text-ink">{activity.position}. {activity.title}</h1>)}
                 {saveState && !readOnly && <p role="status" className="px-4 text-xs text-ink-muted">{l(saveState === 'error' ? 'saveFailed' : saveState === 'saved' ? 'savedActivity' : 'saving')}</p>}
             </div>
             {activity && !readOnly && <Button variant="secondary" onClick={() => void leave()}

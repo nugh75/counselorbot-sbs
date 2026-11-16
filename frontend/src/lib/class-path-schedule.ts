@@ -39,3 +39,9 @@ export function plannedDayLocation(step: PlannedDayStep): string | null {
         ? step.target_summary?.location || null
         : null;
 }
+
+/** A calendar day (YYYY-MM-DD) in the reader's language, the same format as the planned day. */
+export function formatPlanDay(iso: string, lang: string): string {
+    const date = new Date(`${iso}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString(lang, { dateStyle: 'medium' });
+}

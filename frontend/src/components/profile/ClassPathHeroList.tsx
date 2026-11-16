@@ -14,12 +14,14 @@ import { useResumeEntries } from '@/lib/use-resume-entries';
 import { getIdentity } from '@/lib/auth';
 import { latestAdministrationDraft } from '@/lib/administration-entry';
 
-// Every published plan of the student: the priority one open, the others folded.
-// A forum link to a step (#class-step-N) opens the plan holding it.
-export function ClassPathHeroList({ paths, onReload, showAllLink = true }: {
+// Every published plan of the student: the priority one open, the others and finished ones folded.
+// A forum link to a step (#class-step-N) opens the plan holding it. The Student home
+// (nextOnly) shows each plan's «To do now» block and links to the full page.
+export function ClassPathHeroList({ paths, onReload, showAllLink = true, nextOnly = false }: {
     paths: StudentClassPath[];
     onReload?: () => Promise<void> | void;
     showAllLink?: boolean;
+    nextOnly?: boolean;
 }) {
     const { lang } = useI18n();
     const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
@@ -64,31 +66,31 @@ export function ClassPathHeroList({ paths, onReload, showAllLink = true }: {
             {resume.error && <button type="button" className="min-h-control text-sm text-link underline" onClick={resume.retry}>
                 {classPathText(lang, 'reload')}
             </button>}
-            {ordered.map((path, index) => (
+            {ordered.map((path, index) => {
+                const finished = path.total > 0 && path.done >= path.total;
+                return (
                 <ClassPathHeroCard
                     key={path.id}
                     path={path}
                     pausedChats={paused}
                     drafts={drafts}
                     onReload={onReload}
-                    collapsible={ordered.length > 1}
-                    defaultOpen={path.steps.some(step => hash === `#class-step-${step.id}`) || index === 0}
+                    collapsible={!nextOnly && (ordered.length > 1 || finished)}
+                    defaultOpen={path.steps.some(step => hash === `#class-step-${step.id}`) || (index === 0 && !finished)}
+                    nextOnly={nextOnly}
                     discussionLinks={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                     meetings={meetings.meetings}
                     onMeetingsChanged={meetings.load}
                 />
-            ))}
+                );
+            })}
             {showAllLink && (
                 <div className="flex items-center justify-end">
                     <Link
                         href="/profilo/piani-operativi"
                         className="inline-flex min-h-control items-center gap-2 text-sm font-semibold text-link transition-colors hover:text-link hover:underline"
                     >
-                        <span>
-                            {ordered.length > 1
-                                ? `${classPathText(lang, 'seeAllClassPaths')} (${ordered.length})`
-                                : classPathText(lang, 'seeAllClassPaths')}
-                        </span>
+                        <span>{classPathText(lang, 'seeAllClassPaths')}</span>
                         <ArrowRight className="h-4 w-4" aria-hidden />
                     </Link>
                 </div>

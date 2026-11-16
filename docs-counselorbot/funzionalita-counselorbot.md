@@ -461,6 +461,29 @@ codice manuale è testo in `font-mono` senza riquadro. I moduli isolati di `/uni
 delle schede strumento. Comportamento, API, testi, chiavi di traduzione e `data-testid`
 non cambiano.
 
+**Attività assegnate: chiare per lo studente (#989).** Per lo studente i piani
+operativi si chiamano **Attività assegnate** (voce dell’Area studente, intestazioni,
+Guida); l’indirizzo resta `/profilo/piani-operativi` e il docente continua a vedere
+«Piani operativi». La home `/profilo` mostra per ogni piano solo il blocco **Da fare
+adesso** (attività consigliata, stato e l’unico pulsante pieno) con il link «Vedi
+tutte le attività assegnate»; se il caricamento fallisce compare un avviso con
+«Ricarica» invece di nascondere il piano. In `/profilo/piani-operativi` ogni card
+dice «Attività assegnate · classe …» (senza maiuscolo), una frase per lo studente
+(ordine consigliato ma libero), «1 su 4 attività completate» (senza percentuale), il
+blocco Da fare adesso e poi righe compatte: numero o spunta, titolo, uno di quattro
+stati sempre a parole (**Da fare**, **Da finire**, **Completata**, **Non ancora
+disponibile**) e una sola azione testuale. Toccando il titolo si aprono i dettagli:
+nota del docente, regole, incontro, date in formato leggibile (mai ISO grezzo),
+«Segnata dal docente» / «Segnata da te» (il rilevamento automatico non si mostra),
+ripetizione come link e le volte precedenti. L’analisi appare come «Conversazione
+guidata sui tuoi risultati (strumento)» invece dell’etichetta dell’editor. Un piano
+completato è chiuso con «Hai completato tutte le attività di questo piano» e resta
+apribile. Senza piani la pagina invita a usare gli strumenti dell’Area studente.
+Nell’attività di chat e analisi il titolo del passo è l’`h1`; nell’analisi il pulsante
+dice «Inizia la conversazione» o «Continua la conversazione»; il riepilogo finale
+della chat del piano è piatto. Date doppie e conferma prima di ripetere sono fuori
+da questo cambio.
+
 **Piani operativi dello studente piatti (#918).** I piani in cima a `/profilo` e in
 `/profilo/piani-operativi` sono `Card` piatte separate da filetti: classe come
 etichetta di testo, titolo, avanzamento, poi le tappe come righe divise da filetti invece
@@ -1756,12 +1779,13 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
 
 Nei piani operativi ogni passo espone lo stato del proprio tentativo dal server.
-**Inizia** apre l’attività, **Riprendi** recupera la stessa conversazione o bozza,
-**Rivedi** mostra risultati, riepilogo e conversazione svolta; **Fai un altro
-tentativo** crea una nuova attività e conserva lo storico, espandibile nella
-scheda del piano. Nei questionari il comando si chiama **Nuova compilazione**.
-Un completamento precedente resta valido mentre viene indicato il nuovo tentativo
-in corso. La barra dell’attività identifica piano e passo; **Salva ed esci** attende
+**Inizia** apre l’attività, **Continua** recupera la stessa conversazione o bozza,
+**Vedi i risultati** (questionario) o **Rileggi la conversazione** (chat e analisi)
+mostrano in sola lettura ciò che è stato svolto; **Ricomincia da capo** crea una
+nuova attività e conserva le volte precedenti, elencate nei dettagli del passo
+(«Le volte precedenti (n)», senza contare quella corrente). Nei questionari il
+comando si chiama **Compila di nuovo**. Un completamento precedente resta valido:
+il passo resta «Completata» e i dettagli dicono che lo studente ha ricominciato. La barra dell’attività identifica piano e passo; **Salva ed esci** attende
 il salvataggio e riporta allo stesso passo nella pagina da cui si era partiti.
 Un errore nel recupero offre Riprova senza aprire una conversazione vuota.
 Anche il menu **Da riprendere** usa lo stato dei tentativi del piano: include le
@@ -2221,7 +2245,7 @@ laurea, uguale per docenti, ricercatori e amministrazione: nel selettore «Area�
 La Guida pratica (`/guide`) distingue avvio/ripresa, nuovi tentativi e incontri
 per lo studente; per il docente separa creazione del piano, raccolta di risultati
 e programmazione degli incontri. Le schede sono nelle sei lingue. I richiami
-Riprendi e Fai un altro tentativo si rigenerano con `capture-quick-guide.mjs`;
+Continua e Ricomincia da capo si rigenerano con `capture-quick-guide.mjs`;
 l'editor del piano resta in `GUIDE_SCREENS=class-paths` di `capture-guide.mjs`.
 
 Per **analizzare un questionario nel piano operativo**, il docente sceglie il tipo

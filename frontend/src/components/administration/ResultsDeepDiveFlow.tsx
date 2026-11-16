@@ -193,7 +193,7 @@ export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCo
             </option>)}
           </Select>
         </Field>}
-        {failure !== 'legacy' && <Button disabled={busy || (options.personal && !resultId)} onClick={() => void start()}>{l('deepDiveStart')}</Button>}
+        {failure !== 'legacy' && <Button disabled={busy || (options.personal && !resultId)} onClick={() => void start()}>{l(options.attempts.some(item => item.resumable && !item.completed) ? 'deepDiveContinue' : 'deepDiveStart')}</Button>}
       </>}
     </Card>}
   </div>;
