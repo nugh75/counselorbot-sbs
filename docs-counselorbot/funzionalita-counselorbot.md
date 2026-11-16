@@ -2050,6 +2050,11 @@ copertina e la conferma di eliminazione della classe usano il `Dialog` condiviso
 e pulsante di chiusura, mai durante un salvataggio). Funzioni, testi e dati invariati; la
 fascia di copertina (#953) resta.
 
+**Copertina di classe validata (#984).** `image_url` accetta solo vuoto, un'immagine predefinita
+(`/images/classes/*.svg`) o l'URL del caricamento della classe stessa; altri valori (URL esterni
+compresi) ricevono 422. Il caricamento ignora il Content-Type del client e riconosce PNG, JPEG,
+WebP o GIF dai byte iniziali (massimo 5 MB); la risposta porta `X-Content-Type-Options: nosniff`.
+
 **Filetti di sezione più netti e ritorni come testo (#952, novembre 2026).** Il filetto
 sotto i titoli di sezione delle pagine usa il token della linea forte (`border-line-strong`):
 in tema chiaro passa dal grigio più tenue a quello leggibile, in tema scuro al valore
