@@ -1,7 +1,7 @@
 """Authenticated self-service settings and administrator-only feature policy."""
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
@@ -159,6 +159,14 @@ def write_class_sharing(request: PolicyUpdate, identity: dict = Depends(require_
     from .. import class_api_sharing
     class_api_sharing.set_switch(db, request.enabled)
     return read_class_sharing(identity, db)
+
+
+@router.get("/me/ai-source")
+def read_ai_source(counselor: int | None = Query(default=None, gt=0), identity: dict = Depends(current_owner),
+                   db: Session = Depends(get_db)):
+    """Which key answers this person for a counselor, or by default (#1020); never the key."""
+    from .. import ai_source
+    return ai_source.describe(db, identity, counselor)
 
 
 @router.get("/user/api-settings")
