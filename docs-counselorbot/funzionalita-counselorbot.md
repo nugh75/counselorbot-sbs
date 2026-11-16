@@ -3997,3 +3997,21 @@ entrambi i Compose). Il codice importa `datetime.UTC`, disponibile da Python 3.1
 con il vecchio default 3.10 una nuova installazione non riusciva ad avviare il
 backend. Nessuna modifica a funzioni, dati o Guida interfaccia; un deploy già in
 esecuzione resta valido finché non si ricostruisce l'immagine.
+
+### Integrità dei dati di classe (#1000)
+
+«Elimina classe» cancella ora la classe e tutto ciò che è collegato: iscrizioni,
+note docente, condivisioni con altri docenti, link per il consiglio di classe,
+voci del catalogo obiettivi e assegnazioni della classe, percorsi, forum,
+incontri, codici di abbinamento e studenti locali (profilo desktop, prima davano
+errore 500), immagine di copertina. Gli obiettivi personali condivisi con la
+classe restano agli studenti (perdono solo il collegamento) e i taccuini degli
+studenti di prova perdono la classe dall'elenco. La finestra di conferma elenca
+cosa viene cancellato, nelle sei lingue. Con piani di somministrazione collegati
+l'eliminazione resta bloccata (409): «Disattiva» resta l'azione normale.
+
+Uno studente risulta iscritto una sola volta per classe: all'avvio la migrazione
+`20261116_class_data_integrity` unisce le iscrizioni doppie tenendo la più vecchia
+e aggiunge il vincolo unico `(group_id, username)`; due ingressi contemporanei
+non creano più righe doppie. I destinatari del catalogo obiettivi
+(`goal_catalog_targets`) non ammettono più doppioni né righe senza destinatario.
