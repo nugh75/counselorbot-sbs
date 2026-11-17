@@ -1,13 +1,21 @@
-# Articolo per Interfaces da Educação
+# Intelligenza artificiale conversazionale e orientamento educativo
 
-Cartella di lavoro dell'articolo destinato alla rivista *Interfaces da Educação*.
+Tensioni epistemologiche, metodologiche ed etiche nella costruzione di uno strumento riflessivo
 
-- **Stato**: bozza, nome della cartella provvisorio.
-- **Lingua**: da confermare (`pt` / `it` / `en`).
-- **Contenuto previsto**: manoscritto, figure, bibliografia.
+- **Autori**: Daniele Dragoni, Massimo Margottini
+- **Rivista**: *Interfaces da Educação*
+- **Lingua**: italiano, con titolo e abstract anche in inglese
+- **Stato**: bozza v2, in lavorazione
+- **Anno**: 2026
 
-Qui vanno i file dell'articolo. Prima della sottomissione la cartella prende il nome definitivo secondo la convenzione di `docs/articoli/README.md`:
+## File
 
-```
-AAAA_<autori>_<titolo-breve>_<lingua>/
-```
+- `2026_dragoni-margottini_ia-conversazionale-orientamento_it_v2.docx` — manoscritto, bozza 2 in italiano
+- `modelli/template-interfaces-2025-oth.docx` — template della rivista (tipo contributo OTH)
+
+Il nome della cartella resta provvisorio finché l'articolo non è sottomesso; a quel punto diventa `2026_dragoni-margottini_ia-conversazionale-orientamento_it/` secondo la convenzione di `docs/articoli/README.md`.
+
+## Da decidere
+
+- lingua di sottomissione: la rivista è portoghese, da verificare se accetta l'italiano o chiede una versione `pt`
+- eventuale versione Markdown leggibile per la revisione su GitHub, accanto al `.docx`
