@@ -17,7 +17,6 @@ This directory is the canonical entry point for stable project documentation, re
 - [Future implementation](future-implementazione/): deferred technical plans and audits.
 - [Handoffs](handoff/): working-session handoffs and prompt-audit findings.
 - [Sources](fonti/): bibliographic material, the archived `competenzestrategiche.it` public site content, and linked external sources.
-- [Articles](articoli/): our own drafts and published papers about CounselorBot, with naming and frontmatter conventions.
 
 ## Placement rules
 
