@@ -16,9 +16,17 @@ Tensioni epistemologiche, metodologiche ed etiche nella costruzione di uno strum
 
 Il nome della cartella resta provvisorio finché l'articolo non è sottomesso; a quel punto diventa `2026_dragoni-margottini_ia-conversazionale-orientamento_en/`.
 
+## Calendario
+
+- **mar 17 – ven 20 nov**: chiusura della bozza italiana. Serve il minimo di 15 pagine: oggi siamo a circa 9–10, mancano ~2.000 parole (~15.000 caratteri)
+- **sab 21 nov**: revisione di Massimo Margottini e ritorno del testo
+- **dom 22 – lun 23 nov**: traduzione inglese, titolo e `Resumo` in portoghese, controllo ABNT e dichiarazioni
+- **invio alla rivista**
+
 ## Prossimi passi
 
-- tradurre la bozza in inglese (`_en`) e preparare titolo e `Resumo` in portoghese
-- citare almeno un articolo già pubblicato sulla rivista, come richiesto dalle norme
-- verificare la lunghezza: la bozza è a circa 9–10 pagine, il minimo è 15
+- allungare la bozza fino a 15 pagine senza aggiungere acqua: casi, esempi dal registro di progetto, limiti e implicazioni
+- preparare titolo e `Resumo` in portoghese (150–200 parole) dalla versione italiana
+- tradurre in inglese (`_en`) dopo la revisione, così si traduce una volta sola
+- verificare la citazione di un articolo della rivista e la dichiarazione sull'uso dell'IA
 - decidere se aggiungere una versione Markdown leggibile per la revisione su GitHub
