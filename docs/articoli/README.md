@@ -23,6 +23,8 @@ Esempi:
 - lingua con il codice ISO a due lettere (`it`, `pt`, `en`).
 - stesso articolo in più lingue = stesso nome con codice lingua diverso.
 
+Finché l'articolo è in lavorazione la cartella può avere un nome leggibile e provvisorio, per esempio `Articolo per Interfaces da Educação`; prima della sottomissione si rinomina secondo la convenzione.
+
 Un articolo con più file (figure, allegati, bibliografia) diventa una sottocartella con lo stesso nome del manoscritto principale:
 
 ```
