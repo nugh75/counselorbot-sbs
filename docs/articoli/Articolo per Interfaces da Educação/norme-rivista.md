@@ -7,9 +7,18 @@ Fonti verificate il 17/11/2026:
 
 Dove le due fonti divergono, il sito dice che il template è vincolante (punto 1.n). La checklist segnala i conflitti.
 
-## Stato della rivista
+## Stato della rivista e invito
 
-**La rivista non sta accettando sottomissioni in questo momento** (avviso sulla pagina Submissão). Le norme qui sotto restano valide per preparare il testo.
+**La rivista non sta accettando sottomissioni spontanee in questo momento** (avviso sulla pagina Submissão). Questo articolo però è **commissionato direttamente dalla rivista**: la consegna avviene fuori dal flusso ordinario, quindi la finestra chiusa non è un ostacolo.
+
+Le norme di formato e di struttura restano la base, ma i requisiti pensati per le sottomissioni spontanee vanno confermati con la redazione:
+
+- lingua ammessa (inglese) e necessità del `Resumo` in portoghese
+- valutazione doppia cieca o revisione editoriale diretta
+- dichiarazioni supplementari (revisione linguistica, normalizzazione, importanza)
+- citazione obbligatoria di un articolo già pubblicato sulla rivista
+- lunghezza richiesta e scadenza di consegna
+- canale e formato di invio (.doc, e-mail redazione, piattaforma)
 
 ## Genere e lunghezza
 
@@ -56,7 +65,7 @@ Dove le due fonti divergono, il sito dice che il template è vincolante (punto 1
 - Nel testo: `(Cognome, anno, p. xx)` oppure `Cognome (anno, p. xx)`.
 - Riferimenti secondo ABNT NBR 6023:2018, interlinea semplice.
 - Template: per gli articoli su rivista togliere il link della piattaforma dell'articolo («em razão do Google Citations»).
-- **Almeno una citazione** di un articolo pubblicato in numeri precedenti della rivista, con aderenza tematica.
+- Per le sottomissioni spontanee è richiesta **almeno una citazione** di un articolo pubblicato in numeri precedenti della rivista, con aderenza tematica; con l'invito, chiedere se vale anche qui.
 
 ## Etica e progetto
 
@@ -84,6 +93,8 @@ Dove le due fonti divergono, il sito dice che il template è vincolante (punto 1
 Per il resumo si punta a **150–200 parole**, che soddisfa entrambe le fonti.
 
 ## Checklist prima dell'invio
+
+Da usare come promemoria, chiedendo alla redazione quali voci valgono per un articolo su invito.
 
 - [ ] 15–20 pagine, riferimenti e allegati inclusi
 - [ ] titolo e resumo/abstract in portoghese e inglese, 150–200 parole

@@ -5,7 +5,7 @@ Tensioni epistemologiche, metodologiche ed etiche nella costruzione di uno strum
 - **Autori**: Daniele Dragoni, Massimo Margottini
 - **Rivista**: *Interfaces da Educação*
 - **Lingua**: si scrive in italiano, la sottomissione sarà in inglese; titolo e `Resumo` anche in portoghese come chiede la rivista
-- **Stato**: bozza v2, in lavorazione
+- **Stato**: bozza v2, articolo commissionato dalla rivista, in lavorazione
 - **Anno**: 2026
 
 ## File
