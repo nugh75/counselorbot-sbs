@@ -741,13 +741,59 @@ def evaluate(db: Session, *, drafts: dict[str, str] | None = None, prompt_ids=()
             "prompt_ids": wanted, "surface": surface}
 
 
+STATUS_FACTORY = "factory"               # uguale alla fabbrica
+STATUS_CUSTOMISED = "customised"         # personalizzato qui
+STATUS_FACTORY_UPDATE = "factory_update" # aggiornamento di fabbrica da rivedere
+STATUS_CODE = "code"                     # nel codice dell'applicazione
+
+
+def prompt_status(db: Session, prompt_id: str, *, text: str | None = None,
+                  factory: str | None = None, legacy=None) -> str:
+    """Ownership status of one prompt (#775): factory | customised | factory_update | code."""
+    from .prompt_factory_alignment import factory_owned
+
+    kind, _, key = prompt_id.partition(":")
+    if kind == "code":
+        return STATUS_CODE
+    if factory is None:
+        entry = _entry_for(prompt_id)
+        factory = factory_text(entry) if entry is not None else None
+    if text is None:
+        row, field = _live_row(db, prompt_id)
+        text = (getattr(row, field) or "") if row is not None else ""
+    if factory is None:
+        return STATUS_CUSTOMISED
+    if text == factory:
+        return STATUS_FACTORY
+    if prompt_revisions.is_admin_owned(db, kind, key):
+        return STATUS_CUSTOMISED
+    if factory_owned(db, kind, key, text, legacy=legacy, cached=legacy is None):
+        return STATUS_FACTORY_UPDATE
+    return STATUS_CUSTOMISED
+
+
+def all_prompt_statuses(db: Session) -> dict[str, str]:
+    """Ownership status for every prompt currently stored in the database (#775)."""
+    from .prompt_factory_alignment import _cached_legacy
+
+    legacy = _cached_legacy()
+    texts = active_texts(db)
+    return {
+        pid: prompt_status(db, pid, text=text, legacy=legacy)
+        for pid, text in sorted(texts.items())
+    }
+
+
 def save_prompt(db: Session, prompt_id: str, text: str, author: str | None) -> None:
     """Save one prompt as the admin's text. Never blocked by findings."""
     row, field = _live_row(db, prompt_id)
     if row is None:
         raise LookupError(prompt_id)
-    setattr(row, field, text)
     kind, key = _scope_key(prompt_id)
+    before = getattr(row, field) or ""
+    if before != text:
+        prompt_revisions.ensure_baseline(db, kind, key, before)
+    setattr(row, field, text)
     prompt_revisions.record(db, kind, key, text, prompt_revisions.ORIGIN_ADMIN, author=author)
     db.commit()
 
@@ -762,8 +808,11 @@ def restore_factory(db: Session, prompt_id: str, author: str | None) -> str:
     row, field = _live_row(db, prompt_id)
     if row is None:
         raise LookupError(prompt_id)
-    setattr(row, field, factory)
     kind, key = _scope_key(prompt_id)
+    before = getattr(row, field) or ""
+    if before != factory:
+        prompt_revisions.ensure_baseline(db, kind, key, before)
+    setattr(row, field, factory)
     last = prompt_revisions.latest(db, kind, key)
     if last is None or last.value != factory or last.origin == prompt_revisions.ORIGIN_ADMIN:
         db.add(models.PromptRevision(scope=kind, target_key=key, value=factory, author=author,
@@ -818,8 +867,10 @@ def prompt_card(db: Session, prompt_id: str) -> dict:
     run = latest_run(db)
     findings = [f for f in (run.findings if run else []) if prompt_id in f["prompts"]]
     turns = _turns_for(db, [prompt_id]) if kind in ("config", "guided_step") else None
+    status = prompt_status(db, prompt_id, text=text, factory=factory)
     return {
         "id": prompt_id, "kind": kind, "text": text, "factory": factory, "editable": text is not None,
+        "status": status,
         "differs_from_factory": factory is not None and text is not None and text != factory,
         "customised": text is not None and prompt_revisions.is_admin_owned(db, kind, key),
         "consumer": entry.consumer if entry else None, "app_surfaces": list(entry.surfaces) if entry else [],

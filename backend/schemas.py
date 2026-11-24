@@ -68,12 +68,17 @@ class PromptFactoryAlignmentChange(BaseModel):
     before: str
     after: str
     expected_hash: str
+    status: Literal["factory_update"] = "factory_update"
 
 
 class PromptFactoryAlignmentPreserved(BaseModel):
     scope: Literal["config", "guided_step"]
     key: str
     reason: Literal["personalised", "different_instrument"]
+    before: Optional[str] = None
+    after: Optional[str] = None
+    expected_hash: Optional[str] = None
+    status: Optional[Literal["customised"]] = None
 
 
 class PromptFactoryAlignmentPreview(BaseModel):
@@ -83,8 +88,15 @@ class PromptFactoryAlignmentPreview(BaseModel):
     review_hash: str
 
 
+class PromptFactoryAlignmentSelection(BaseModel):
+    scope: Literal["config", "guided_step"]
+    key: str = Field(..., min_length=1, max_length=255)
+    model_config = {"extra": "forbid"}
+
+
 class PromptFactoryAlignmentApply(BaseModel):
     review_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    selected: Optional[List[PromptFactoryAlignmentSelection]] = None
     model_config = {"extra": "forbid"}
 
 

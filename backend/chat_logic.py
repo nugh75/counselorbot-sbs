@@ -13,7 +13,7 @@ from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy import func
 
-from . import database, models, prompt_config
+from . import database, models, prompt_config, prompt_revisions
 from . import recommendation_service as _recommendation_service
 from .ai_service import AIService
 from .anonymous_codes import code_for_identity
@@ -252,6 +252,14 @@ def _ensure_questionnaire_guided_steps(db, questionnaire_type: str) -> None:
             if translations:
                 payload["label_i18n"] = dict(translations)
         db.add(models.GuidedStep(**payload))
+        prompt_revisions.record(
+            db,
+            prompt_revisions.SCOPE_GUIDED_STEP,
+            payload["id"],
+            payload.get("prompt", ""),
+            prompt_revisions.ORIGIN_SEED,
+            note="default di fabbrica",
+        )
         changed = True
 
     if changed:

@@ -91,8 +91,9 @@ def apply_plan(db, plan, *, author="prompt-coherence", rollback=False, origin="a
             raise ValueError(f"Prompt changed since review: {change['scope']}/{change['key']}")
         pending.append((row, value_field, change))
     for row, field, change in pending:
+        baseline_origin = prompt_revisions.ORIGIN_ADMIN if change.get("status") == "customised" else origin
         prompt_revisions.record(db, change["scope"], change["key"], getattr(row, field),
-                                origin, author=author, note="Baseline before approved prompt alignment")
+                                baseline_origin, author=author, note="Baseline before approved prompt alignment")
         db.flush()
         value = change["before"] if rollback else change["after"]
         setattr(row, field, value)

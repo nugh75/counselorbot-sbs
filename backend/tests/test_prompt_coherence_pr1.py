@@ -59,7 +59,8 @@ def test_qsar_second_level_has_no_fixed_language_and_a_single_factor_exception()
     assert prompt_config.DEFAULT_FACTOR_INTERPLAY_QSAR in prompt
 
 
-def test_changed_factory_text_overwrites_a_personalised_row_once():
+def test_changed_factory_text_preserves_personalised_row_unless_explicitly_selected():
+    from backend.prompt_factory_alignment import apply_review, review_hash
     configs, _ = factory_catalog()
     key = 'prompt_qsar_second_level'
     with artifact_session() as db:
@@ -67,16 +68,23 @@ def test_changed_factory_text_overwrites_a_personalised_row_once():
         prompt_revisions.record(db, 'config', key, 'Admin text proposing guidance in English.', prompt_revisions.ORIGIN_ADMIN)
         db.commit()
         plan = make_plan(db)
-        assert [change['key'] for change in plan['changes']] == [key]
-        apply_plan(db, plan, author='alignment', origin=prompt_revisions.ORIGIN_MIGRATION)
+        assert plan['changes'] == []
+        assert len(plan['preserved']) == 1
+        preserved = plan['preserved'][0]
+        assert preserved['scope'] == 'config' and preserved['key'] == key
+        assert preserved['reason'] == 'personalised' and preserved['status'] == 'customised'
+        assert preserved['before'] == 'Admin text proposing guidance in English.'
+        assert preserved['after'] == configs[key]
+        # Default alignment leaves the customised prompt untouched.
+        result = apply_review(db, review_hash(plan), author='alignment')
+        assert result['updated'] == 0
+        assert db.query(models.Config).filter_by(key=key).one().value == 'Admin text proposing guidance in English.'
+        # Explicit selection aligns it and keeps the custom text restorable in history.
+        result = apply_review(db, review_hash(plan), author='alignment', selected=[{'scope': 'config', 'key': key}])
+        assert result['updated'] == 1
         assert db.query(models.Config).filter_by(key=key).one().value == configs[key]
-        # A later admin edit is the admin's again: no second overwrite.
-        row = db.query(models.Config).filter_by(key=key).one()
-        row.value = 'A later admin edit.'
-        prompt_revisions.record(db, 'config', key, row.value, prompt_revisions.ORIGIN_ADMIN)
-        db.commit()
-        assert make_plan(db)['changes'] == []
-        assert make_plan(db)['preserved'] == [{'scope': 'config', 'key': key, 'reason': 'personalised'}]
+        revs = prompt_revisions.history(db, scope='config', target_key=key)
+        assert [r.value for r in revs[:2]] == [configs[key], 'Admin text proposing guidance in English.']
 
 
 # D01, D02, D03, D06: unused prompts are gone, with their admin controls and DB keys.
