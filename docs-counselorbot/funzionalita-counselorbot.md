@@ -2310,8 +2310,7 @@ amministratori, ciascuno limitato agli istituti di cui è membro, e chi crea un
 istituto ne diventa membro), `/docente/compilazioni` (Compilazioni degli studenti con
 immagine `compilazioni.png`: selezione della classe, elenco cronologico dei risultati,
 lettura della conversazione e link rapido alla matrice dei partecipanti), `/docente/piani-operativi` (Piani operativi, fino a ottobre 2026 «Percorsi di classe»: il vecchio
-indirizzo /docente/percorsi reindirizza qui in modo permanente; con una propria
-immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi piani operativi
+indirizzo /docente/percorsi reindirizza qui in modo permanente: si sceglie la classe e si preparano, pubblicano e seguono i suoi piani operativi
 con lo stesso editor della scheda Piani operativi della classe; nell’editor (della classe e dei
 modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
 mostra solo il modulo del tipo scelto. Un piano già salvato si apre come **riepilogo**:
@@ -2373,7 +2372,7 @@ un nuovo modello privato, rifiutando obiettivi di una sola classe e discussioni 
 nate da un modello, perché il testo del forum non esce mai dal forum), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),
-`/docente/incontri` (Incontri, con la propria immagine `incontri.png`, nel gruppo **Classe e
+`/docente/incontri` (Incontri, nel gruppo **Classe e
 assegnazioni** dopo Piani operativi: si sceglie la classe o il gruppo e si creano,
 spostano e annullano gli incontri di classe o di gruppo e i colloqui individuali a fasce,
 con prenotazioni, presenze e altre classi coinvolte, senza aprire un piano operativo;

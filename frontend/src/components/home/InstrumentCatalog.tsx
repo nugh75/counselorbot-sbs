@@ -9,10 +9,10 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import ToolIllustration from '@/components/ui/ToolIllustration';
 import { Snowflake, X } from 'lucide-react';
-import { QUESTIONNAIRE_LIST, QuestionnaireConfig } from '@/lib/questionnaires';
+import { QUESTIONNAIRE_LIST } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
-import { getDynamicToolCategories, resolveActiveStudentTools, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
+import { getDynamicToolCategories, resolveActiveStudentTools, resolveCatalogSections, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { isToolAllowed } from '@/lib/user-access';
 import { latestPausedByTool, suggestTools, type PausedChat } from '@/lib/catalog-status';
 import { fetchOrientationSession, fetchOrientationStatus, type OrientationRecommendation } from '@/lib/orientation-api';
@@ -147,11 +147,11 @@ export function InstrumentCatalog({
                     </Button>
                 </Callout>
             )}
-            {dynamicCategories.filter((group) => group.questionnaireIds.length > 0).map((group) => (
+            {resolveCatalogSections(dynamicCategories, activeInstrumentById).map((group) => (
                 // The wrapper keeps the #tools-<category> anchors used by the intro screen.
                 <div key={group.id} id={`tools-${group.id}`} className="scroll-mt-24">
                     <EntrySection id={`tools-${group.id}-title`} title={t(`base.category.${group.id}`)}>
-                        {group.questionnaireIds.map((toolId) => activeInstrumentById.get(toolId)).filter((q): q is QuestionnaireConfig => Boolean(q)).map((q) => {
+                        {group.tools.map((q) => {
                             const done = lastCompiledAt[q.id];
                             const paused = pausedByTool.get(q.id);
                             const status = paused

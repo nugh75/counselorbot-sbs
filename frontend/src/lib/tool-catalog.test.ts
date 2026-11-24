@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS, TOOL_CATEGORIES, isStartableQuestionnaireId, orientationSkippedThisVisit, skipOrientationThisVisit, resolveActiveStudentTools, getDynamicToolCategories } from './tool-catalog.ts';
+import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS, TOOL_CATEGORIES, isStartableQuestionnaireId, orientationSkippedThisVisit, skipOrientationThisVisit, resolveActiveStudentTools, getDynamicToolCategories, resolveCatalogSections } from './tool-catalog.ts';
 import type { InstrumentSummary } from './instruments-api';
 
 test('every active questionnaire appears in exactly one home category, or is the declared teacher-area exception', () => {
@@ -223,4 +224,24 @@ test('a storage that refuses to answer does not turn the skip into a broken scre
         assert.doesNotThrow(() => skipOrientationThisVisit());
         assert.equal(orientationSkippedThisVisit(), false);
     });
+});
+
+test('resolveCatalogSections omits categories whose tools are all absent from activeInstrumentById', () => {
+    const tools = resolveActiveStudentTools(null, 'it');
+    const savickasOnly = new Map(tools.filter((q) => q.id === 'SAVICKAS').map((q) => [q.id, q]));
+    const sections = resolveCatalogSections([
+        { id: 'assessment', questionnaireIds: ['QSA', 'ZTPI'] },
+        { id: 'guided', questionnaireIds: ['SAVICKAS', 'IDEA'] },
+    ], savickasOnly);
+    assert.equal(sections.length, 1);
+    assert.equal(sections[0].id, 'guided');
+    assert.deepEqual(sections[0].tools.map((q) => q.id), ['SAVICKAS']);
+    assert.deepEqual(resolveCatalogSections([
+        { id: 'assessment', questionnaireIds: ['QSA'] },
+        { id: 'guided', questionnaireIds: ['IDEA'] },
+    ], new Map()), []);
+
+    const catalogComponent = readFileSync(new URL('../components/home/InstrumentCatalog.tsx', import.meta.url), 'utf8');
+    assert.match(catalogComponent, /resolveCatalogSections\(dynamicCategories, activeInstrumentById\)\.map\(\(group\) =>/);
+    assert.doesNotMatch(catalogComponent, /dynamicCategories\.filter\(/);
 });
