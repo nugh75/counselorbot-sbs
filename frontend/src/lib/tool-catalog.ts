@@ -135,6 +135,23 @@ export function getDynamicToolCategories(
     ];
 }
 
+export interface ResolvedToolCategorySection {
+    id: ToolCategory;
+    tools: QuestionnaireConfig[];
+}
+
+export function resolveCatalogSections(
+    categories: readonly ToolCategoryDefinition[],
+    activeInstrumentById: ReadonlyMap<string, QuestionnaireConfig>,
+): ResolvedToolCategorySection[] {
+    return categories.flatMap((group) => {
+        const tools = group.questionnaireIds
+            .map((toolId) => activeInstrumentById.get(toolId))
+            .filter((q): q is QuestionnaireConfig => Boolean(q));
+        return tools.length > 0 ? [{ id: group.id, tools }] : [];
+    });
+}
+
 export function orientationToolHref(id: string): string {
     if (isStartableQuestionnaireId(id)) return instrumentStartHref(id, true);
     if (id === 'pqbl') return '/profilo/pqbl';
