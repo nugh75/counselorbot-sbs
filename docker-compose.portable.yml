@@ -76,6 +76,8 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@counselorbot-portable-postgres:5432/${POSTGRES_DB}
+      AUTH_PROVIDER: ai4auth
+      COUNSELORBOT_PROFILE: ""
       AI4AUTH_VERIFY_URL: http://ai4auth:9091/api/verify
       AI4AUTH_PUBLIC_HOST: ${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net}
       ADMIN_GROUPS: ${ADMIN_GROUPS:-admins}
