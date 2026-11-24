@@ -1,6 +1,25 @@
 // Avvisi sui prompt (#760): tipi e funzioni pure del pannello admin.
 
 export type PromptHealthSeverity = 'high' | 'medium' | 'low';
+export type PromptOwnershipStatus = 'factory' | 'customised' | 'factory_update' | 'code';
+
+export function promptOwnershipStatus(card: {
+    status?: PromptOwnershipStatus;
+    customised?: boolean;
+    differs_from_factory?: boolean;
+    editable?: boolean;
+}): PromptOwnershipStatus {
+    if (card.status) return card.status;
+    if (card.editable === false) return 'code';
+    if (card.customised) return 'customised';
+    return card.differs_from_factory ? 'factory_update' : 'factory';
+}
+
+export function promptScopeAndKey(promptId: string): { scope: 'config' | 'guided_step'; key: string } | null {
+    if (promptId.startsWith('config:')) return { scope: 'config', key: promptId.slice('config:'.length) };
+    if (promptId.startsWith('guided_step:')) return { scope: 'guided_step', key: promptId.slice('guided_step:'.length) };
+    return null;
+}
 
 export interface PromptCodeLocation { file: string; line: number; symbol: string }
 export interface PromptCodeReference extends PromptCodeLocation {

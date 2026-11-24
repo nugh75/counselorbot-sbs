@@ -7,15 +7,17 @@ import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
+import { PromptFactoryAlignment } from '@/components/admin/PromptFactoryAlignment';
 import { PromptHealthLlm } from '@/components/admin/PromptHealthLlm';
+import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptUsagePanel } from '@/components/admin/PromptUsagePanel';
 import {
     PromptCompare, loadPromptCard, postJson,
     type PromptCard, type PromptHealthPath, type PromptHealthStep,
 } from '@/components/admin/PromptCompare';
 import {
-    cellStatus, hasCodeSource, mergeFindings, visibleSurfaces,
-    type PromptCellStatus, type PromptHealthFinding, type PromptHealthRun,
+    cellStatus, hasCodeSource, mergeFindings, promptOwnershipStatus, promptScopeAndKey, visibleSurfaces,
+    type PromptCellStatus, type PromptHealthFinding, type PromptHealthRun, type PromptOwnershipStatus,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
 import { FindingCard } from './PromptHealthFinding';
@@ -29,10 +31,24 @@ const STATUS: Record<PromptCellStatus, { icon: typeof CheckCircle2; className: s
     unused: { icon: CircleSlash, className: 'border-line bg-surface-sunken text-ink-muted' },
 };
 
+const OWNERSHIP_BADGE: Record<PromptOwnershipStatus, string> = {
+    factory: 'border-success-line bg-success-soft text-success-ink',
+    customised: 'border-brand-line bg-brand-soft text-link',
+    factory_update: 'border-warning-line bg-warning-soft text-warning-ink',
+    code: 'border-info-line bg-info-soft text-info-ink',
+};
+
 type CompareRequest = { prompts: string[]; focus: string | null; propose: boolean; key: number };
 type OpenCompare = (prompts: string[], focus: string | null, propose?: boolean) => void;
 
-/** Scheda di un prompt: dove arriva, differenza dalla fabbrica, avvisi aperti. */
+function OwnershipBadge({ status }: { status: PromptOwnershipStatus }) {
+    const { t } = useI18n();
+    return <span className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-semibold', OWNERSHIP_BADGE[status])}>
+        {t(`admin.promptHealth.ownership.${status}`)}
+    </span>;
+}
+
+/** Scheda di un prompt: stato rispetto alla fabbrica, cronologia versioni, dove arriva, avvisi aperti. */
 function PromptCardView({ id, paths, onCompare, onChanged, onClose }: {
     id: string;
     paths: PromptHealthPath[];
@@ -47,9 +63,14 @@ function PromptCardView({ id, paths, onCompare, onChanged, onClose }: {
     const [card, setCard] = useState<PromptCard | null>(null);
     const [error, setError] = useState(false);
     // Il genitore usa `key={id}`: ogni prompt monta una scheda nuova.
-    useEffect(() => { loadPromptCard(id).then(setCard).catch(() => setError(true)); }, [id]);
+    const reload = useCallback(() => {
+        loadPromptCard(id).then(next => { setCard(next); setError(false); }).catch(() => setError(true));
+    }, [id]);
+    useEffect(() => { reload(); }, [reload]);
     const where = card?.surfaces ? visibleSurfaces(card.surfaces.map(surfaceName), 6) : null;
-    return <Card as="section" aria-labelledby={titleId} className="space-y-3">
+    const ownership = card ? promptOwnershipStatus(card) : null;
+    const historyTarget = promptScopeAndKey(id);
+    return <Card as="section" id="prompt-health-card" aria-labelledby={titleId} className="scroll-mt-4 space-y-3">
         <div className="flex flex-wrap items-start gap-2">
             <h3 id={titleId} className="min-w-0 flex-1 break-words text-base font-semibold text-ink-strong">{name(id)}</h3>
             <Button type="button" variant="ghost" onClick={onClose}>{t('admin.promptHealth.close')}</Button>
@@ -58,7 +79,7 @@ function PromptCardView({ id, paths, onCompare, onChanged, onClose }: {
         {card && <>
             <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
                 <dt className="font-semibold text-ink-body">{t('admin.promptHealth.card.state')}</dt>
-                <dd className="text-ink-muted">{card.customised ? t('admin.promptHealth.card.customised') : card.differs_from_factory ? t('admin.promptHealth.card.differs') : t('admin.promptHealth.card.factory')}</dd>
+                <dd>{ownership && <OwnershipBadge status={ownership} />}</dd>
                 {card.consumer && <><dt className="font-semibold text-ink-body">{t('admin.promptHealth.card.consumer')}</dt><dd className="break-words font-mono text-xs text-ink-muted">{card.consumer}</dd></>}
                 <dt className="font-semibold text-ink-body">{t('admin.promptHealth.card.arrives')}</dt>
                 <dd className="break-words text-ink-muted">{where
@@ -68,6 +89,12 @@ function PromptCardView({ id, paths, onCompare, onChanged, onClose }: {
             {card.editable && <Button type="button" variant="secondary" onClick={() => onCompare([id], null)}>
                 <Columns3 className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.card.openEditor')}
             </Button>}
+            {card.editable && historyTarget && <PromptHistory
+                scope={historyTarget.scope}
+                targetKey={historyTarget.key}
+                currentValue={card.text ?? ''}
+                onRestored={() => { reload(); onChanged(); }}
+            />}
             {card.findings.length === 0
                 ? <Callout variant="success">{t('admin.promptHealth.card.noFindings')}</Callout>
                 : <ul className="space-y-2">{card.findings.map(finding => <FindingCard key={finding.id} finding={finding} paths={paths} onCompare={onCompare} onChanged={onChanged} />)}</ul>}
@@ -111,20 +138,120 @@ function PathMap({ paths, findings, selected, onSelect }: {
     </div>;
 }
 
-async function fetchHealth(): Promise<{ run: PromptHealthRun | null; paths: PromptHealthPath[]; llm: PromptHealthFinding[] }> {
+/** Elenco completo dei prompt salvati nel database con stato rispetto alla fabbrica (#775). */
+function PromptStatusCatalog({ statuses, paths, selectedId, onOpen }: {
+    statuses: Record<string, PromptOwnershipStatus>;
+    paths: PromptHealthPath[];
+    selectedId: string | null;
+    onOpen: (id: string) => void;
+}) {
+    const { t } = useI18n();
+    const name = usePromptName(paths);
+    const searchId = useId();
+    const [statusFilter, setStatusFilter] = useState<'all' | 'factory_update' | 'customised' | 'factory'>('all');
+    const [query, setQuery] = useState('');
+
+    const entries = useMemo(() => Object.entries(statuses)
+        .map(([id, status]) => ({ id, status, label: name(id) }))
+        .sort((a, b) => a.label.localeCompare(b.label)), [statuses, name]);
+
+    const counts = useMemo(() => ({
+        all: entries.length,
+        factory: entries.filter(e => e.status === 'factory').length,
+        customised: entries.filter(e => e.status === 'customised').length,
+        factory_update: entries.filter(e => e.status === 'factory_update').length,
+    }), [entries]);
+
+    const visible = useMemo(() => {
+        const needle = query.trim().toLowerCase();
+        return entries.filter(item =>
+            (statusFilter === 'all' || item.status === statusFilter)
+            && (!needle || item.label.toLowerCase().includes(needle) || item.id.toLowerCase().includes(needle)),
+        );
+    }, [entries, statusFilter, query]);
+
+    return <div className="space-y-3">
+        <p className="text-sm text-ink-muted">{t('admin.promptHealth.catalog.help')}</p>
+        <p className="text-sm text-ink-body">
+            {t('admin.promptHealth.catalog.summary', {
+                factory: counts.factory,
+                customised: counts.customised,
+                updates: counts.factory_update,
+            })}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant={statusFilter === 'all' ? 'primary' : 'secondary'}
+                aria-pressed={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
+                {t('admin.promptHealth.catalog.filterAll', { count: counts.all })}
+            </Button>
+            {(['factory_update', 'customised', 'factory'] as const).map(status => (
+                <Button key={status} type="button" size="sm" variant={statusFilter === status ? 'primary' : 'secondary'}
+                    aria-pressed={statusFilter === status} onClick={() => setStatusFilter(status)}>
+                    {t(`admin.promptHealth.ownership.${status}`)} ({counts[status]})
+                </Button>
+            ))}
+        </div>
+        <div>
+            <label htmlFor={searchId} className="sr-only">{t('admin.promptHealth.catalog.search')}</label>
+            <input
+                id={searchId}
+                type="search"
+                value={query}
+                onChange={event => setQuery(event.target.value)}
+                placeholder={t('admin.promptHealth.catalog.search')}
+                className="min-h-control w-full rounded-control border border-line bg-surface px-3 text-sm text-ink-body sm:max-w-sm"
+            />
+        </div>
+        {visible.length === 0
+            ? <Callout variant="info">{t('admin.promptHealth.catalog.empty')}</Callout>
+            : <ul className="max-h-96 space-y-2 overflow-y-auto pr-1">
+                {visible.map(item => <li key={item.id}>
+                    <button
+                        type="button"
+                        onClick={() => onOpen(item.id)}
+                        aria-pressed={selectedId === item.id}
+                        className={cn(
+                            'flex min-h-control w-full flex-wrap items-center justify-between gap-2 rounded-control border border-line bg-surface px-3 py-2 text-left text-sm transition-colors hover:bg-surface-sunken',
+                            selectedId === item.id && 'ring-2 ring-brand',
+                        )}
+                    >
+                        <span className="min-w-0 flex-1 break-words font-semibold text-ink-strong">
+                            {item.label}
+                            <code className="ml-2 font-mono text-xs font-normal text-ink-muted">{item.id}</code>
+                        </span>
+                        <OwnershipBadge status={item.status} />
+                    </button>
+                </li>)}
+            </ul>}
+    </div>;
+}
+
+async function fetchHealth(): Promise<{
+    run: PromptHealthRun | null;
+    paths: PromptHealthPath[];
+    promptStatuses: Record<string, PromptOwnershipStatus>;
+    llm: PromptHealthFinding[];
+}> {
     const [health, map, llm] = await Promise.all([apiFetch('/api/admin/prompt-health'), apiFetch('/api/admin/prompt-health/map'),
         apiFetch('/api/admin/prompt-health/llm')]);
     if (!health.ok || !map.ok) throw new Error('load');
     // Le contraddizioni del modello (#763) vengono dalla memoria: nessuna chiamata qui.
     const llmFindings: PromptHealthFinding[] = llm.ok ? (await llm.json()).findings : [];
-    return { run: (await health.json()).run, paths: (await map.json()).paths, llm: llmFindings };
+    const mapPayload = await map.json();
+    return {
+        run: (await health.json()).run,
+        paths: mapPayload.paths,
+        promptStatuses: mapPayload.prompt_statuses ?? {},
+        llm: llmFindings,
+    };
 }
 
-/** Pagina «Salute dei prompt» (#761): mappa, schede, avvisi con azioni, confronto. */
+/** Pagina «Salute dei prompt» (#761, #775): problemi, stato prompt, cronologia, allineamento di fabbrica, confronto. */
 export function PromptHealthPage() {
     const { t, lang } = useI18n();
     const [run, setRun] = useState<PromptHealthRun | null>(null);
     const [paths, setPaths] = useState<PromptHealthPath[]>([]);
+    const [promptStatuses, setPromptStatuses] = useState<Record<string, PromptOwnershipStatus>>({});
     const [error, setError] = useState(false);
     const [busy, setBusy] = useState(false);
     const [step, setStep] = useState<PromptHealthStep | null>(null);
@@ -139,11 +266,17 @@ export function PromptHealthPage() {
     const load = useCallback(() => fetchHealth().then(state => {
         setRun(state.run);
         setPaths(state.paths);
+        setPromptStatuses(state.promptStatuses);
         setLlmFindings(state.llm);
         setError(false);
     }).catch(() => setError(true)), []);
     useEffect(() => {
-        fetchHealth().then(state => { setRun(state.run); setPaths(state.paths); setLlmFindings(state.llm); }).catch(() => setError(true));
+        fetchHealth().then(state => {
+            setRun(state.run);
+            setPaths(state.paths);
+            setPromptStatuses(state.promptStatuses);
+            setLlmFindings(state.llm);
+        }).catch(() => setError(true));
     }, []);
 
     const runNow = async () => {
@@ -163,6 +296,11 @@ export function PromptHealthPage() {
         window.requestAnimationFrame(() => document.getElementById('prompt-health-compare')?.scrollIntoView({ block: 'start' }));
     }, []);
 
+    const openCard = useCallback((id: string) => {
+        setCardId(id);
+        window.requestAnimationFrame(() => document.getElementById('prompt-health-card')?.scrollIntoView({ block: 'start' }));
+    }, []);
+
     const findings = useMemo(() => {
         const rank = { high: 0, medium: 1, low: 2 };
         return mergeFindings(run?.findings ?? [], llmFindings).sort((a, b) => rank[a.severity] - rank[b.severity]);
@@ -173,9 +311,10 @@ export function PromptHealthPage() {
     const codeCount = open.filter(hasCodeSource).length;
     const visible = open.filter(finding => filter === 'all' || (filter === 'code' ? hasCodeSource(finding) : !hasCodeSource(finding)));
     const knownPrompts = useMemo(() => [...new Set([
+        ...Object.keys(promptStatuses),
         ...paths.flatMap(path => path.steps.flatMap(item => item.prompts)),
         ...findings.flatMap(finding => finding.editable ?? []),
-    ])].sort(), [paths, findings]);
+    ])].sort(), [promptStatuses, paths, findings]);
 
     return <div className="space-y-6">
         <Card as="section" aria-labelledby="prompt-health-title" className="space-y-3">
@@ -198,6 +337,7 @@ export function PromptHealthPage() {
                     <Columns3 className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.compare.title')}
                 </Button>
             </div>
+            <PromptFactoryAlignment paths={paths} onApplied={() => { void load(); }} />
         </Card>
 
         <Card as="section" aria-labelledby="prompt-health-findings" className="space-y-3">
@@ -228,6 +368,13 @@ export function PromptHealthPage() {
         </div>}
 
         <details className="rounded-card border border-line bg-surface p-6">
+            <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptHealth.catalog.title')}</summary>
+            <div className="mt-4">
+                <PromptStatusCatalog statuses={promptStatuses} paths={paths} selectedId={cardId} onOpen={openCard} />
+            </div>
+        </details>
+
+        <details className="rounded-card border border-line bg-surface p-6">
             <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptHealth.map.title')}</summary>
             <div className="mt-4 space-y-3">
                 <p className="text-sm text-ink-muted">{t('admin.promptHealth.map.help')}</p>
@@ -236,8 +383,9 @@ export function PromptHealthPage() {
                     <p className="text-sm font-semibold text-ink-body">{t('admin.promptHealth.map.stepPrompts', { step: step.label_i18n?.[lang] || step.label })}</p>
                     <ul className="flex flex-wrap gap-2">
                         {step.prompts.map(id => <li key={id}>
-                            <Button type="button" variant="secondary" size="sm" onClick={() => setCardId(id)} aria-pressed={cardId === id}>
+                            <Button type="button" variant="secondary" size="sm" onClick={() => openCard(id)} aria-pressed={cardId === id}>
                                 <span>{name(id)}</span>
+                                {promptStatuses[id] && <OwnershipBadge status={promptStatuses[id]} />}
                             </Button>
                         </li>)}
                     </ul>
@@ -255,7 +403,7 @@ export function PromptHealthPage() {
         </details>
         <details className="rounded-card border border-line bg-surface p-6">
             <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptUsage.title')}</summary>
-            <div className="mt-4"><PromptUsagePanel onOpen={setCardId} /></div>
+            <div className="mt-4"><PromptUsagePanel onOpen={openCard} /></div>
         </details>
     </div>;
 }
