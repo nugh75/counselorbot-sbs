@@ -250,7 +250,7 @@
   --info-soft: var(--color-indigo-50);
   --info-line: var(--color-indigo-200);
   --info-ink: var(--ink);
-  --success: var(--color-emerald-600);
+  --success: var(--color-emerald-700);
   --success-soft: var(--color-emerald-50);
   --success-line: var(--color-emerald-200);
   --success-ink: var(--color-emerald-950);
@@ -593,7 +593,7 @@ h1.text-3xl {
   font-weight: 600;
   margin-top: 1em;
   margin-bottom: 0.5em;
-  color: #1e293b;
+  color: var(--ink);
 }
 
 .prose h1 {
@@ -614,7 +614,7 @@ h1.text-3xl {
 
 .prose strong {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .prose em {
@@ -640,7 +640,8 @@ h1.text-3xl {
 }
 
 .prose code {
-  background-color: #f1f5f9;
+  background-color: var(--surface-raised);
+  color: var(--ink);
   padding: 0.125em 0.25em;
   border-radius: 0.25em;
   font-size: 0.9em;
@@ -651,7 +652,7 @@ h1.text-3xl {
   border-left: 3px solid var(--console-primary);
   padding-left: 1em;
   margin-left: 0;
-  color: #64748b;
+  color: var(--ink-muted);
   font-style: italic;
 }
 
@@ -723,6 +724,7 @@ h1.text-3xl {
   --info: #8fcfd1;
   --info-soft: #103f42;
   --info-line: #1f7376;
+  --info-ink: #f8fafc;
   --success: #6ee7b7;
   --success-soft: #052e16;
   --success-line: #047857;
@@ -809,14 +811,7 @@ h1.text-3xl {
 .dark .text-sky-700 { color: #7dd3fc; }
 
 /* Prose (markdown chat/documenti) */
-.dark .prose { color: #cbd5e1; }
-.dark .prose h1,
-.dark .prose h2,
-.dark .prose h3,
-.dark .prose h4 { color: #f1f5f9; }
-.dark .prose strong { color: #f8fafc; }
-.dark .prose code { background-color: #334155; color: #e2e8f0; }
-.dark .prose blockquote { color: #94a3b8; }
+.dark .prose { color: var(--ink-body); }
 
 /* Hover background: le varianti hover:bg-* sono classi a sé, vanno rimappate. */
 .dark .hover\:bg-white:hover { background-color: #334155; }
