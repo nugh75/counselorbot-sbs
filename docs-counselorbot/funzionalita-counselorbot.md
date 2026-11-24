@@ -4017,10 +4017,10 @@ dati, flussi o Guida interfaccia.
 
 A ogni modifica del frontend la verifica su GitHub controlla ora anche i tipi
 (`tsc`) e i test Node senza browser, oltre a lingue e ESLint. I caricamenti al
-montaggio di Chat/QSA/entry e dell'Area docente usano i pattern React 19
-(`useClientValue`, reset durante il render e `.then()` con guardia nell'effetto)
-e abbassano la soglia `ESLINT_MAX_ERRORS` della CI da 78 a 54 (#773). Nessuna
-modifica visibile all'app, ai dati o alla Guida interfaccia.
+montaggio di Chat/QSA/entry, dell'Area docente e dell'Area personale usano i
+pattern React 19 (`useClientValue`, reset durante il render e `.then()` con
+guardia nell'effetto) e abbassano la soglia `ESLINT_MAX_ERRORS` della CI a 39
+(#773). Nessuna modifica visibile all'app, ai dati o alla Guida interfaccia.
 
 ### Pulizia di file e immagini non usati (#1003)
 
