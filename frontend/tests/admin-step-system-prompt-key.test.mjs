@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { chromium } from 'playwright';
 
-// Il pannello "Prompt per step" deve mostrare e salvare la chiave del prompt di
+// La "Mappa dei prompt" deve mostrare e salvare la chiave del prompt di
 // sistema che il backend risolve come a runtime (audit B-01), e il select del
 // mode deve offrire i mode del backend (NB-02). API intercettate, nessun DB.
 const origin = process.env.PROMPT_PREVIEW_BASE_URL || 'http://127.0.0.1:3107';
@@ -24,8 +24,47 @@ const configs = [
     { key: 'prompt_obbstudio_intro', value: 'Testo di apertura Obiettivo', description: '' },
 ];
 
+const configEntry = (key, value, stepId, level = 'instrument') => ({
+    key, kind: 'config', role: 'system_prompt', level, destination: 'model', when: 'every_turn',
+    label: '', description: key, value, stored: true, default: value, shared: false,
+    used_by: { instruments: ['OBIETTIVO_STUDIO'], steps: [{ instrument: 'OBIETTIVO_STUDIO', step_id: stepId, label: stepId }] },
+    editor: { method: 'POST', path: '/admin/config' }, read_only: false,
+});
+
+const stepField = (step, field, value, destination, when) => ({
+    key: `guided_step:${step.id}:${field}`, kind: 'guided_step', field, role: 'step_field', level: 'step', destination, when,
+    value, stored: true, shared: false,
+    used_by: { instruments: ['OBIETTIVO_STUDIO'], steps: [{ instrument: 'OBIETTIVO_STUDIO', step_id: step.id, label: step.label }] },
+    editor: { method: 'PUT', path: `/admin/guided-steps/${step.id}`, field }, read_only: false,
+});
+
+const promptMap = {
+    instrument: 'OBIETTIVO_STUDIO',
+    instruments: [{ id: 'OBIETTIVO_STUDIO', step_count: 2 }],
+    levels: {
+        common: [],
+        groups: [],
+        instrument: [
+            configEntry('prompt_obbstudio_intro', 'Testo di apertura Obiettivo', 'obbstudio-intro'),
+            configEntry('prompt_obiettivo_interview', 'Testo della conversazione Obiettivo', 'obbstudio-patto'),
+        ],
+        steps: steps.map(step => ({
+            id: step.id, label: step.label, label_i18n: {}, color_theme: step.color_theme, sort_order: step.sort_order,
+            system_prompt_mode: step.system_prompt_mode, system_prompt_key: step.system_prompt_key,
+            follow_up_mode: step.system_prompt_mode, fixed: false,
+            entries: [
+                stepField(step, 'label', step.label, 'student', 'student'),
+                stepField(step, 'color_theme', step.color_theme, 'student', 'student'),
+                stepField(step, 'system_prompt_mode', step.system_prompt_mode, 'context_filter', 'entry'),
+                stepField(step, 'prompt', step.prompt, 'model', 'entry'),
+            ],
+            refs: [{ key: step.system_prompt_key, level: 'instrument', role: 'system_prompt', when: 'every_turn' }],
+        })),
+    },
+};
+
 async function fixture() {
-    const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true });
+    const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
     const saved = [];
@@ -43,26 +82,26 @@ async function fixture() {
         }
         if (url.pathname === '/api/admin/guided-steps') data = steps;
         if (url.pathname === '/api/admin/guided-steps/modes') data = modes;
+        if (url.pathname === '/api/admin/prompt-map/instruments') data = promptMap.instruments;
+        if (url.pathname === '/api/admin/prompt-map') data = promptMap;
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
     });
-    await page.goto(`${origin}/admin?section=obiettivo-studio`);
+    await page.goto(`${origin}/admin?section=prompt-map&instrument=OBIETTIVO_STUDIO`);
     return { page, saved, close: async () => { await context.close(); await browser.close(); } };
 }
 
-const systemPromptBlock = (page, key) =>
-    page.locator(`xpath=//h5/following-sibling::p[normalize-space()="${key}"]/ancestor::div[contains(@class,"rounded-card")][1]`);
+const systemPromptBlock = (page, key) => page.locator(`[data-entry-key="${key}"]`);
 
 test('step prompt panel shows and saves the backend-resolved system prompt key', async () => {
     const f = await fixture();
     try {
         const { page, saved } = f;
-        await page.locator('select:has(option[value="obbstudio-patto"])').selectOption('obbstudio-patto');
         const block = systemPromptBlock(page, 'prompt_obiettivo_interview');
         await block.waitFor();
         assert.match(await block.innerText(), /Testo della conversazione Obiettivo/);
         assert.equal(await systemPromptBlock(page, 'prompt_generic').count(), 0);
 
-        await block.locator('button[title="Modifica"]').click();
+        await block.getByRole('button', { name: 'Modifica' }).click();
         await block.locator('textarea').fill('Conversazione Obiettivo aggiornata');
         const posted = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/admin/config');
         await block.getByRole('button', { name: 'Salva', exact: true }).click();
@@ -75,7 +114,11 @@ test('guided steps mode select uses the backend modes and keeps the real mode', 
     const f = await fixture();
     try {
         const { page } = f;
-        await page.getByRole('button', { name: 'Step guidati', exact: true }).click();
+        await page.locator('#pm-step-obbstudio-patto > div button[aria-expanded]').first().click();
+        for (const step of steps) {
+            const card = page.locator(`[data-entry-key="guided_step:${step.id}:system_prompt_mode"]`);
+            await card.getByRole('button', { name: 'Modifica' }).click();
+        }
         await page.locator('select option[value="idea-focus"]').first().waitFor({ state: 'attached' });
         const selects = await page.evaluate(() => [...document.querySelectorAll('select')]
             .filter(select => [...select.options].some(option => option.value === 'idea-focus'))

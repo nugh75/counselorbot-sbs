@@ -3704,16 +3704,19 @@ def test_an_older_stage_of_the_map_can_be_drawn_again():
             "session_id": session_id, "revision": rows[0]["revision_id"], "format": "svg",
         })
         now = client.get("/idea/map/image", params={"session_id": session_id, "format": "svg"})
+        # Una revisione di un'altra sessione non si guarda da qui.
+        assert client.get("/idea/map/image", params={
+            "session_id": session_id, "revision": 999999,
+        }).status_code == 404
+        if not find_program("dot"):
+            assert first.status_code == 422 and now.status_code == 422
+            assert "graphviz" in first.json()["detail"].lower()
+            return
         assert first.status_code == 200 and now.status_code == 200
         # Il disegno di allora non e' quello di adesso.
         assert first.headers["ETag"] != now.headers["ETag"]
         assert "I dati siano accessibili" in now.text
         assert "I dati siano accessibili" not in first.text
-
-        # Una revisione di un'altra sessione non si guarda da qui.
-        assert client.get("/idea/map/image", params={
-            "session_id": session_id, "revision": 999999,
-        }).status_code == 404
     finally:
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
         _set_idea_feature("false")
