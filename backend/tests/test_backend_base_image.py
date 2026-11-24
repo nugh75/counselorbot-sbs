@@ -3,7 +3,8 @@
 The backend uses ``datetime.UTC`` (Python 3.11+). With the old
 ``python:3.10-slim`` default a fresh Docker install could not even import
 ``backend/ai_service.py``. This guard reads the build configuration and fails
-if the default slips back to 3.10.
+if the default slips back to 3.10. It also verifies that portable Compose
+pins AUTH_PROVIDER=ai4auth and an empty COUNSELORBOT_PROFILE (#734).
 """
 from pathlib import Path
 
@@ -38,6 +39,13 @@ def test_env_example_documents_the_312_default():
     example = _read(".env.example")
     assert f"mirror.gcr.io/library/{DEFAULT}" in example
     assert "python:3.10" not in example
+
+
+def test_portable_compose_pins_auth_provider_and_empty_profile():
+    compose = _read("docker-compose.portable.yml")
+    backend_section = compose.split("counselorbot-backend:")[1].split("counselorbot-frontend:")[0]
+    assert "AUTH_PROVIDER: ai4auth" in backend_section
+    assert 'COUNSELORBOT_PROFILE: ""' in backend_section
 
 
 if __name__ == "__main__":
