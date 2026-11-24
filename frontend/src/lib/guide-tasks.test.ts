@@ -65,5 +65,8 @@ test('plan instructions quote the actual action labels in every language', () =>
         assert.ok(resume.includes(personalAreaName(lang,'piani-operativi')), `${lang}/student plan name`);
         for (const key of ['start','resume','saveExit']) assert.ok(resume.includes(pathActivityText(lang,key)), `${lang}/${key}`);
         for (const key of ['anotherAttempt','newCompilation','history','seeResults','rereadConversation']) assert.ok(repeat.includes(pathActivityText(lang,key)), `${lang}/${key}`);
+        const events = guideTaskCopy(lang, 'events').steps.join(' ');
+        assert.ok(events.includes(personalAreaName(lang, 'timeline')), `${lang}/events timeline name`);
+        assert.doesNotMatch(events, /\b(?:libretto|livret|lerntagebuch|journal(?:en)?)\b/i, `${lang}/retired booklet`);
     }
 });
