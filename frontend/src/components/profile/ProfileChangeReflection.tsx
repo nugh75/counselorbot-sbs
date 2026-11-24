@@ -96,23 +96,42 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     const [chatConversationId, setChatConversationId] = useState<string | undefined>(undefined);
     const [chatLoading, setChatLoading] = useState(false);
 
+    const fetchProfileChanges = useCallback(async () => {
+        const [historyRes, reflectionsRes] = await Promise.all([
+            apiFetch('/api/user/learner-profile/history'),
+            apiFetch('/api/user/learner-profile/reflections'),
+        ]);
+        return {
+            nextHistory: (historyRes.ok ? await historyRes.json() : []) as Revision[],
+            nextReflections: (reflectionsRes.ok ? await reflectionsRes.json() : []) as Reflection[],
+        };
+    }, []);
+
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const [historyRes, reflectionsRes] = await Promise.all([
-                apiFetch('/api/user/learner-profile/history'),
-                apiFetch('/api/user/learner-profile/reflections'),
-            ]);
-            setHistory(historyRes.ok ? await historyRes.json() : []);
-            setReflections(reflectionsRes.ok ? await reflectionsRes.json() : []);
+            const { nextHistory, nextReflections } = await fetchProfileChanges();
+            setHistory(nextHistory);
+            setReflections(nextReflections);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchProfileChanges]);
 
     useEffect(() => {
-        void load();
-    }, [load]);
+        let active = true;
+        fetchProfileChanges()
+            .then(({ nextHistory, nextReflections }) => {
+                if (!active) return;
+                setHistory(nextHistory);
+                setReflections(nextReflections);
+                setLoading(false);
+            })
+            .catch(() => {
+                if (active) setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchProfileChanges]);
 
     const current = history[revIndex];
     const previous = history[revIndex + 1];

@@ -48,27 +48,42 @@ export function GoalsPanel() {
     const [saved, setSaved] = useState(false); const [showClosed, setShowClosed] = useState(false); const [chosenView, setView] = useState<'list' | 'map' | null>(null);
     const storedView = useClientValue(readView, 'list'); const view = chosenView ?? storedView;
     const chooseView = (next: 'list' | 'map') => { setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* per-viewer convenience only */ } };
-    const load = useCallback(async (): Promise<PersonalGoal[]> => {
+    const fetchGoalsData = useCallback(() => Promise.all([
+        goalApi<PersonalGoal[]>('/user/goals'),
+        goalApi<CatalogEntry[]>('/user/goal-catalog'),
+        goalApi<GoalGroup[]>('/user/goal-groups'),
+    ]), []);
+    const load = useCallback(async () => {
         setLoading(true); setError(null);
         try {
-            const [rows, entries, memberships] = await Promise.all([goalApi<PersonalGoal[]>('/user/goals'), goalApi<CatalogEntry[]>('/user/goal-catalog'), goalApi<GoalGroup[]>('/user/goal-groups')]);
+            const [rows, entries, memberships] = await fetchGoalsData();
             setGoals(rows); setCatalog(entries); setGroups(memberships);
-            return rows;
-        } catch (e) { setError(e); return []; } finally { setLoading(false); }
-    }, []);
+        } catch (e) { setError(e); } finally { setLoading(false); }
+    }, [fetchGoalsData]);
     useEffect(() => {
-        void load().then(rows => {
-            const search = new URLSearchParams(window.location.search);
-            if (search.get('new') === '1') {
-                setSaved(false); setTarget(createTargetFromSearch(search));
-                ['new', 'origin', 'title'].forEach(stripParam); return;
-            }
-            const requested = Number(search.get('goal'));
-            if (!requested) return;
-            if (rows.some(row => row.id === requested)) setTarget({ kind: 'edit', id: requested });
-            else stripGoalParam();
-        });
-    }, [load]);
+        let active = true;
+        fetchGoalsData()
+            .then(([rows, entries, memberships]) => {
+                if (!active) return [];
+                setGoals(rows); setCatalog(entries); setGroups(memberships);
+                return rows;
+            })
+            .catch(e => { if (active) setError(e); return [] as PersonalGoal[]; })
+            .then(rows => {
+                if (!active) return;
+                setLoading(false);
+                const search = new URLSearchParams(window.location.search);
+                if (search.get('new') === '1') {
+                    setSaved(false); setTarget(createTargetFromSearch(search));
+                    ['new', 'origin', 'title'].forEach(stripParam); return;
+                }
+                const requested = Number(search.get('goal'));
+                if (!requested) return;
+                if (rows.some(row => row.id === requested)) setTarget({ kind: 'edit', id: requested });
+                else stripGoalParam();
+            });
+        return () => { active = false; };
+    }, [fetchGoalsData]);
     const open = (next: DialogTarget) => { setSaved(false); setTarget(next); };
     const closeDialog = useCallback(() => { setTarget(null); stripGoalParam(); }, []);
     const openGoal = useCallback((id: number) => { setSaved(false); setTarget({ kind: 'edit', id }); }, []);

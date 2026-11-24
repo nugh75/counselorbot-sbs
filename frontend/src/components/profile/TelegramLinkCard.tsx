@@ -145,19 +145,29 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
     const [statusError, setStatusError] = useState(false);
     const [now, setNow] = useState(() => Date.now());
 
+    const fetchLinkStatus = useCallback(async () => {
+        const res = await apiFetch('/api/telegram/link-status');
+        if (!res.ok) throw new Error('link-status failed');
+        return await res.json() as LinkStatus;
+    }, []);
+
     const loadStatus = useCallback(async () => {
         // F03: un errore di rete non è “non collegato” — è un errore con Riprova.
         try {
-            const res = await apiFetch('/api/telegram/link-status');
-            if (!res.ok) throw new Error('link-status failed');
-            setStatus(await res.json() as LinkStatus);
+            setStatus(await fetchLinkStatus());
             setStatusError(false);
         } catch {
             setStatusError(true);
         }
-    }, []);
+    }, [fetchLinkStatus]);
 
-    useEffect(() => { void loadStatus(); }, [loadStatus]);
+    useEffect(() => {
+        let active = true;
+        fetchLinkStatus()
+            .then(next => { if (active) { setStatus(next); setStatusError(false); } })
+            .catch(() => { if (active) setStatusError(true); });
+        return () => { active = false; };
+    }, [fetchLinkStatus]);
 
     // F32: al ritorno dal bot (tab di nuovo visibile) si riverifica lo stato.
     useEffect(() => {

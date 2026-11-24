@@ -34,12 +34,26 @@ export function GoalCatalogEditor({ initialData }: { initialData?: CatalogData }
     const formRef = useRef<HTMLFormElement>(null);
     const goals = useMemo(() => catalogGoals(rows), [rows]);
     const forest = useMemo(() => buildForest(goals, true), [goals]);
+    const fetchCatalog = useCallback(() => Promise.all([
+        goalApi<TeacherCatalogEntry[]>('/teacher/goal-catalog'),
+        goalApi<GoalGroup[]>('/admin/groups'),
+        getIdentity(),
+    ]), []);
     const load = useCallback(async () => {
         setLoading(true); setError(null);
-        try { const [entries, groupRows, identity] = await Promise.all([goalApi<TeacherCatalogEntry[]>('/teacher/goal-catalog'), goalApi<GoalGroup[]>('/admin/groups'), getIdentity()]); setRows(entries); setGroups(groupRows); setAdmin(Boolean(identity?.is_admin)); setUsername(identity?.username || ''); }
+        try { const [entries, groupRows, identity] = await fetchCatalog(); setRows(entries); setGroups(groupRows); setAdmin(Boolean(identity?.is_admin)); setUsername(identity?.username || ''); }
         catch (e) { setError(e); } finally { setLoading(false); }
-    }, []);
-    useEffect(() => { void load(); }, [load]);
+    }, [fetchCatalog]);
+    useEffect(() => {
+        let active = true;
+        fetchCatalog()
+            .then(([entries, groupRows, identity]) => {
+                if (!active) return;
+                setRows(entries); setGroups(groupRows); setAdmin(Boolean(identity?.is_admin)); setUsername(identity?.username || ''); setLoading(false);
+            })
+            .catch(e => { if (active) { setError(e); setLoading(false); } });
+        return () => { active = false; };
+    }, [fetchCatalog]);
     const sharedKey = `${sharedGroup}:${sharedAttempt}`; const [sharedKeyShown, setSharedKeyShown] = useState(sharedKey);
     if (sharedKeyShown !== sharedKey) { setSharedKeyShown(sharedKey); setShared([]); setSharedError(null); setSharedLoading(Boolean(sharedGroup)); }
     useEffect(() => {

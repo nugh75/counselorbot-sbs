@@ -93,7 +93,26 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
         } catch (exc) { setError(exc instanceof Error ? exc.message : 'error'); }
         finally { setLoading(false); }
     }, [accept]);
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        request('/api/user/api-connections')
+            .then(async (data: Settings) => {
+                if (!active) return;
+                accept(data);
+                if (data.api_enabled) {
+                    const counselors: Counselor[] = await request('/api/user/counselors');
+                    if (!active) return;
+                    setOwn(counselors);
+                }
+                setLoading(false);
+            })
+            .catch((exc: unknown) => {
+                if (!active) return;
+                setError(exc instanceof Error ? exc.message : 'error');
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [accept]);
     // #217: a class that forbids own sources gets an explanation instead of a redirect.
     const blocked = settings?.class_blocked === true;
     useEffect(() => { if (settings?.available === false && !blocked) router.replace(`/${area}`); }, [settings?.available, blocked, router, area]);

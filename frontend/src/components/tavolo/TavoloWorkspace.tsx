@@ -90,6 +90,12 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
         return () => window.removeEventListener('resize', measure);
     }, []);
 
+    const [seenId, setSeenId] = useState(id);
+    if (seenId !== id) {
+        setSeenId(id);
+        setStatus('loading');
+    }
+
     const load = useCallback(async () => {
         try {
             const next = await fetchTavolo(id);
@@ -103,7 +109,22 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
         }
     }, [id]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchTavolo(id)
+            .then((next) => {
+                if (!active) return;
+                viewRef.current = next;
+                dirtyGraph.current = null;
+                setView(next);
+                setGraph(next.graph);
+                setStatus('ready');
+            })
+            .catch(() => {
+                if (active) setStatus('missing');
+            });
+        return () => { active = false; };
+    }, [id]);
 
     // Serialize writes and drain the latest edit before save, AI or settlement.
     // A slow response must not overwrite what the person typed while it was in flight.
