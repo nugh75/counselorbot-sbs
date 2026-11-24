@@ -99,33 +99,57 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
     };
 
 
+    const fetchAll = useCallback(async () => {
+        const [response, people, groups] = await Promise.all([
+            apiFetch(`/api/teacher/groups/${groupId}/meetings`),
+            apiFetch(`/api/teacher/groups/${groupId}/meeting-referents`),
+            apiFetch('/api/admin/groups'),
+        ]);
+        if (!response.ok) throw new Error('meetings');
+        const rows = parseMeetings(await response.json());
+        const nextReferents = people.ok ? await people.json() as Referent[] : null;
+        // Other active classes or groups the teacher manages can share a meeting (#190).
+        const nextOtherGroups = groups.ok
+            ? parseClassGroups(await groups.json()).filter(row => row.is_active && row.id !== groupId).map(row => ({ id: row.id, name: row.name }))
+            : null;
+        return { rows, nextReferents, nextOtherGroups };
+    }, [groupId]);
+
+    const applyAll = useCallback(({ rows, nextReferents, nextOtherGroups }: {
+        rows: ClassMeeting[];
+        nextReferents: Referent[] | null;
+        nextOtherGroups: { id: number; name: string }[] | null;
+    }) => {
+        setMeetings(rows);
+        onMeetingsChanged?.(rows);
+        if (initialMeetingId !== undefined && !initialOpened.current) {
+            const target = rows.find(row => row.id === initialMeetingId && row.status === 'scheduled');
+            if (target) {
+                initialOpened.current = true;
+                setEditing(target); setDraft(draftOf(target)); setFailure(null);
+            }
+        }
+        if (nextReferents) setReferents(nextReferents);
+        if (nextOtherGroups) setOtherGroups(nextOtherGroups);
+        setLoadFailed(false);
+    }, [initialMeetingId, onMeetingsChanged]);
+
     const load = useCallback(async () => {
         try {
-            const [response, people, groups] = await Promise.all([
-                apiFetch(`/api/teacher/groups/${groupId}/meetings`),
-                apiFetch(`/api/teacher/groups/${groupId}/meeting-referents`),
-                apiFetch('/api/admin/groups'),
-            ]);
-            if (!response.ok) throw new Error('meetings');
-            const rows = parseMeetings(await response.json());
-            setMeetings(rows);
-            onMeetingsChanged?.(rows);
-            if (initialMeetingId !== undefined && !initialOpened.current) {
-                const target = rows.find(row => row.id === initialMeetingId && row.status === 'scheduled');
-                if (target) {
-                    initialOpened.current = true;
-                    setEditing(target); setDraft(draftOf(target)); setFailure(null);
-                }
-            }
-            if (people.ok) setReferents(await people.json() as Referent[]);
-            // Other active classes or groups the teacher manages can share a meeting (#190).
-            if (groups.ok) setOtherGroups(parseClassGroups(await groups.json())
-                .filter(row => row.is_active && row.id !== groupId).map(row => ({ id: row.id, name: row.name })));
-            setLoadFailed(false);
-            return rows;
+            const payload = await fetchAll();
+            applyAll(payload);
+            return payload.rows;
         } catch { setLoadFailed(true); } finally { setLoaded(true); }
-    }, [groupId, initialMeetingId, onMeetingsChanged]);
-    useEffect(() => { void load(); }, [load]);
+    }, [fetchAll, applyAll]);
+
+    useEffect(() => {
+        let active = true;
+        fetchAll()
+            .then(payload => { if (active) applyAll(payload); })
+            .catch(() => { if (active) setLoadFailed(true); })
+            .finally(() => { if (active) setLoaded(true); });
+        return () => { active = false; };
+    }, [fetchAll, applyAll]);
 
     const open = useCallback((target: ClassMeeting | 'new') => {
         if (onDraft && formDirty && !window.confirm(classPathText(lang, 'discard'))) return;
@@ -345,7 +369,17 @@ function AttendanceRegister({ lang, meeting, onChanged }: { lang: string; meetin
             setFailed(false);
         } catch { setFailed(true); }
     }, [meeting.id]);
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        apiFetch(`/api/teacher/meetings/${meeting.id}/attendance`)
+            .then(async response => {
+                if (!response.ok) throw new Error('register');
+                const students = ((await response.json()) as { students: RegisterRow[] }).students;
+                if (active) { setRows(students); setFailed(false); }
+            })
+            .catch(() => { if (active) setFailed(true); });
+        return () => { active = false; };
+    }, [meeting.id]);
     const toggle = async (row: RegisterRow) => {
         setBusy(row.username);
         try {

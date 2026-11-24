@@ -51,31 +51,52 @@ export function AssignmentDialog({ close, saved, classId }: { close: () => void;
     const request = useRef<{ body: string; id: string } | null>(null);
     const group = groups.find(row => String(row.id) === groupId);
     const visibleGoals = goals.filter(row => !group || row.group_id == null || row.group_id === group.id);
-    const load = useCallback(async () => {
-        setLoading(true); setFailed(false);
-        try {
-            const [targets, catalog, strategies, readings] = await Promise.all([
-                apiFetch('/api/teacher/assignment-targets'),
-                apiFetch('/api/teacher/goal-catalog'),
-                apiFetch('/api/admin/certified-strategies'),
-                apiFetch('/api/admin/certified-readings'),
-            ]);
-            if (!targets.ok || !catalog.ok || !strategies.ok || !readings.ok) throw new Error('unavailable');
-            const rows: Group[] = await targets.json();
-            const catalogRows: GoalEntry[] = await catalog.json();
-            const strategyRows: StrategyRow[] = await strategies.json();
-            const readingRows: ReadingRow[] = await readings.json();
-            setGroups(rows);
-            setGoals(catalogRows.filter(row => row.status === 'published'));
-            setAttachments([
+    const fetchAll = useCallback(async () => {
+        const [targets, catalog, strategies, readings] = await Promise.all([
+            apiFetch('/api/teacher/assignment-targets'),
+            apiFetch('/api/teacher/goal-catalog'),
+            apiFetch('/api/admin/certified-strategies'),
+            apiFetch('/api/admin/certified-readings'),
+        ]);
+        if (!targets.ok || !catalog.ok || !strategies.ok || !readings.ok) throw new Error('unavailable');
+        const rows: Group[] = await targets.json();
+        const catalogRows: GoalEntry[] = await catalog.json();
+        const strategyRows: StrategyRow[] = await strategies.json();
+        const readingRows: ReadingRow[] = await readings.json();
+        return {
+            groups: rows,
+            goals: catalogRows.filter(row => row.status === 'published'),
+            attachments: [
                 ...strategyRows.filter(row => row.status === 'certified' && row.is_active)
                     .map(row => ({ kind: 'strategy' as const, id: row.id, title: row.name_it || row.slug })),
                 ...readingRows.filter(row => row.status === 'certified' && row.is_active)
                     .map(row => ({ kind: 'reading' as const, id: row.id, title: row.title })),
-            ]);
-        } catch { setFailed(true); } finally { setLoading(false); }
+            ],
+        };
     }, []);
-    useEffect(() => { void load(); }, [load]);
+    const load = useCallback(async () => {
+        setLoading(true); setFailed(false);
+        try {
+            const next = await fetchAll();
+            setGroups(next.groups);
+            setGoals(next.goals);
+            setAttachments(next.attachments);
+        } catch { setFailed(true); } finally { setLoading(false); }
+    }, [fetchAll]);
+    useEffect(() => {
+        let active = true;
+        fetchAll()
+            .then(next => {
+                if (!active) return;
+                setGroups(next.groups);
+                setGoals(next.goals);
+                setAttachments(next.attachments);
+                setFailed(false);
+            })
+            .catch(() => { if (active) setFailed(true); })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, [fetchAll]);
     return <Dialog title={l('newAssignment')} closeLabel={l('cancel')} onClose={() => { if (!busy) close(); }}>
         <DialogBody>
         {loading && <p role="status">{l('loading')}</p>}

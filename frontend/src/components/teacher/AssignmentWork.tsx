@@ -10,6 +10,7 @@ import { assignmentText } from '@/lib/i18n-assignments';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { goalApi as request, GoalError, type PersonalGoal } from '@/lib/goals';
+import { useClientValue } from '@/lib/use-client-value';
 
 type Submission = { text: string; portfolio?: { title: string; description: string } };
 type Work = {
@@ -52,26 +53,36 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
     const [reflectionRevision, setReflectionRevision] = useState(0);
     const [goalId, setGoalId] = useState(''); const [portfolioId, setPortfolioId] = useState(''); const [shareText, setShareText] = useState('');
     const [shareBaseline, setShareBaseline] = useState('');
-    const [busy, setBusy] = useState(false); const [error, setError] = useState<unknown>(null); const [saved, setSaved] = useState(false);
+    const [busy, setBusy] = useState(true); const [error, setError] = useState<unknown>(null); const [saved, setSaved] = useState(false);
     const mounted = useRef(false); const inFlight = useRef(false);
     const shareSection = useRef<HTMLDetailsElement>(null);
     const [newAttempt, setNewAttempt] = useState(false);
     const [confirmWithdraw, setConfirmWithdraw] = useState(false);
+    const applyLoaded = useCallback(([state, ownGoals, ownPortfolio]: [Work, PersonalGoal[], Portfolio[]]) => {
+        setWork(state); setGoals(ownGoals); setPortfolio(ownPortfolio);
+        const fresh = new URLSearchParams(window.location.search).get('attempt') === 'new'
+            && window.location.hash === `#assignment-${assignmentId}`;
+        setNewAttempt(fresh);
+        setReflection(state.event?.reflection ?? (state.action?.reflection || '')); setShareText(fresh ? '' : state.submission?.text || ''); setPortfolioId('');
+        setReflectionRevision(state.workspace_revision);
+        setShareBaseline(JSON.stringify([fresh ? '' : state.submission?.text || '', '']));
+    }, [assignmentId]);
     const load = useCallback(async () => {
         setBusy(true); setError(null); setSaved(false);
         try {
-            const [state, ownGoals, ownPortfolio] = await Promise.all([request<Work>(`${base}/work`), request<PersonalGoal[]>('/user/goals'), request<Portfolio[]>('/user/portfolio')]);
+            const payload = await Promise.all([request<Work>(`${base}/work`), request<PersonalGoal[]>('/user/goals'), request<Portfolio[]>('/user/portfolio')]);
             if (!mounted.current) return;
-            setWork(state); setGoals(ownGoals); setPortfolio(ownPortfolio);
-            const fresh = new URLSearchParams(window.location.search).get('attempt') === 'new'
-                && window.location.hash === `#assignment-${assignmentId}`;
-            setNewAttempt(fresh);
-            setReflection(state.event?.reflection ?? (state.action?.reflection || '')); setShareText(fresh ? '' : state.submission?.text || ''); setPortfolioId('');
-            setReflectionRevision(state.workspace_revision);
-            setShareBaseline(JSON.stringify([fresh ? '' : state.submission?.text || '', '']));
+            applyLoaded(payload);
         } catch (e) { if (mounted.current) setError(e); } finally { if (mounted.current) setBusy(false); }
-    }, [base, assignmentId]);
-    useEffect(() => { mounted.current = true; void load(); return () => { mounted.current = false; }; }, [load]);
+    }, [base, applyLoaded]);
+    useEffect(() => {
+        mounted.current = true;
+        Promise.all([request<Work>(`${base}/work`), request<PersonalGoal[]>('/user/goals'), request<Portfolio[]>('/user/portfolio')])
+            .then(payload => { if (mounted.current) applyLoaded(payload); })
+            .catch(e => { if (mounted.current) setError(e); })
+            .finally(() => { if (mounted.current) setBusy(false); });
+        return () => { mounted.current = false; };
+    }, [base, applyLoaded]);
     useEffect(() => { if (newAttempt && shareSection.current) shareSection.current.open = true; }, [newAttempt, work]);
     const dirty = Boolean(work && (reflection !== (work.event?.reflection ?? (work.action?.reflection || '')) || JSON.stringify([shareText, portfolioId]) !== shareBaseline));
     const protectedBusy = busy && work !== null;
@@ -174,10 +185,13 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
 }
 
 export function AssignmentWork({ assignmentId, authorName, onDraftStateChange }: { assignmentId: number; authorName?: string; onDraftStateChange?: DraftStateChange }) {
-    const { lang } = useI18n(); const [open, setOpen] = useState(false);
+    const { lang } = useI18n();
+    const hashMatches = useClientValue(() => window.location.hash === `#assignment-${assignmentId}`, false);
+    const [manualOpen, setOpen] = useState(false);
+    const open = manualOpen || hashMatches;
     useEffect(() => {
         const check = () => { if (window.location.hash === `#assignment-${assignmentId}`) setOpen(true); };
-        check(); window.addEventListener('hashchange', check); return () => window.removeEventListener('hashchange', check);
+        window.addEventListener('hashchange', check); return () => window.removeEventListener('hashchange', check);
     }, [assignmentId]);
     return <div className="space-y-4"><Button type="button" variant="secondary" aria-expanded={open} onClick={() => setOpen(true)}>{learningText(lang, 'openWork')}</Button>{open && <WorkEditor key={assignmentId} assignmentId={assignmentId} authorName={authorName} onDraftStateChange={onDraftStateChange} />}</div>;
 }

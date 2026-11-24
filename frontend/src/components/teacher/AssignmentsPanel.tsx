@@ -46,6 +46,12 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
     const w = (key: Parameters<typeof learningText>[1]) => learningText(lang, key);
     const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
     const [rows, setRows] = useState<Assignment[]>([]); const [loading, setLoading] = useState(true); const [failed, setFailed] = useState(false); const [busy, setBusy] = useState<number | null>(null);
+    const [seenTeacher, setSeenTeacher] = useState(teacher);
+    if (seenTeacher !== teacher) {
+        setSeenTeacher(teacher);
+        setLoading(true);
+        setFailed(false);
+    }
     // F27: filtri gruppo, tipo, finalità (richiesta/proposta) e stato. Con almeno
     // tre schede sono la prima riga della schermata: barra di inquiry, non una
     // fila di select anonimi.
@@ -68,7 +74,22 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
         try { const res = await apiFetch(`/api/${teacher ? 'teacher' : 'user'}/assignments`); if (!res.ok) throw new Error('unavailable'); setRows(await res.json()); }
         catch { setFailed(true); } finally { setLoading(false); }
     }, [teacher]);
-    useEffect(() => { void load(); if (teacher) window.addEventListener('teacher-assignments-changed', load); return () => window.removeEventListener('teacher-assignments-changed', load); }, [load, teacher]);
+    useEffect(() => {
+        let active = true;
+        apiFetch(`/api/${teacher ? 'teacher' : 'user'}/assignments`)
+            .then(async res => {
+                if (!res.ok) throw new Error('unavailable');
+                const next: Assignment[] = await res.json();
+                if (active) { setRows(next); setFailed(false); }
+            })
+            .catch(() => { if (active) setFailed(true); })
+            .finally(() => { if (active) setLoading(false); });
+        if (teacher) window.addEventListener('teacher-assignments-changed', load);
+        return () => {
+            active = false;
+            window.removeEventListener('teacher-assignments-changed', load);
+        };
+    }, [load, teacher]);
     // F27: un link diretto #assignment-N apre quel dettaglio anche se la lista cambia.
     // F30: il collegamento dal gruppo porta ?group=Nome e preimposta il filtro.
     // Letti una volta dall'URL d'ingresso (null finché non c'è il browser); i cambi

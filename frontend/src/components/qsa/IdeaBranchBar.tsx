@@ -34,7 +34,11 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
         setRows(await fetchIdeaBranches(sessionId, locale));
     }, [sessionId, locale]);
 
-    useEffect(() => { void reload(); }, [reload, version]);
+    useEffect(() => {
+        let active = true;
+        void fetchIdeaBranches(sessionId, locale).then((next) => { if (active) setRows(next); });
+        return () => { active = false; };
+    }, [sessionId, locale, version]);
 
     const goTo = async (nodeId: string) => {
         setBusy(true);

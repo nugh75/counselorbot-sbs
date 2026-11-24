@@ -60,13 +60,22 @@ export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
             setFailed(true);
         }
     }, [notebookId]);
-    useEffect(() => { void load(); }, [load]);
-    useEffect(() => { if (results) onResults?.(results); }, [results, onResults]);
     useEffect(() => {
-        if (!newProfileType || !(PRACTICE_RESULT_TYPES as readonly string[]).includes(newProfileType)) return;
-        setDraft({ type: newProfileType as QuestionnaireType, generated: false, version: 0 });
-        setDirty(false); setSaved(false); setError('');
-    }, [newProfileType]);
+        let active = true;
+        practiceNotebookApi.results(notebookId)
+            .then(rows => { if (active) { setResults(rows); setFailed(false); } })
+            .catch(() => { if (active) setFailed(true); });
+        return () => { active = false; };
+    }, [notebookId]);
+    useEffect(() => { if (results) onResults?.(results); }, [results, onResults]);
+    const [seenProfileType, setSeenProfileType] = useState<string | null | undefined>(undefined);
+    if (seenProfileType !== newProfileType) {
+        setSeenProfileType(newProfileType);
+        if (newProfileType && (PRACTICE_RESULT_TYPES as readonly string[]).includes(newProfileType)) {
+            setDraft({ type: newProfileType as QuestionnaireType, generated: false, version: 0 });
+            setDirty(false); setSaved(false); setError('');
+        }
+    }
 
     const act = async (action: () => Promise<unknown>) => {
         if (busy) return false;

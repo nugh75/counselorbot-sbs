@@ -4013,11 +4013,14 @@ i pulsanti di scelta e le risposte rapide arrivano a 44 px e i colori passano da
 token del tema, così il tema scuro non dipende più dal remap. Nessuna modifica a
 dati, flussi o Guida interfaccia.
 
-### Controlli automatici del frontend (#982)
+### Controlli automatici del frontend (#982, #773)
 
 A ogni modifica del frontend la verifica su GitHub controlla ora anche i tipi
-(`tsc`) e i test Node senza browser, oltre a lingue e ESLint. Nessuna modifica
-visibile all'app, ai dati o alla Guida interfaccia.
+(`tsc`) e i test Node senza browser, oltre a lingue e ESLint. I caricamenti al
+montaggio di Chat/QSA/entry e dell'Area docente usano i pattern React 19
+(`useClientValue`, reset durante il render e `.then()` con guardia nell'effetto)
+e abbassano la soglia `ESLINT_MAX_ERRORS` della CI da 78 a 54 (#773). Nessuna
+modifica visibile all'app, ai dati o alla Guida interfaccia.
 
 ### Pulizia di file e immagini non usati (#1003)
 

@@ -103,7 +103,17 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             setAdministrations(await response.json());setAdministrationError(false);
         } catch {setAdministrationError(true);}
     };
-    useEffect(() => {void loadAdministrations();}, []); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        let active = true;
+        apiFetch(`/api/teacher/groups/${path.group_id}/administrations`)
+            .then(async response => {
+                if (!response.ok) throw new Error('administrations');
+                const rows = await response.json();
+                if (active) { setAdministrations(rows); setAdministrationError(false); }
+            })
+            .catch(() => { if (active) setAdministrationError(true); });
+        return () => { active = false; };
+    }, [path.group_id]);
     useEffect(() => {
         fetchInstruments().then(rows=>setServedLocales(Object.fromEntries(rows.map(row=>[row.code,row.available_locales]))))
             .catch(()=>setAdministrationError(true));
@@ -155,7 +165,17 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             if (select) setSelectedAssignment(String(select));
         } catch {setAssignmentLoadError(true);}
     };
-    useEffect(() => {void loadPathAssignments();}, []); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        let active = true;
+        apiFetch(`/api/teacher/groups/${path.group_id}/path-assignments`)
+            .then(async response => {
+                if (!response.ok) throw new Error('path assignments');
+                const rows = parsePathAssignments(await response.json());
+                if (active) { setPathAssignments(rows); setAssignmentLoadError(false); }
+            })
+            .catch(() => { if (active) setAssignmentLoadError(true); });
+        return () => { active = false; };
+    }, [path.group_id]);
     const addAssignmentStep = () => {
         const target = pathAssignments.find(row => row.id === Number(selectedAssignment));
         if (!target) return;
@@ -178,7 +198,17 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             if (select !== undefined) setSelectedTopic(steps.some(step => step.step_type === 'forum' && step.topic_id === select) ? '' : String(select));
         } catch {setForumLoadError(true);}
     };
-    useEffect(() => {void loadForumTopics();}, []); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        let active = true;
+        apiFetch(`/api/groups/${path.group_id}/forum/topics?limit=100`)
+            .then(async response => {
+                if (!response.ok) throw new Error('forum topics');
+                const rows = pathForumTopics(parseForumList(await response.json()).topics);
+                if (active) { setForumTopics(rows); setForumLoadError(false); }
+            })
+            .catch(() => { if (active) setForumLoadError(true); });
+        return () => { active = false; };
+    }, [path.group_id]);
     const addForumStep = () => {
         const target = selectablePathForumTopics(forumTopics, steps).find(row => row.id === Number(selectedTopic));
         if (!target) return;
