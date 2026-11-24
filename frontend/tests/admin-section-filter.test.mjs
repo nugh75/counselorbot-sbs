@@ -23,7 +23,7 @@ const generalLabels = {
 };
 
 async function fixture(language, { width = 1440, path = '/admin' } = {}) {
-    const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true });
+    const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
     const context = await browser.newContext({ viewport: { width, height: 900 } });
     const page = await context.newPage();
     await page.addInitScript(language => localStorage.setItem('cb_lang', language), language);
