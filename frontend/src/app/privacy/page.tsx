@@ -40,61 +40,106 @@ export default function PrivacyPage() {
     const [choicesLoading, setChoicesLoading] = useState(true);
     const [choicesError, setChoicesError] = useState(false);
     const [authRequired, setAuthRequired] = useState(false);
+    const [seenLang, setSeenLang] = useState(lang);
+    if (seenLang !== lang) {
+        setSeenLang(lang);
+        setLoading(true);
+        setLoadError(false);
+    }
+
+    const fetchPublic = useCallback(async () => {
+        const [documentsResponse, purposesResponse] = await Promise.all([
+            apiFetch(`/api/privacy/documents?locale=${encodeURIComponent(lang)}`),
+            apiFetch('/api/privacy/purposes'),
+        ]);
+        if (!documentsResponse.ok || !purposesResponse.ok) throw new Error('privacy public read failed');
+        const documentsPayload = await documentsResponse.json() as PrivacyDocumentsPayload;
+        const purposesPayload = await purposesResponse.json() as PrivacyPurposesPayload;
+        return {
+            documents: Array.isArray(documentsPayload.documents) ? documentsPayload.documents : [],
+            validationStatus: documentsPayload.validation_status || '[DA VALIDARE]',
+            purposes: Array.isArray(purposesPayload.purposes) ? purposesPayload.purposes : [],
+        };
+    }, [lang]);
 
     const loadPublic = useCallback(async () => {
         setLoading(true);
         setLoadError(false);
         try {
-            const [documentsResponse, purposesResponse] = await Promise.all([
-                apiFetch(`/api/privacy/documents?locale=${encodeURIComponent(lang)}`),
-                apiFetch('/api/privacy/purposes'),
-            ]);
-            if (!documentsResponse.ok || !purposesResponse.ok) throw new Error('privacy public read failed');
-            const documentsPayload = await documentsResponse.json() as PrivacyDocumentsPayload;
-            const purposesPayload = await purposesResponse.json() as PrivacyPurposesPayload;
-            setDocuments(Array.isArray(documentsPayload.documents) ? documentsPayload.documents : []);
-            setValidationStatus(documentsPayload.validation_status || '[DA VALIDARE]');
-            setPurposes(Array.isArray(purposesPayload.purposes) ? purposesPayload.purposes : []);
+            const next = await fetchPublic();
+            setDocuments(next.documents);
+            setValidationStatus(next.validationStatus);
+            setPurposes(next.purposes);
         } catch {
             setLoadError(true);
         } finally {
             setLoading(false);
         }
-    }, [lang]);
+    }, [fetchPublic]);
+
+    const fetchSelf = useCallback(async () => {
+        const response = await apiFetch('/api/privacy/choices');
+        if (response.status === 401) {
+            return { authRequired: true, choices: [] as PrivacyChoice[], history: [] as PrivacyHistoryEntry[], groups: [] as PrivacyGroup[] };
+        }
+        if (!response.ok) throw new Error('privacy choices read failed');
+        const payload = await response.json() as PrivacyChoicesPayload;
+        const groupsResponse = await apiFetch('/api/user/groups');
+        const groupsPayload: unknown = groupsResponse.ok ? await groupsResponse.json() : [];
+        return {
+            authRequired: false,
+            choices: Array.isArray(payload.choices) ? payload.choices : [],
+            history: Array.isArray(payload.history) ? payload.history : [],
+            groups: Array.isArray(groupsPayload) ? groupsPayload as PrivacyGroup[] : [],
+        };
+    }, []);
 
     const loadSelf = useCallback(async () => {
         setChoicesLoading(true);
         setChoicesError(false);
         try {
-            const response = await apiFetch('/api/privacy/choices');
-            if (response.status === 401) {
-                setAuthRequired(true);
-                setChoices([]);
-                setHistory([]);
-                setGroups([]);
-                return;
-            }
-            if (!response.ok) throw new Error('privacy choices read failed');
-            const payload = await response.json() as PrivacyChoicesPayload;
-            setAuthRequired(false);
-            setChoices(Array.isArray(payload.choices) ? payload.choices : []);
-            setHistory(Array.isArray(payload.history) ? payload.history : []);
-            const groupsResponse = await apiFetch('/api/user/groups');
-            if (groupsResponse.ok) {
-                const groupsPayload: unknown = await groupsResponse.json();
-                setGroups(Array.isArray(groupsPayload) ? groupsPayload as PrivacyGroup[] : []);
-            } else {
-                setGroups([]);
-            }
+            const next = await fetchSelf();
+            setAuthRequired(next.authRequired);
+            setChoices(next.choices);
+            setHistory(next.history);
+            setGroups(next.groups);
         } catch {
             setChoicesError(true);
         } finally {
             setChoicesLoading(false);
         }
-    }, []);
+    }, [fetchSelf]);
 
-    useEffect(() => { void loadPublic(); }, [loadPublic]);
-    useEffect(() => { void loadSelf(); }, [loadSelf]);
+    useEffect(() => {
+        let active = true;
+        fetchPublic()
+            .then((next) => {
+                if (!active) return;
+                setDocuments(next.documents);
+                setValidationStatus(next.validationStatus);
+                setPurposes(next.purposes);
+                setLoadError(false);
+            })
+            .catch(() => { if (active) setLoadError(true); })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, [fetchPublic]);
+
+    useEffect(() => {
+        let active = true;
+        fetchSelf()
+            .then((next) => {
+                if (!active) return;
+                setAuthRequired(next.authRequired);
+                setChoices(next.choices);
+                setHistory(next.history);
+                setGroups(next.groups);
+                setChoicesError(false);
+            })
+            .catch(() => { if (active) setChoicesError(true); })
+            .finally(() => { if (active) setChoicesLoading(false); });
+        return () => { active = false; };
+    }, [fetchSelf]);
 
     const canEdit = !authRequired && !choicesError && !choicesLoading;
     const sharingPurpose = purposes.find((purpose) => purpose.key === SHARING_PURPOSE) || null;

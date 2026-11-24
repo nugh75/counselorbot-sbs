@@ -110,7 +110,13 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
             setLoadFailed(true);
         }
     }, []);
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        practiceNotebookApi.list(true)
+            .then(rows => { if (active) { setNotebooks(rows); setLoadFailed(false); } })
+            .catch(() => { if (active) setLoadFailed(true); });
+        return () => { active = false; };
+    }, []);
 
     const classGroups = useTeacherResource('/api/admin/groups?own=true', parseClassGroups);
     const groups = classGroups.data?.filter(group => group.is_active);

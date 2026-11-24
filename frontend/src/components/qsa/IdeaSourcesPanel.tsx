@@ -48,7 +48,12 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
         setKept(await fetchIdeaKeptSources(sessionId, focus));
     }, [sessionId, focus]);
 
-    useEffect(() => { void reloadKept(); }, [reloadKept, version]);
+    useEffect(() => {
+        if (!focus) return;
+        let active = true;
+        void fetchIdeaKeptSources(sessionId, focus).then((next) => { if (active) setKept(next); });
+        return () => { active = false; };
+    }, [sessionId, focus, version]);
 
     // Cambiare ramo cambia il lavoro: i risultati di prima non c'entrano piu'.
     const [resultsFocus, setResultsFocus] = useState(focus);

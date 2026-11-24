@@ -80,7 +80,7 @@ export function ClassOverviewTab({
     // Colleagues sharing state
     const [shares, setShares] = useState<GroupShare[]>([]);
     const [allUsers, setAllUsers] = useState<UserSummaryItem[]>([]);
-    const [sharesLoading, setSharesLoading] = useState(false);
+    const [sharesLoading, setSharesLoading] = useState(true);
     const [shareBusy, setShareBusy] = useState(false);
     const [selectedUserToAdd, setSelectedUserToAdd] = useState('');
     const [shareMessage, setShareMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
@@ -149,23 +149,31 @@ export function ClassOverviewTab({
         }
     }, [group.id]);
 
-    const loadUsers = useCallback(async () => {
-        try {
-            const res = await apiFetch('/api/admin/users-summary');
-            if (res.ok) {
+    useEffect(() => {
+        let active = true;
+        apiFetch(`/api/admin/groups/${group.id}/shares`)
+            .then(async res => {
+                if (!res.ok) return;
                 const data = await res.json();
-                const list = data?.users || (Array.isArray(data) ? data : []);
-                setAllUsers(list);
-            }
-        } catch {
-            // non-fatal
-        }
-    }, []);
+                if (active) setShares(Array.isArray(data) ? data : []);
+            })
+            .catch(() => {})
+            .finally(() => { if (active) setSharesLoading(false); });
+        return () => { active = false; };
+    }, [group.id]);
 
     useEffect(() => {
-        void loadShares();
-        void loadUsers();
-    }, [loadShares, loadUsers]);
+        let active = true;
+        apiFetch('/api/admin/users-summary')
+            .then(async res => {
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = data?.users || (Array.isArray(data) ? data : []);
+                if (active) setAllUsers(list);
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, []);
 
     // Track dirty state of class details
     const isDirty =

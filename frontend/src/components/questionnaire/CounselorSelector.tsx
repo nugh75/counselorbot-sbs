@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Check, Cpu, Cloud, Search, Sparkles, X, Filter } from 'lucide-react';
 import {
     fetchCounselorCategories,
@@ -46,7 +46,9 @@ export function CounselorSelector({
     const { t, lang } = useI18n();
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     const [selected, setSelected] = useState<number | null>(null);
-    const [loaded, setLoaded] = useState(false);
+    const [loadedKey, setLoadedKey] = useState<string | null>(null);
+    const currentKey = `${lang}:${questionnaireType ?? ''}:${initialSelectedId ?? ''}`;
+    const loaded = loadedKey === currentKey;
 
     // Categorie e filtro
     const [allCategories, setAllCategories] = useState<string[]>([]);
@@ -73,42 +75,43 @@ export function CounselorSelector({
         setSelectedCategories([]);
     };
 
-    const load = useCallback(async () => {
-        setLoaded(false);
-        try {
-            const [list, fetchedCats] = await Promise.all([
-                fetchCounselors(lang, lang, questionnaireType),
-                fetchCounselorCategories(),
-            ]);
-            setCounselors(list);
+    useEffect(() => {
+        let active = true;
+        const key = `${lang}:${questionnaireType ?? ''}:${initialSelectedId ?? ''}`;
+        Promise.all([
+            fetchCounselors(lang, lang, questionnaireType),
+            fetchCounselorCategories(),
+        ])
+            .then(([list, fetchedCats]) => {
+                if (!active) return;
+                setCounselors(list);
 
-            // Costruisci elenco categorie: base/censite + categorie presenti nei counselor
-            const unionSet = new Set<string>();
-            for (const cat of fetchedCats) {
-                if (cat) unionSet.add(cat.toLowerCase().trim());
-            }
-            for (const c of list) {
-                if (Array.isArray(c.approach_categories)) {
-                    for (const cat of c.approach_categories) {
-                        if (cat) unionSet.add(cat.toLowerCase().trim());
+                // Costruisci elenco categorie: base/censite + categorie presenti nei counselor
+                const unionSet = new Set<string>();
+                for (const cat of fetchedCats) {
+                    if (cat) unionSet.add(cat.toLowerCase().trim());
+                }
+                for (const c of list) {
+                    if (Array.isArray(c.approach_categories)) {
+                        for (const cat of c.approach_categories) {
+                            if (cat) unionSet.add(cat.toLowerCase().trim());
+                        }
                     }
                 }
-            }
-            setAllCategories(Array.from(unionSet));
+                setAllCategories(Array.from(unionSet));
 
-            const stored = initialSelectedId ?? getSelectedCounselorId();
-            // se il counselor salvato non esiste piu', azzera
-            setSelected(list.some((c) => c.id === stored && c.is_active !== false) ? stored : null);
-        } catch (e) {
-            console.error('Failed to load counselors', e);
-        } finally {
-            setLoaded(true);
-        }
+                const stored = initialSelectedId ?? getSelectedCounselorId();
+                // se il counselor salvato non esiste piu', azzera
+                setSelected(list.some((c) => c.id === stored && c.is_active !== false) ? stored : null);
+            })
+            .catch((e) => {
+                console.error('Failed to load counselors', e);
+            })
+            .finally(() => {
+                if (active) setLoadedKey(key);
+            });
+        return () => { active = false; };
     }, [lang, questionnaireType, initialSelectedId]);
-
-    useEffect(() => {
-        void load();
-    }, [load]);
 
     const choose = (counselor: PublicCounselor) => {
         if (counselor.is_active === false || counselor.suitable === false) return;

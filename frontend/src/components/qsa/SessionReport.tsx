@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Download, Home } from 'lucide-react';
@@ -84,30 +84,33 @@ export function SessionReport({
     const { lang, t } = useI18n();
     const copy = labels[lang] || labels.it;
     const [summary, setSummary] = useState<{ summary: string | null; status: string } | null>(null);
-    const [loading, setLoading] = useState(true);
     const [downloading, setDownloading] = useState(false);
     const [downloaded, setDownloaded] = useState(false);
     const [error, setError] = useState(false);
-
-    const loadSummary = useCallback(async (signal: AbortSignal) => {
-        setLoading(true);
-        try {
-            const response = await apiFetch(`/api/user/questionnaire-result/${encodeURIComponent(sessionId)}/summary?lang=${lang}`, { signal });
-            if (!response.ok) throw new Error('summary failed');
-            const value = await response.json();
-            if (!signal.aborted) setSummary(value);
-        } catch {
-            if (!signal.aborted) setSummary({ summary: null, status: 'unavailable' });
-        } finally {
-            if (!signal.aborted) setLoading(false);
-        }
-    }, [sessionId, lang]);
+    const [loadedKey, setLoadedKey] = useState<string | null>(null);
+    const currentKey = `${sessionId}:${lang}`;
+    const loading = loadedKey !== currentKey;
 
     useEffect(() => {
         const controller = new AbortController();
-        void loadSummary(controller.signal);
+        const key = `${sessionId}:${lang}`;
+        apiFetch(`/api/user/questionnaire-result/${encodeURIComponent(sessionId)}/summary?lang=${lang}`, { signal: controller.signal })
+            .then(async (response) => {
+                if (!response.ok) throw new Error('summary failed');
+                const value = await response.json();
+                if (!controller.signal.aborted) {
+                    setSummary(value);
+                    setLoadedKey(key);
+                }
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) {
+                    setSummary({ summary: null, status: 'unavailable' });
+                    setLoadedKey(key);
+                }
+            });
         return () => controller.abort();
-    }, [loadSummary]);
+    }, [sessionId, lang]);
 
     const download = async () => {
         setDownloading(true);

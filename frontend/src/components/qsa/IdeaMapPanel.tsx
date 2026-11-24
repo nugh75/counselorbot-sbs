@@ -72,27 +72,40 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
     const [stage, setStage] = useState<number | null>(null);
     const theme = isDark ? 'dark' : 'light';
 
+    const fetchAll = useCallback(async () => {
+        const [next, tappe] = await Promise.all([
+            fetchIdeaMap(sessionId, locale),
+            fetchIdeaMapHistory(sessionId),
+        ]);
+        // Inline e non <img>: dentro un'immagine i nodi non si possono cliccare.
+        const nextSvg = next?.revision_id == null
+            ? null
+            : await fetchIdeaMapSvg(sessionId, next.revision_id, theme, locale, stage);
+        return { next, tappe, nextSvg };
+    }, [sessionId, theme, locale, stage]);
+
     const reload = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [next, tappe] = await Promise.all([
-                fetchIdeaMap(sessionId, locale),
-                fetchIdeaMapHistory(sessionId),
-            ]);
+            const { next, tappe, nextSvg } = await fetchAll();
             setState(next);
             setStages(tappe);
-            // Inline e non <img>: dentro un'immagine i nodi non si possono cliccare.
-            setSvg(next?.revision_id == null
-                ? null
-                : await fetchIdeaMapSvg(sessionId, next.revision_id, theme, locale, stage));
+            setSvg(nextSvg);
         } finally {
             setIsLoading(false);
         }
-    }, [sessionId, theme, locale, stage]);
+    }, [fetchAll]);
 
     useEffect(() => {
-        void reload();
-    }, [reload, version]);
+        let active = true;
+        void fetchAll().then(({ next, tappe, nextSvg }) => {
+            if (!active) return;
+            setState(next);
+            setStages(tappe);
+            setSvg(nextSvg);
+        });
+        return () => { active = false; };
+    }, [fetchAll, version]);
 
     const select = (nodeId: string) => {
         const node = (state?.spec?.nodes ?? []).find((item) => item.id === nodeId);

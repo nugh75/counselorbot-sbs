@@ -64,7 +64,11 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
         setRows(await fetchIdeaBranches(sessionId, locale));
     }, [sessionId, locale]);
 
-    useEffect(() => { void reload(); }, [reload, version]);
+    useEffect(() => {
+        let active = true;
+        void fetchIdeaBranches(sessionId, locale).then((next) => { if (active) setRows(next); });
+        return () => { active = false; };
+    }, [sessionId, locale, version]);
 
     const reopenBranch = async (nodeId: string) => {
         setMoving(nodeId);

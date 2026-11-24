@@ -12,6 +12,7 @@ import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { localPairingText, type LocalPairingTextKey } from '@/lib/i18n-local-pairing';
 import { formatPersonalCode, type PairedStudent, type RecoveredStudent } from '@/lib/local-pairing';
+import { useClientValue } from '@/lib/use-client-value';
 
 type SessionResult = {
     pseudonym: string;
@@ -34,12 +35,19 @@ export default function JoinPage() {
     const [codeSaved, setCodeSaved] = useState(false);
     const [copied, setCopied] = useState(false);
 
+    const entryKey = useClientValue(() => new URLSearchParams(window.location.hash.slice(1)).get('k') ?? '', null);
+    const [entryApplied, setEntryApplied] = useState(false);
+    if (!entryApplied && entryKey !== null) {
+        setEntryApplied(true);
+        if (entryKey) {
+            setClassKey(entryKey);
+            setKeyFromLink(true);
+        }
+    }
+
     useEffect(() => {
         let current = true;
-        const key = new URLSearchParams(window.location.hash.slice(1)).get('k');
-        if (key) {
-            setClassKey(key);
-            setKeyFromLink(true);
+        if (new URLSearchParams(window.location.hash.slice(1)).get('k')) {
             // La chiave resta nel frammento e non deve finire nella cronologia del browser.
             window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
         }

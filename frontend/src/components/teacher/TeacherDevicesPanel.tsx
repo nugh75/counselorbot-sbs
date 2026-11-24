@@ -21,30 +21,47 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
     const [classes, setClasses] = useState<LocalDeviceClass[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
+    const [seenGroupId, setSeenGroupId] = useState(groupId);
+    if (seenGroupId !== groupId) {
+        setSeenGroupId(groupId);
+        setLoading(true);
+        setLoadError(false);
+    }
     const [actionError, setActionError] = useState(false);
     const [busy, setBusy] = useState<string | null>(null);
     const [revokeId, setRevokeId] = useState<number | null>(null);
     const [regenerated, setRegenerated] = useState<RegeneratedCode | null>(null);
     const [copied, setCopied] = useState(false);
 
+    const fetchClasses = useCallback(async () => {
+        const response = await apiFetch('/api/local-auth/devices');
+        if (!response.ok) throw new Error('devices read failed');
+        const payload = await response.json() as { classes?: LocalDeviceClass[] };
+        const rows = Array.isArray(payload.classes) ? payload.classes : [];
+        return groupId === undefined ? rows : rows.filter(row => row.group_id === groupId);
+    }, [groupId]);
+
     const load = useCallback(async () => {
         setLoading(true);
         setLoadError(false);
         try {
-            const response = await apiFetch('/api/local-auth/devices');
-            if (!response.ok) throw new Error('devices read failed');
-            const payload = await response.json() as { classes?: LocalDeviceClass[] };
-            const rows = Array.isArray(payload.classes) ? payload.classes : [];
-            setClasses(groupId === undefined ? rows : rows.filter(row => row.group_id === groupId));
+            setClasses(await fetchClasses());
         } catch {
             setClasses([]);
             setLoadError(true);
         } finally {
             setLoading(false);
         }
-    }, [groupId]);
+    }, [fetchClasses]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchClasses()
+            .then(rows => { if (active) { setClasses(rows); setLoadError(false); } })
+            .catch(() => { if (active) { setClasses([]); setLoadError(true); } })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, [fetchClasses]);
 
     const runAction = async (key: string, action: () => Promise<void>) => {
         if (busy) return;
