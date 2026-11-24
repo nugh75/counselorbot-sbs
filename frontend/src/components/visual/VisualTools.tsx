@@ -82,8 +82,17 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [confirmActionId, setConfirmActionId] = useState<string | null>(null);
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
     const [loaded, setLoaded] = useState(false);
-    const [busy, setBusy] = useState(false);
+    const [busy, setBusy] = useState(Boolean(fixedTab));
     const [issue, setIssue] = useState('');
+    const shouldLoadOnOpen = open && !loaded;
+    const [autoLoadingStarted, setAutoLoadingStarted] = useState(shouldLoadOnOpen);
+    if (shouldLoadOnOpen && !autoLoadingStarted) {
+        setAutoLoadingStarted(true);
+        setBusy(true);
+        setIssue('');
+    } else if (!shouldLoadOnOpen && autoLoadingStarted) {
+        setAutoLoadingStarted(false);
+    }
     const [catalog, setCatalog] = useState<RecommendationCatalog>({ reading: [], strategy: [], advice: [], request: [] });
     const [draftTitle, setDraftTitle] = useState('');
     const [draftDetail, setDraftDetail] = useState('');
@@ -162,21 +171,40 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     });
     const launch = () => { opener.current = document.activeElement as HTMLElement; setOpen(true); };
     const requestEventId = request?.eventId;
+    const fetchWorkspace = useCallback(async () => {
+        const response = await apiFetch(personal ? `${endpoint}?${new URLSearchParams({ lang: locale, ...(legacySession ? { legacy_session: legacySession } : {}), ...(requestEventId ? { event: requestEventId } : {}) })}` : endpoint, { signal: AbortSignal.timeout(15000) });
+        if (!response.ok) throw new Error();
+        return await response.json() as SavedWorkspace & { focus_event?: string };
+    }, [endpoint, personal, locale, legacySession, requestEventId]);
+
     const load = useCallback(async () => {
         const generation = ++loadGeneration.current;
         setBusy(true); setIssue('');
         try {
-            const response = await apiFetch(personal ? `${endpoint}?${new URLSearchParams({ lang: locale, ...(legacySession ? { legacy_session: legacySession } : {}), ...(requestEventId ? { event: requestEventId } : {}) })}` : endpoint, { signal: AbortSignal.timeout(15000) });
-            if (!response.ok) throw new Error();
-            const result: SavedWorkspace & { focus_event?: string } = await response.json();
+            const result = await fetchWorkspace();
             setFocusEvent(result.focus_event);
             if (generation !== loadGeneration.current) return;
             setSaved(result); setWork(result.workspace); setHistory([]); setLoaded(true);
         } catch { if (generation === loadGeneration.current) setIssue('loadError'); }
         finally { if (generation === loadGeneration.current) setBusy(false); }
-    }, [endpoint, personal, locale, legacySession, requestEventId]);
+    }, [fetchWorkspace]);
 
-    useEffect(() => { if (open && !loaded) void load(); }, [open, loaded, load]);
+    useEffect(() => {
+        if (!open || loaded) return;
+        const generation = ++loadGeneration.current;
+        let active = true;
+        fetchWorkspace()
+            .then(result => {
+                if (!active) return;
+                setFocusEvent(result.focus_event);
+                if (generation !== loadGeneration.current) return;
+                setSaved(result); setWork(result.workspace); setHistory([]); setLoaded(true); setBusy(false);
+            })
+            .catch(() => {
+                if (active && generation === loadGeneration.current) { setIssue('loadError'); setBusy(false); }
+            });
+        return () => { active = false; };
+    }, [open, loaded, fetchWorkspace]);
     useEffect(() => {
         if (!open || providedCatalog || personal) return;
         const controller = new AbortController();

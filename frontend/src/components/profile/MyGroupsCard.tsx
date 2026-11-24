@@ -122,31 +122,54 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
     const [leavingId, setLeavingId] = useState<number | null>(null);
     const [leaveErrorId, setLeaveErrorId] = useState<number | null>(null);
 
+    const fetchGroups = useCallback(async () => {
+        const [res, unreadRes] = await Promise.all([
+            apiFetch('/api/user/groups'),
+            apiFetch('/api/user/forum/unread').catch(() => null),
+        ]);
+        if (!res.ok) throw new Error('groups failed');
+        const payload = await res.json();
+        const nextGroups = Array.isArray(payload) ? payload as MyGroup[] : [];
+        let nextUnread: Record<string, number> | null = null;
+        if (unreadRes && unreadRes.ok) {
+            const unreadData: unknown = await unreadRes.json();
+            if (unreadData && typeof unreadData === 'object' && 'by_group' in unreadData) {
+                nextUnread = (unreadData as { by_group: Record<string, number> }).by_group || {};
+            }
+        }
+        return { nextGroups, nextUnread };
+    }, []);
+
     const load = useCallback(async () => {
         setLoading(true);
         setLoadError(false);
         try {
-            const [res, unreadRes] = await Promise.all([
-                apiFetch('/api/user/groups'),
-                apiFetch('/api/user/forum/unread').catch(() => null),
-            ]);
-            if (!res.ok) throw new Error('groups failed');
-            const payload = await res.json();
-            setGroups(Array.isArray(payload) ? payload as MyGroup[] : []);
-            if (unreadRes && unreadRes.ok) {
-                const unreadData: unknown = await unreadRes.json();
-                if (unreadData && typeof unreadData === 'object' && 'by_group' in unreadData) {
-                    setUnreadByGroup((unreadData as { by_group: Record<string, number> }).by_group || {});
-                }
-            }
+            const { nextGroups, nextUnread } = await fetchGroups();
+            setGroups(nextGroups);
+            if (nextUnread !== null) setUnreadByGroup(nextUnread);
         } catch {
             setLoadError(true);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchGroups]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchGroups()
+            .then(({ nextGroups, nextUnread }) => {
+                if (!active) return;
+                setGroups(nextGroups);
+                if (nextUnread !== null) setUnreadByGroup(nextUnread);
+                setLoading(false);
+            })
+            .catch(() => {
+                if (!active) return;
+                setLoadError(true);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchGroups]);
 
     const leave = async (membershipId: number) => {
         setLeavingId(membershipId);

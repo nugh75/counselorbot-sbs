@@ -70,8 +70,15 @@ export function PersonalTimeline({ locale }: { locale: string }) {
     const [work, setWork] = useState<VisualWorkspace | null>(null);
     const [goals, setGoals] = useState<PersonalGoal[]>([]);
     const [loaded, setLoaded] = useState(false);
-    const [busy, setBusy] = useState(false);
+    const [busy, setBusy] = useState(true);
     const [issue, setIssue] = useState('');
+    const loadKey = `${locale}:${eventParam ?? ''}`;
+    const [seenLoadKey, setSeenLoadKey] = useState(loadKey);
+    if (seenLoadKey !== loadKey) {
+        setSeenLoadKey(loadKey);
+        setBusy(true);
+        setIssue('');
+    }
     const [activeEvent, setActiveEvent] = useState<string | undefined>(undefined);
     const [createTitle, setCreateTitle] = useState('');
     const [createDates, setCreateDates] = useState<TimelineDates>({ date_mode: 'point', start_date: null, end_date: null });
@@ -98,35 +105,65 @@ export function PersonalTimeline({ locale }: { locale: string }) {
     const dirty = Boolean(work && saved && JSON.stringify(work) !== JSON.stringify(saved.workspace));
     useDraftGuard(loaded && (dirty || createDirty), l('leaveConfirm'));
 
+    const fetchTimeline = useCallback(async () => {
+        const query = new URLSearchParams({ lang: locale, ...(eventParam ? { event: eventParam } : {}) });
+        const [response, goalRows] = await Promise.all([
+            apiFetch(`/api/user/timeline?${query}`, { signal: AbortSignal.timeout(15000) }),
+            goalApi<PersonalGoal[]>('/user/goals').catch(() => [] as PersonalGoal[]),
+        ]);
+        if (!response.ok) throw new Error();
+        const result: SavedWorkspace & { focus_event?: string } = await response.json();
+        return { result, goalRows };
+    }, [locale, eventParam]);
+
     const load = useCallback(async () => {
         setBusy(true); setIssue('');
         try {
-            const query = new URLSearchParams({ lang: locale, ...(eventParam ? { event: eventParam } : {}) });
-            const [response, goalRows] = await Promise.all([
-                apiFetch(`/api/user/timeline?${query}`, { signal: AbortSignal.timeout(15000) }),
-                goalApi<PersonalGoal[]>('/user/goals').catch(() => [] as PersonalGoal[]),
-            ]);
-            if (!response.ok) throw new Error();
-            const result: SavedWorkspace & { focus_event?: string } = await response.json();
+            const { result, goalRows } = await fetchTimeline();
             setGoals(goalRows);
             setSaved(result); setWork(result.workspace); setLoaded(true);
             if (result.focus_event) setActiveEvent(result.focus_event);
         } catch { setIssue('loadError'); }
         finally { setBusy(false); }
-    }, [locale, eventParam]);
-    useEffect(() => { void load(); }, [load]);
+    }, [fetchTimeline]);
+    useEffect(() => {
+        let active = true;
+        fetchTimeline()
+            .then(({ result, goalRows }) => {
+                if (!active) return;
+                setGoals(goalRows);
+                setSaved(result); setWork(result.workspace); setLoaded(true);
+                if (result.focus_event) setActiveEvent(result.focus_event);
+                setBusy(false);
+            })
+            .catch(() => {
+                if (!active) return;
+                setIssue('loadError');
+                setBusy(false);
+            });
+        return () => { active = false; };
+    }, [fetchTimeline]);
 
+    const fetchPortfolioItems = useCallback(async (signal?: AbortSignal) => {
+        const response = await apiFetch('/api/user/portfolio', { signal });
+        if (!response.ok) throw new Error();
+        const items = await response.json();
+        if (!Array.isArray(items)) throw new Error();
+        return items as { id: number; title: string }[];
+    }, []);
     const loadPortfolio = useCallback(async (signal?: AbortSignal) => {
         setPortfolioIssue(false);
         try {
-            const response = await apiFetch('/api/user/portfolio', { signal });
-            if (!response.ok) throw new Error();
-            const items = await response.json();
-            if (!Array.isArray(items)) throw new Error();
-            setPortfolio(items);
+            setPortfolio(await fetchPortfolioItems(signal));
         } catch { if (!signal?.aborted) setPortfolioIssue(true); }
-    }, []);
-    useEffect(() => { const controller = new AbortController(); void loadPortfolio(controller.signal); return () => controller.abort(); }, [loadPortfolio]);
+    }, [fetchPortfolioItems]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchPortfolioItems(controller.signal)
+            .then(items => { if (!controller.signal.aborted) setPortfolio(items); })
+            .catch(() => { if (!controller.signal.aborted) setPortfolioIssue(true); });
+        return () => controller.abort();
+    }, [fetchPortfolioItems]);
 
     const chooseFilters = (next: Set<TimelineItemKind>) => {
         setFilters(next);

@@ -117,30 +117,60 @@ export function PortfolioCard() {
     }, [items]);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+    const filterKey = `${q}\n${categoryFilter}`;
+    const [seenFilterKey, setSeenFilterKey] = useState(filterKey);
+    if (seenFilterKey !== filterKey) {
+        setSeenFilterKey(filterKey);
+        setLoading(true);
+        setLoadError(false);
+    }
+
+    const fetchPortfolio = useCallback(async () => {
+        const params = new URLSearchParams();
+        if (q.trim()) params.set('q', q.trim());
+        if (categoryFilter) params.set('category', categoryFilter);
+        const [itemsRes, catsRes] = await Promise.all([
+            apiFetch(`/api/user/portfolio?${params.toString()}`),
+            apiFetch('/api/user/portfolio/categories'),
+        ]);
+        // F03: su errore si conservano i lavori già mostrati invece di svuotare.
+        if (!itemsRes.ok || !catsRes.ok) throw new Error('portfolio load failed');
+        const [nextItems, nextCategories] = await Promise.all([itemsRes.json(), catsRes.json()]);
+        return { nextItems: nextItems as PortfolioItem[], nextCategories: nextCategories as string[] };
+    }, [q, categoryFilter]);
+
     const load = useCallback(async () => {
         setLoading(true);
         setLoadError(false);
         try {
-            const params = new URLSearchParams();
-            if (q.trim()) params.set('q', q.trim());
-            if (categoryFilter) params.set('category', categoryFilter);
-            const [itemsRes, catsRes] = await Promise.all([
-                apiFetch(`/api/user/portfolio?${params.toString()}`),
-                apiFetch('/api/user/portfolio/categories'),
-            ]);
-            // F03: su errore si conservano i lavori già mostrati invece di svuotare.
-            if (!itemsRes.ok || !catsRes.ok) throw new Error('portfolio load failed');
-            setItems(await itemsRes.json());
-            setCategories(await catsRes.json());
+            const { nextItems, nextCategories } = await fetchPortfolio();
+            setItems(nextItems);
+            setCategories(nextCategories);
         } catch (e) {
             console.error('Failed to load portfolio', e);
             setLoadError(true);
         } finally {
             setLoading(false);
         }
-    }, [q, categoryFilter]);
+    }, [fetchPortfolio]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchPortfolio()
+            .then(({ nextItems, nextCategories }) => {
+                if (!active) return;
+                setItems(nextItems);
+                setCategories(nextCategories);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load portfolio', e);
+                setLoadError(true);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchPortfolio]);
 
     const openImage = (image: LightboxImage) => setLightbox(image);
 

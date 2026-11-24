@@ -55,16 +55,25 @@ export function FlashcardsPage() {
 
     useEffect(() => { document.title = `${flashcardLabel(lang, 'title')} - CounselorBot`; }, [lang]);
 
+    const fetchFlashcards = useCallback(async (): Promise<SavedFlashcards> => {
+        const response = await apiFetch('/api/user/flashcards', { signal: AbortSignal.timeout(15000) });
+        if (!response.ok) throw new Error();
+        return response.json();
+    }, []);
     const load = useCallback(async () => {
         setIssue('');
         try {
-            const response = await apiFetch('/api/user/flashcards', { signal: AbortSignal.timeout(15000) });
-            if (!response.ok) throw new Error();
-            const state: SavedFlashcards = await response.json();
+            const state = await fetchFlashcards();
             setSaved(state); setWork(state.workspace); setLoaded(true);
         } catch { setIssue('loadError'); }
-    }, []);
-    useEffect(() => { void load(); }, [load]);
+    }, [fetchFlashcards]);
+    useEffect(() => {
+        let active = true;
+        fetchFlashcards()
+            .then(state => { if (active) { setSaved(state); setWork(state.workspace); setLoaded(true); } })
+            .catch(() => { if (active) setIssue('loadError'); });
+        return () => { active = false; };
+    }, [fetchFlashcards]);
 
     const doSave = useCallback(async () => {
         const payload = workRef.current;

@@ -189,6 +189,36 @@ export default function ProfilePage() {
     }));
     const activeArea = personalAreas.find((area) => area.id === activeSection) ?? null;
 
+    const [seenSection, setSeenSection] = useState(activeSection);
+    if (seenSection !== activeSection) {
+        setSeenSection(activeSection);
+        setLoading(true);
+    }
+
+    const applyQuestionnaireResults = useCallback((data: QuestionnaireResult[]) => {
+        setSessionsError(false);
+        setSessions(data);
+        // `?instrument=` arrives from old booklet links: open that instrument's latest result.
+        const requested = new URLSearchParams(window.location.search).get('instrument');
+        const first = data.find((session) => session.questionnaire_type === requested) ?? data[0] ?? null;
+        setSelectedSession((selected) => (
+            selected
+                ? data.find((session) => session.session_id === selected.session_id) ?? first
+                : first
+        ));
+
+        // Sync localStorage completed profiles
+        clearCompletedProfiles();
+        const sorted = [...data].sort((a, b) =>
+            new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
+        );
+        for (const s of sorted) {
+            if (['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'].includes(s.questionnaire_type)) {
+                addCompletedProfile(s.questionnaire_type, s.session_id, s.scores || {});
+            }
+        }
+    }, []);
+
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
@@ -199,30 +229,7 @@ export default function ProfilePage() {
                 const res = await apiFetch('/api/user/questionnaire-results');
                 if (!res.ok) throw new Error('results failed');
                 const payload: unknown = await res.json();
-                if (Array.isArray(payload)) {
-                    setSessionsError(false);
-                    const data = payload as QuestionnaireResult[];
-                    setSessions(data);
-                    // `?instrument=` arrives from old booklet links: open that instrument's latest result.
-                    const requested = new URLSearchParams(window.location.search).get('instrument');
-                    const first = data.find((session) => session.questionnaire_type === requested) ?? data[0] ?? null;
-                    setSelectedSession((selected) => (
-                        selected
-                            ? data.find((session) => session.session_id === selected.session_id) ?? first
-                            : first
-                    ));
-
-                    // Sync localStorage completed profiles
-                    clearCompletedProfiles();
-                    const sorted = [...data].sort((a, b) =>
-                        new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
-                    );
-                    for (const s of sorted) {
-                        if (['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'].includes(s.questionnaire_type)) {
-                            addCompletedProfile(s.questionnaire_type, s.session_id, s.scores || {});
-                        }
-                    }
-                }
+                if (Array.isArray(payload)) applyQuestionnaireResults(payload as QuestionnaireResult[]);
             } else {
                 setIdentity(null);
             }
@@ -232,54 +239,86 @@ export default function ProfilePage() {
         } finally {
             setLoading(false);
         }
-    }, [activeSection]);
+    }, [activeSection, applyQuestionnaireResults]);
 
     useEffect(() => {
-        void loadData();
-    }, [loadData]);
+        let active = true;
+        getIdentity()
+            .then(async (id) => {
+                if (!active) return;
+                if (!id?.authenticated) {
+                    setIdentity(null);
+                    setLoading(false);
+                    return;
+                }
+                setIdentity(id);
+                if (!activeSection) {
+                    setLoading(false);
+                    return;
+                }
+                const res = await apiFetch('/api/user/questionnaire-results');
+                if (!res.ok) throw new Error('results failed');
+                const payload: unknown = await res.json();
+                if (!active) return;
+                if (Array.isArray(payload)) applyQuestionnaireResults(payload as QuestionnaireResult[]);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error("Failed to load profile data", e);
+                setSessionsError(true);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [activeSection, applyQuestionnaireResults]);
 
-    useEffect(() => {
-        if (activeSection !== 'sessions' || !selectedSession) {
-            setConversation(null);
-            setSessionSummary(null);
-            return;
-        }
-        setConvLoading(true);
-        setSummaryLoading(true);
+    const selectedSessionId = selectedSession?.session_id ?? null;
+    const sessionDetailKey = activeSection === 'sessions' && selectedSessionId ? `${selectedSessionId}:${lang}` : '';
+    const [seenDetailKey, setSeenDetailKey] = useState(sessionDetailKey);
+    if (seenDetailKey !== sessionDetailKey) {
+        setSeenDetailKey(sessionDetailKey);
         setConversation(null);
         setSessionSummary(null);
+        setConvLoading(Boolean(sessionDetailKey));
+        setSummaryLoading(Boolean(sessionDetailKey));
+    }
+
+    useEffect(() => {
+        if (activeSection !== 'sessions' || !selectedSessionId) return;
 
         let active = true;
-        apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/conversation`)
+        apiFetch(`/api/user/questionnaire-result/${selectedSessionId}/conversation`)
             .then(async (res) => {
                 if (!res.ok) throw new Error('Failed to fetch conversation');
                 const data = await res.json();
-                if (active) setConversation(data as Array<{ role: string; text: string }>);
+                if (active) {
+                    setConversation(data as Array<{ role: string; text: string }>);
+                    setConvLoading(false);
+                }
             })
             .catch((err) => {
                 if (!active) return;
                 console.error("Error loading conversation:", err);
-            })
-            .finally(() => {
-                if (active) setConvLoading(false);
+                setConvLoading(false);
             });
 
-        apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/summary?lang=${lang}`)
+        apiFetch(`/api/user/questionnaire-result/${selectedSessionId}/summary?lang=${lang}`)
             .then(async (res) => {
                 if (!res.ok) throw new Error('Failed to fetch summary');
                 const data = await res.json();
-                if (active) setSessionSummary((data as { summary?: string | null }).summary ?? null);
+                if (active) {
+                    setSessionSummary((data as { summary?: string | null }).summary ?? null);
+                    setSummaryLoading(false);
+                }
             })
             .catch((err) => {
                 if (!active) return;
                 console.error("Error loading summary:", err);
-            })
-            .finally(() => {
-                if (active) setSummaryLoading(false);
+                setSummaryLoading(false);
             });
 
         return () => { active = false; };
-    }, [activeSection, selectedSession, lang]);
+    }, [activeSection, selectedSessionId, lang]);
 
     const handleDelete = async (sessionId: string) => {
         if (selectedSession?.session_id === sessionId && !leaveReadingDraft()) return;

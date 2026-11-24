@@ -110,15 +110,24 @@ export function useStudentMeetings() {
     const { access } = useUserAccess();
     const [meetings, setMeetings] = useState<ClassMeeting[] | null>(null);
     const [failed, setFailed] = useState(false);
+    const fetchMeetings = useCallback(async () => {
+        const response = await apiFetch('/api/user/meetings');
+        if (!response.ok) throw new Error('meetings');
+        return parseMeetings(await response.json());
+    }, []);
     const load = useCallback(async () => {
         try {
-            const response = await apiFetch('/api/user/meetings');
-            if (!response.ok) throw new Error('meetings');
-            setMeetings(parseMeetings(await response.json()));
+            setMeetings(await fetchMeetings());
             setFailed(false);
         } catch { setFailed(true); }
-    }, []);
-    useEffect(() => { void load(); }, [load]);
+    }, [fetchMeetings]);
+    useEffect(() => {
+        let active = true;
+        fetchMeetings()
+            .then(rows => { if (active) { setMeetings(rows); setFailed(false); } })
+            .catch(() => { if (active) setFailed(true); });
+        return () => { active = false; };
+    }, [fetchMeetings]);
     return isClassContentHidden(access) ? { meetings: [], failed: false, load } : { meetings, failed, load };
 }
 
