@@ -61,6 +61,27 @@ class Rule:
     evidence: str
 
 
+# --- Prompt tiers (#778) ------------------------------------------------------
+# Level 1: core turn contract, privacy/safety, language directive, private markers.
+# Level 2: guided steps, tone, content, examples, contexts.
+LEVEL_FIRST = 1
+LEVEL_SECOND = 2
+LEVELS = (LEVEL_FIRST, LEVEL_SECOND)
+
+FIRST_LEVEL_CONFIG_KEYS = frozenset({
+    "prompt_free_chat_contract",
+    "directive_language",
+    "directive_conversation_quality",
+    "directive_context",
+    "directive_thinking",
+    "prompt_savickas_summary",
+    "prompt_evento_summary",
+    "prompt_qpcs_summary",
+    "prompt_qpcc_summary",
+    "prompt_qap_summary",
+})
+
+
 @dataclass(frozen=True)
 class PromptEntry:
     id: str
@@ -77,6 +98,7 @@ class PromptEntry:
     marker: str | None = None      # code entries: substring proving presence in a request
     known_refs: frozenset = frozenset()  # codes named on purpose (e.g. "K1-K5 are not QPCC factors")
     label: str = ""
+    level: int = LEVEL_SECOND
 
 
 def _q(lo: int, hi: int, evidence: str) -> Rule:
@@ -242,10 +264,11 @@ _KNOWN_REFS = {"prompt_qpcc_factor": frozenset({"K1", "K5"})}
 
 
 def _config(key, consumer, surfaces, order, **extra) -> PromptEntry:
+    level = extra.pop("level", LEVEL_FIRST if key in FIRST_LEVEL_CONFIG_KEYS else LEVEL_SECOND)
     return PromptEntry(
         id=f"config:{key}", kind="config", key=key, consumer=consumer, surfaces=tuple(surfaces),
         order=order, factory=_factory_name(key), rules=_CONFIG_RULES.get(key, ()),
-        known_refs=_KNOWN_REFS.get(key, frozenset()), **extra,
+        known_refs=_KNOWN_REFS.get(key, frozenset()), level=level, **extra,
     )
 
 
@@ -316,7 +339,7 @@ def _build_step_entries() -> dict[str, PromptEntry]:
 _CODE_ENTRIES = (
     PromptEntry(
         id="code:turn_contract", kind="code", key="turn_contract", consumer="backend.prompt_contract:turn_contract",
-        surfaces=_GUIDED, order=ORDER_CONTRACT, marker="[TURN CONTRACT]",
+        surfaces=_GUIDED, order=ORDER_CONTRACT, marker="[TURN CONTRACT]", level=LEVEL_FIRST,
         rules=(
             _q(0, 1, "Ask at most ONE focused question, then wait."),
             _r("strategies", "none", "Introduce no new practical action in this turn."),
@@ -326,13 +349,13 @@ _CODE_ENTRIES = (
     ),
     PromptEntry(
         id="code:format_rule", kind="code", key="FORMAT_RULE", consumer="backend.prompt_contract:turn_contract",
-        surfaces=_GUIDED, order=ORDER_FORMAT, marker="Write in the format chosen in the chat",
+        surfaces=_GUIDED, order=ORDER_FORMAT, marker="Write in the format chosen in the chat", level=LEVEL_FIRST,
         rules=(_r("format", "chosen", "Write in the format chosen in the chat, given in [VISIBLE RESPONSE FORMAT]"),),
     ),
     PromptEntry(
         id="code:bussola_guide", kind="code", key="bussola_guide", consumer="backend.orientation:analyze_turn",
         surfaces=(BUSSOLA,), order=ORDER_SYSTEM, marker="You are CounselorBot's neutral orientation guide",
-        label="Compass orientation guide",
+        label="Compass orientation guide", level=LEVEL_FIRST,
     ),
 )
 
@@ -394,3 +417,21 @@ def factory_text(entry: PromptEntry) -> str | None:
     from .prompt_factory_alignment import factory_catalog
     step = factory_catalog()[1].get(entry.key)
     return step["prompt"] if step else None
+
+
+def prompt_level(entry_or_id: PromptEntry | str | None) -> int:
+    """Return tier (1=core contract/directive/markers, 2=steps/tone/content)."""
+    if entry_or_id is None:
+        return LEVEL_SECOND
+    if isinstance(entry_or_id, PromptEntry):
+        return entry_or_id.level
+    entry = REGISTRY.get(entry_or_id)
+    if entry is not None:
+        return entry.level
+    kind, _, key = entry_or_id.partition(":")
+    if kind == "config":
+        resolved = config_entry(key)
+        return resolved.level if resolved is not None else LEVEL_SECOND
+    if kind == "guided_step":
+        return step_entry(key).level
+    return LEVEL_SECOND

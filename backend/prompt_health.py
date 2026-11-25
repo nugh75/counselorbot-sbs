@@ -784,6 +784,14 @@ def all_prompt_statuses(db: Session) -> dict[str, str]:
     }
 
 
+def all_prompt_levels(db: Session) -> dict[str, int]:
+    """Declared tier (1 or 2) for every prompt currently stored in the database (#778)."""
+    return {
+        pid: prompt_registry.prompt_level(pid)
+        for pid in sorted(active_texts(db))
+    }
+
+
 def save_prompt(db: Session, prompt_id: str, text: str, author: str | None) -> None:
     """Save one prompt as the admin's text. Never blocked by findings."""
     row, field = _live_row(db, prompt_id)
@@ -871,6 +879,7 @@ def prompt_card(db: Session, prompt_id: str) -> dict:
     return {
         "id": prompt_id, "kind": kind, "text": text, "factory": factory, "editable": text is not None,
         "status": status,
+        "level": prompt_registry.prompt_level(entry or prompt_id),
         "differs_from_factory": factory is not None and text is not None and text != factory,
         "customised": text is not None and prompt_revisions.is_admin_owned(db, kind, key),
         "consumer": entry.consumer if entry else None, "app_surfaces": list(entry.surfaces) if entry else [],

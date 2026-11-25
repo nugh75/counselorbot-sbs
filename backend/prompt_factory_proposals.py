@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
-from . import models, prompt_factory_alignment, prompt_revisions, prompt_updates
+from . import models, prompt_factory_alignment, prompt_registry, prompt_revisions, prompt_updates
 
 VALID_SCOPES = (prompt_revisions.SCOPE_CONFIG, prompt_revisions.SCOPE_GUIDED_STEP)
 
@@ -110,6 +110,7 @@ def list_proposals(db: Session) -> dict:
             "scope": scope,
             "key": key,
             "status": item.get("status") or "customised",
+            "level": prompt_registry.prompt_level(f"{scope}:{key}"),
             "current_text": current_text,
             "factory_text": factory_text,
             "current_hash": item.get("expected_hash") or prompt_updates.digest(current_text),

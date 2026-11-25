@@ -7,7 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from .. import auth, database, prompt_factory_proposals, prompt_health, prompt_health_llm
+from .. import auth, database, prompt_factory_proposals, prompt_health, prompt_health_llm, prompt_registry
 
 router = APIRouter()
 get_db = database.get_db
@@ -22,6 +22,7 @@ class PromptCheckRequest(BaseModel):
 
 class PromptSaveRequest(PromptCheckRequest):
     text: str = Field(..., max_length=200_000)
+    confirm_first_level: bool = False
 
 
 class PromptEvaluateRequest(BaseModel):
@@ -115,8 +116,12 @@ def _not_found(exc: Exception) -> HTTPException:
 
 @router.get("/admin/prompt-health/map")
 def prompt_health_map(current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    """Paths x steps with prompts, turns and ownership status of every stored prompt."""
-    return {"paths": prompt_health.turn_map(db), "prompt_statuses": prompt_health.all_prompt_statuses(db)}
+    """Paths x steps with prompts, turns, ownership status and tier of every stored prompt."""
+    return {
+        "paths": prompt_health.turn_map(db),
+        "prompt_statuses": prompt_health.all_prompt_statuses(db),
+        "prompt_levels": prompt_health.all_prompt_levels(db),
+    }
 
 
 @router.get("/admin/prompt-health/prompt")
@@ -145,7 +150,9 @@ def evaluate_prompt_drafts(payload: PromptEvaluateRequest, current_user=Depends(
 @router.post("/admin/prompt-health/save")
 def save_prompt_text(payload: PromptSaveRequest, background: BackgroundTasks,
                      current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    """Save one prompt from the compare screen: never blocked, findings returned as warnings."""
+    """Save one prompt from the compare screen: requires confirm_first_level for tier 1."""
+    if prompt_registry.prompt_level(payload.prompt_id) == prompt_registry.LEVEL_FIRST and not payload.confirm_first_level:
+        raise HTTPException(status_code=409, detail="first_level_confirmation_required")
     try:
         prompt_health.save_prompt(db, payload.prompt_id, payload.text, current_user.get("username"))
         findings = prompt_health.evaluate(db, prompt_ids=[payload.prompt_id])["findings"]
@@ -302,6 +309,7 @@ class ProposalActionRequest(ProposalReopenRequest):
 
 class ProposalMergeRequest(ProposalActionRequest):
     merged_text: str = Field(..., max_length=200_000)
+    confirm_first_level: bool = False
 
 
 @router.get("/admin/prompt-health/proposals")
@@ -383,6 +391,11 @@ def merge_factory_proposal(
     db: Session = Depends(get_db),
 ):
     """Save a manual merge of the current prompt and the factory proposal."""
+    if (
+        prompt_registry.prompt_level(f"{payload.scope}:{payload.key}") == prompt_registry.LEVEL_FIRST
+        and not payload.confirm_first_level
+    ):
+        raise HTTPException(status_code=409, detail="first_level_confirmation_required")
     try:
         result = prompt_factory_proposals.merge_proposal(
             db,
