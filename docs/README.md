@@ -9,6 +9,7 @@ This directory is the canonical entry point for stable project documentation, re
 - [Graphify documentation graph](progetto/organizzazione/graphify-docs-2026-05-30/README.md): generated output from `safishamsi/graphify`.
 - [Visual identity](design.md): design tokens, colour and type scales, dark-mode rules, and the current alignment audit.
 - [Project log](progetto/diario.md): project chronology.
+- [Intervention plan and open issues roadmap](progetto/piano-interventi.md): macro-theme roadmap of open issues, milestones, and execution waves.
 - [Communications](progetto/comunicazioni/): contact drafts and messages.
 - [Validation](validazione/): scientific plan, operating manual, psychometric details, diagnosis, and stanine notes.
 - [Questionnaires](questionari/): instrument PDFs and item-catalog guide.
