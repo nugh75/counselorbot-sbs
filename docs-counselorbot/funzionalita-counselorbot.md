@@ -4050,3 +4050,19 @@ Uno studente risulta iscritto una sola volta per classe: all'avvio la migrazione
 e aggiunge il vincolo unico `(group_id, username)`; due ingressi contemporanei
 non creano più righe doppie. I destinatari del catalogo obiettivi
 (`goal_catalog_targets`) non ammettono più doppioni né righe senza destinatario.
+
+### Proposte di aggiornamento dei prompt di fabbrica (#776)
+
+All'avvio dell'applicazione i prompt mai personalizzati (`factory_owned`) si
+aggiornano automaticamente al nuovo testo di fabbrica conservando le versioni
+precedenti in `prompt_revisions`. Quando una release cambia il testo di fabbrica
+di un prompt personalizzato (o non ancora allineato), in **Amministrazione ›
+Salute dei prompt** compare un contatore delle proposte in sospeso e l'elenco
+delle proposte con diff rispetto al testo attuale e tre azioni: **Accetta**,
+**Ignora** o **Unisci a mano**. Le proposte ignorate o unite manualmente
+restano nascoste per quella specifica versione di fabbrica (tabella
+`prompt_factory_proposal_dismissals`) e riappaiono automaticamente quando una
+release successiva modifica di nuovo il testo di fabbrica. Il pannello
+**Allinea prompt di fabbrica** resta nella stessa pagina come azione multipla
+sincronizzata con le proposte. Nessuna modifica alla Guida interfaccia; il
+deploy crea la nuova tabella via `create_all`.
