@@ -876,17 +876,22 @@ def prompt_card(db: Session, prompt_id: str) -> dict:
     findings = [f for f in (run.findings if run else []) if prompt_id in f["prompts"]]
     turns = _turns_for(db, [prompt_id]) if kind in ("config", "guided_step") else None
     status = prompt_status(db, prompt_id, text=text, factory=factory)
-    return {
+    differs = factory is not None and text is not None and text != factory
+    card = {
         "id": prompt_id, "kind": kind, "text": text, "factory": factory, "editable": text is not None,
         "status": status,
         "level": prompt_registry.prompt_level(entry or prompt_id),
-        "differs_from_factory": factory is not None and text is not None and text != factory,
+        "differs_from_factory": differs,
         "customised": text is not None and prompt_revisions.is_admin_owned(db, kind, key),
         "consumer": entry.consumer if entry else None, "app_surfaces": list(entry.surfaces) if entry else [],
         # Turns that can receive it; None when it is shared by every path.
         "surfaces": None if turns is None else [label for label, _ in turns],
         "findings": with_acks(findings, acks(db), problem_numbers(db, [f["id"] for f in findings])),
     }
+    from . import prompt_maintainer
+    if (promote_cap := prompt_maintainer.promote_capability(prompt_id, differs)) is not None:
+        card["maintainer_promote"] = promote_cap
+    return card
 
 
 def run_at_startup() -> None:

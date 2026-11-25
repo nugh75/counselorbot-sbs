@@ -7,7 +7,15 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from .. import auth, database, prompt_factory_proposals, prompt_health, prompt_health_llm, prompt_registry
+from .. import (
+    auth,
+    database,
+    prompt_factory_proposals,
+    prompt_health,
+    prompt_health_llm,
+    prompt_maintainer,
+    prompt_registry,
+)
 
 router = APIRouter()
 get_db = database.get_db
@@ -414,3 +422,33 @@ def merge_factory_proposal(
     background.add_task(_rerun_after_save)
     background.add_task(_llm_after_change, prompt_id, _checker_actor(current_user))
     return result
+
+
+# --- Maintainer promotion to factory PR (#777) ----------------------------------------
+
+class PromptPromoteRequest(PromptCheckRequest):
+    note: str = Field("", max_length=2000)
+
+
+@router.post("/admin/prompt-health/promote-factory")
+def promote_prompt_to_factory(
+    payload: PromptPromoteRequest,
+    current_user=Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Open a GitHub PR promoting an instance prompt customization to factory (#777)."""
+    try:
+        return prompt_maintainer.promote_prompt_to_factory(
+            db,
+            payload.prompt_id,
+            note=payload.note,
+            actor=current_user.get("username"),
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail="github_pr_failed") from exc

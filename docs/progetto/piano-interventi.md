@@ -140,9 +140,8 @@ Ordine consigliato: `#1028` → `#1029` → `#1030` + `#1031` → `#1032`.
   - **Stato:** `Completata (PR in chiusura)` — i prompt mai personalizzati si aggiornano automaticamente all'avvio preservando lo storico; i prompt personalizzati diversi dalla fabbrica compaiono in «Salute dei prompt» con contatore, diff e azioni *Accetta / Ignora / Unisci a mano* (+ Riapri).
 - [x] [#778](https://github.com/nugh75/counselorbot-sbs/issues/778) — `feat: first-level and second-level prompts with double confirmation for first level`
   - **Stato:** `Completata (PR in chiusura)` — livelli `1` e `2` dichiarati in `backend/prompt_registry.py`, mostrati in «Salute dei prompt» (schede, catalogo, confronto, proposte) e doppia conferma esplicita lato UI e API per i prompt di 1° livello.
-- [ ] [#777](https://github.com/nugh75/counselorbot-sbs/issues/777) — `feat: maintainer mode to promote an instance prompt to factory via pull request`
-  - **Stato:** `Pronta` (coordinare con `#776`).
-  - **Nota operativa:** azione «Rendi testo di fabbrica» visibile solo sull'istanza maintainer configurata con token GitHub, per aprire una PR di aggiornamento sul file di fabbrica.
+- [x] [#777](https://github.com/nugh75/counselorbot-sbs/issues/777) — `feat: maintainer mode to promote an instance prompt to factory via pull request`
+  - **Stato:** `Completata (PR in chiusura)` — azione «Rendi testo di fabbrica» attiva solo in modalità maintainer configurata (`PROMPT_MAINTAINER_MODE` + token GitHub), con risoluzione AST dei sorgenti di fabbrica e creazione PR via REST API.
 - [ ] [#779](https://github.com/nugh75/counselorbot-sbs/issues/779) — `feat: suggest an instance prompt change to the project by email or GitHub issue`
   - **Stato:** `Pronta`.
   - **Nota operativa:** da un prompt personalizzato, azione «Suggerisci al progetto» verso il maintainer via email (impostazioni mail dell'app) o GitHub issue.

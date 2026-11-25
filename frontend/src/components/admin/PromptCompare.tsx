@@ -9,10 +9,11 @@ import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { PromptHistory } from '@/components/admin/PromptHistory';
+import { PromptPromotePanel } from '@/components/admin/PromptPromotePanel';
 import {
     canPropose, findingRanges, highlightSegments, isFirstLevelPrompt, lineDiff, mergeFindings, messageParams, otherSentence, promptLabel,
     promptOwnershipStatus, promptScopeAndKey,
-    type PromptHealthFinding, type PromptHealthProposal, type PromptHealthRange, type PromptLevel, type PromptOwnershipStatus,
+    type MaintainerPromoteInfo, type PromptHealthFinding, type PromptHealthProposal, type PromptHealthRange, type PromptLevel, type PromptOwnershipStatus,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
 import { usePromptName, useSurfaceName } from './PromptHealthLabels';
@@ -33,6 +34,7 @@ export interface PromptCard {
     app_surfaces: string[];
     surfaces: string[] | null;
     findings: PromptHealthFinding[];
+    maintainer_promote?: MaintainerPromoteInfo;
 }
 
 export async function loadPromptCard(id: string): Promise<PromptCard> {
@@ -325,6 +327,7 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
                 </div>
             </div>}
             {diff && card.factory != null && <DiffView before={card.factory} after={draft} />}
+            <PromptPromotePanel card={card} dirty={dirty} />
             {historyTarget && <PromptHistory
                 scope={historyTarget.scope}
                 targetKey={historyTarget.key}

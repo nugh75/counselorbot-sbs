@@ -11,6 +11,7 @@ import { PromptFactoryAlignment } from '@/components/admin/PromptFactoryAlignmen
 import { PromptFactoryProposals } from '@/components/admin/PromptFactoryProposals';
 import { PromptHealthLlm } from '@/components/admin/PromptHealthLlm';
 import { PromptHistory } from '@/components/admin/PromptHistory';
+import { PromptPromotePanel } from '@/components/admin/PromptPromotePanel';
 import { PromptUsagePanel } from '@/components/admin/PromptUsagePanel';
 import {
     PromptCompare, loadPromptCard, postJson,
@@ -104,6 +105,7 @@ function PromptCardView({ id, paths, onCompare, onChanged, onClose }: {
             {card.editable && <Button type="button" variant="secondary" onClick={() => onCompare([id], null)}>
                 <Columns3 className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.card.openEditor')}
             </Button>}
+            <PromptPromotePanel card={card} />
             {card.editable && historyTarget && <PromptHistory
                 scope={historyTarget.scope}
                 targetKey={historyTarget.key}
