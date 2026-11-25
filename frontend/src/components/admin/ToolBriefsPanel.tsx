@@ -26,13 +26,17 @@ export function ToolBriefsPanel() {
     const [savingId, setSavingId] = useState('');
     const [savedId, setSavedId] = useState('');
 
+    const fetchBriefs = useCallback(async () => {
+        const res = await fetch('/api/admin/orientation/tool-briefs');
+        if (!res.ok) throw new Error(String(res.status));
+        return (await res.json()) as ToolBrief[];
+    }, []);
+
     const load = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch('/api/admin/orientation/tool-briefs');
-            if (!res.ok) throw new Error(String(res.status));
-            const data: ToolBrief[] = await res.json();
+            const data = await fetchBriefs();
             setRows(data);
             setDrafts(Object.fromEntries(data.map((row) => [row.tool_id, row.brief])));
         } catch {
@@ -40,9 +44,24 @@ export function ToolBriefsPanel() {
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [fetchBriefs, t]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchBriefs()
+            .then((data) => {
+                if (!active) return;
+                setRows(data);
+                setDrafts(Object.fromEntries(data.map((row) => [row.tool_id, row.brief])));
+                setLoading(false);
+            })
+            .catch(() => {
+                if (!active) return;
+                setError(t('admin.toolBriefs.error'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchBriefs, t]);
 
     const save = async (row: ToolBrief) => {
         setSavingId(row.tool_id);

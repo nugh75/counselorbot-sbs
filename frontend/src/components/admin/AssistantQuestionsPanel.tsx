@@ -60,28 +60,47 @@ export function AssistantQuestionsPanel() {
     const [filterTopic, setFilterTopic] = useState<string>('all');
     const [filterLang, setFilterLang] = useState<string>('all');
 
+    const fetchQuestions = useCallback(async () => {
+        const res = await fetch('/api/admin/assistant-questions');
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/';
+            return null;
+        }
+        if (!res.ok) throw new Error('load failed');
+        return (await res.json()) as AdminAssistantQuestion[];
+    }, []);
+
     const refresh = useCallback(async () => {
         setLoading(true);
         setMessage('');
         try {
-            const res = await fetch('/api/admin/assistant-questions');
-            if (res.status === 401 || res.status === 403) {
-                window.location.href = '/';
-                return;
-            }
-            if (!res.ok) throw new Error('load failed');
-            setItems(await res.json());
+            const data = await fetchQuestions();
+            if (!data) return;
+            setItems(data);
         } catch (e) {
             console.error('Failed to load assistant questions', e);
             setMessage(t('admin.aq.error.load'));
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [fetchQuestions, t]);
 
     useEffect(() => {
-        void refresh();
-    }, [refresh]);
+        let active = true;
+        fetchQuestions()
+            .then((data) => {
+                if (!active || !data) return;
+                setItems(data);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load assistant questions', e);
+                setMessage(t('admin.aq.error.load'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchQuestions, t]);
 
     const filtered = useMemo(() => {
         return items.filter((q) =>

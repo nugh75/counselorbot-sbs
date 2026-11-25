@@ -75,18 +75,34 @@ export function PromptHealthPanel() {
     const [error, setError] = useState(false);
     const [saved, setSaved] = useState<{ promptId: string; state: 'checking' | 'done'; findings?: PromptHealthFinding[] } | null>(null);
 
+    const fetchRun = useCallback(async () => {
+        const response = await apiFetch('/api/admin/prompt-health');
+        if (!response.ok) throw new Error('load');
+        return ((await response.json()) as { run: PromptHealthRun | null }).run;
+    }, []);
+
     const load = useCallback(async () => {
         try {
-            const response = await apiFetch('/api/admin/prompt-health');
-            if (!response.ok) throw new Error('load');
-            setRun((await response.json()).run);
+            setRun(await fetchRun());
             setError(false);
         } catch {
             setError(true);
         }
-    }, []);
+    }, [fetchRun]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchRun()
+            .then((nextRun) => {
+                if (!active) return;
+                setRun(nextRun);
+                setError(false);
+            })
+            .catch(() => {
+                if (active) setError(true);
+            });
+        return () => { active = false; };
+    }, [fetchRun]);
 
     useEffect(() => {
         const onSaved = (event: Event) => {

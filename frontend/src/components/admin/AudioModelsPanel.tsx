@@ -39,13 +39,18 @@ export function AudioModelsPanel() {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState<'idle' | 'saved' | 'error'>('idle');
 
+    const fetchModelsStatus = useCallback(async () => {
+        const response = await fetch('/api/audio/models');
+        if (response.status === 401 || response.status === 403) { window.location.href = '/'; return null; }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return (await response.json()) as ModelStatus;
+    }, []);
+
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/audio/models');
-            if (response.status === 401 || response.status === 403) { window.location.href = '/'; return; }
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const body: ModelStatus = await response.json();
+            const body = await fetchModelsStatus();
+            if (!body) return;
             setStatus(body);
             setSelected(body.active);
             setEngine(body.engine);
@@ -55,9 +60,26 @@ export function AudioModelsPanel() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchModelsStatus]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchModelsStatus()
+            .then((body) => {
+                if (!active || !body) return;
+                setStatus(body);
+                setSelected(body.active);
+                setEngine(body.engine);
+                setLoading(false);
+            })
+            .catch((error) => {
+                if (!active) return;
+                console.error('Failed to load transcription models', error);
+                setSaved('error');
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchModelsStatus]);
 
     const save = async () => {
         if (!status || !validTranscriptionModel(selected) || !transcriptionAvailable(engine, status.providers)) return;

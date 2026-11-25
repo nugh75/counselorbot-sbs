@@ -73,21 +73,54 @@ export function PresetsPanel() {
     const modelRequest = useRef<AbortController | null>(null);
     const [saveError, setSaveError] = useState(false);
 
+    const fetchPresetsData = useCallback(async () => {
+        const res = await fetch('/api/admin/presets');
+        if (res.status === 401 || res.status === 403) { window.location.href = '/'; return null; }
+        if (!res.ok) throw new Error('presets fetch failed');
+        return (await res.json()) as Preset[];
+    }, []);
+
     const fetchPresets = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/admin/presets');
-            if (res.status === 401 || res.status === 403) { window.location.href = '/'; return; }
-            if (!res.ok) throw new Error('presets fetch failed');
-            setPresets(await res.json());
+            const data = await fetchPresetsData();
+            if (data) setPresets(data);
         } catch (e) {
             console.error('Failed to fetch presets', e);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchPresetsData]);
 
-    useEffect(() => { void fetchPresets(); }, [fetchPresets]);
+    useEffect(() => {
+        let active = true;
+        fetchPresetsData()
+            .then((data) => {
+                if (!active) return;
+                if (data) setPresets(data);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to fetch presets', e);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchPresetsData]);
+
+    const requestModels = useCallback(async (provider: string, refresh: boolean, signal: AbortSignal) => {
+        const query = `provider=${encodeURIComponent(provider)}${refresh ? '&refresh=1' : ''}`;
+        const res = await fetch(`/api/admin/models?${query}`, { signal });
+        if (signal.aborted) return null;
+        if (!res.ok) return { models: [] as string[], capabilities: {} as Record<string, ModelCapability> };
+        const data = await res.json();
+        return {
+            models: Array.isArray(data?.models) ? (data.models as string[]) : [],
+            capabilities: data?.capabilities && typeof data.capabilities === 'object'
+                ? (data.capabilities as Record<string, ModelCapability>)
+                : {},
+        };
+    }, []);
 
     const fetchModels = useCallback(async (provider: string, refresh = false) => {
         modelRequest.current?.abort();
@@ -95,18 +128,10 @@ export function PresetsPanel() {
         modelRequest.current = controller;
         setModelsLoading(true);
         try {
-            const query = `provider=${encodeURIComponent(provider)}${refresh ? '&refresh=1' : ''}`;
-            const res = await fetch(`/api/admin/models?${query}`, { signal: controller.signal });
-            if (controller.signal.aborted) return;
-            if (res.ok) {
-                const data = await res.json();
-                if (!controller.signal.aborted) {
-                    setLiveModels(Array.isArray(data?.models) ? data.models : []);
-                    setCapabilities(data?.capabilities && typeof data.capabilities === 'object' ? data.capabilities : {});
-                }
-            } else {
-                setLiveModels([]);
-                setCapabilities({});
+            const data = await requestModels(provider, refresh, controller.signal);
+            if (!controller.signal.aborted && data) {
+                setLiveModels(data.models);
+                setCapabilities(data.capabilities);
             }
         } catch {
             if (!controller.signal.aborted) {
@@ -116,13 +141,37 @@ export function PresetsPanel() {
         } finally {
             if (!controller.signal.aborted) setModelsLoading(false);
         }
-    }, []);
+    }, [requestModels]);
+
+    const modelTarget = editingId === null ? null : form.provider;
+    const [shownModelTarget, setShownModelTarget] = useState<string | null>(modelTarget);
+    if (shownModelTarget !== modelTarget) {
+        setShownModelTarget(modelTarget);
+        if (modelTarget !== null) setModelsLoading(true);
+    }
 
     useEffect(() => {
         if (editingId === null) return;
-        void fetchModels(form.provider);
-        return () => modelRequest.current?.abort();
-    }, [editingId, form.provider, fetchModels]);
+        modelRequest.current?.abort();
+        const controller = new AbortController();
+        modelRequest.current = controller;
+        requestModels(form.provider, false, controller.signal)
+            .then((data) => {
+                if (controller.signal.aborted) return;
+                if (data) {
+                    setLiveModels(data.models);
+                    setCapabilities(data.capabilities);
+                }
+                setModelsLoading(false);
+            })
+            .catch(() => {
+                if (controller.signal.aborted) return;
+                setLiveModels([]);
+                setCapabilities({});
+                setModelsLoading(false);
+            });
+        return () => controller.abort();
+    }, [editingId, form.provider, requestModels]);
 
     const startNew = () => { setForm(EMPTY_FORM); setLiveModels([]); setCapabilities({}); setSaveError(false); setManualModel(false); setEditingId('new'); };
     const startEdit = (p: Preset) => {

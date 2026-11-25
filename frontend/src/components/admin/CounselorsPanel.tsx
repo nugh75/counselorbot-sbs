@@ -100,24 +100,47 @@ export function CounselorsPanel() {
     const [tLang, setTLang] = useState(uiLang);
     const [coverModalOpen, setCoverModalOpen] = useState(false);
 
+    const fetchCounselorsData = useCallback(async () => {
+        const [cr, pr] = await Promise.all([
+            fetch('/api/admin/counselors'),
+            fetch('/api/admin/presets'),
+        ]);
+        if (cr.status === 401 || cr.status === 403) { window.location.href = '/'; return null; }
+        const nextCounselors = cr.ok ? (await cr.json() as Counselor[]) : null;
+        const nextPresets = pr.ok ? (await pr.json() as Preset[]) : null;
+        return { nextCounselors, nextPresets };
+    }, []);
+
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
-            const [cr, pr] = await Promise.all([
-                fetch('/api/admin/counselors'),
-                fetch('/api/admin/presets'),
-            ]);
-            if (cr.status === 401 || cr.status === 403) { window.location.href = '/'; return; }
-            if (cr.ok) setCounselors(await cr.json());
-            if (pr.ok) setPresets(await pr.json());
+            const data = await fetchCounselorsData();
+            if (!data) return;
+            if (data.nextCounselors) setCounselors(data.nextCounselors);
+            if (data.nextPresets) setPresets(data.nextPresets);
         } catch (e) {
             console.error('Failed to load counselors', e);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchCounselorsData]);
 
-    useEffect(() => { void refresh(); }, [refresh]);
+    useEffect(() => {
+        let active = true;
+        fetchCounselorsData()
+            .then((data) => {
+                if (!active || !data) return;
+                if (data.nextCounselors) setCounselors(data.nextCounselors);
+                if (data.nextPresets) setPresets(data.nextPresets);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load counselors', e);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchCounselorsData]);
 
     const startNew = () => { setForm(EMPTY); setTLang(uiLang); setEditingId('new'); };
     const startEdit = (c: Counselor) => {

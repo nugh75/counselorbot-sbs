@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
@@ -19,18 +19,36 @@ export function ModelContextSettings() {
     const [saving, setSaving] = useState('');
     const [status, setStatus] = useState('');
     const [error, setError] = useState('');
-    const load = async () => {
+    const fetchSettings = useCallback(async () => {
+        const response = await apiFetch('/api/admin/model-context-levels');
+        if (!response.ok) throw new Error('load');
+        const data = await response.json();
+        return {
+            levels: data.levels as Record<string, Level>,
+            assignments: Object.entries(data.profiles as Record<string, Profile>).map(([target, profile]) => ({ target, profile })),
+        };
+    }, []);
+    const load = useCallback(async () => {
         setState('loading');
         try {
-            const response = await apiFetch('/api/admin/model-context-levels');
-            if (!response.ok) throw new Error('load');
-            const data = await response.json();
+            const data = await fetchSettings();
             setLevels(data.levels); setSavedLevels(data.levels);
-            setAssignments(Object.entries(data.profiles as Record<string, Profile>).map(([target, profile]) => ({ target, profile })));
+            setAssignments(data.assignments);
             setState('ready');
         } catch { setState('error'); }
-    };
-    useEffect(() => { void load(); }, []);
+    }, [fetchSettings]);
+    useEffect(() => {
+        let active = true;
+        fetchSettings()
+            .then((data) => {
+                if (!active) return;
+                setLevels(data.levels); setSavedLevels(data.levels);
+                setAssignments(data.assignments);
+                setState('ready');
+            })
+            .catch(() => { if (active) setState('error'); });
+        return () => { active = false; };
+    }, [fetchSettings]);
     const updateLevel = (id: string, key: string, value: string | boolean | number | null) => {
         setLevels(previous => ({ ...previous, [id]: { ...previous[id], [key]: value } })); setStatus('');
     };

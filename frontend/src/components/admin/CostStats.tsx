@@ -100,29 +100,53 @@ export function CostStats() {
     const [budgetInput, setBudgetInput] = useState('');
     const [savingBudget, setSavingBudget] = useState(false);
 
+    const fetchStatsData = useCallback(async () => {
+        const params = new URLSearchParams();
+        if (fromDate) params.set('from_date', `${fromDate}T00:00:00`);
+        if (toDate) params.set('to_date', `${toDate}T23:59:59`);
+        const res = await fetch(`/api/admin/cost-stats?${params.toString()}`);
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/';
+            return null;
+        }
+        if (!res.ok) throw new Error('cost-stats fetch failed');
+        return (await res.json()) as CostStatsData;
+    }, [fromDate, toDate]);
+
+    const dateRangeKey = `${fromDate}:${toDate}`;
+    const [shownRangeKey, setShownRangeKey] = useState(dateRangeKey);
+    if (shownRangeKey !== dateRangeKey) {
+        setShownRangeKey(dateRangeKey);
+        setLoading(true);
+    }
+
     const fetchStats = useCallback(async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams();
-            if (fromDate) params.set('from_date', `${fromDate}T00:00:00`);
-            if (toDate) params.set('to_date', `${toDate}T23:59:59`);
-            const res = await fetch(`/api/admin/cost-stats?${params.toString()}`);
-            if (res.status === 401 || res.status === 403) {
-                window.location.href = '/';
-                return;
-            }
-            if (!res.ok) throw new Error('cost-stats fetch failed');
-            setData(await res.json());
+            const next = await fetchStatsData();
+            if (next) setData(next);
         } catch (error) {
             console.error('Failed to fetch cost stats', error);
         } finally {
             setLoading(false);
         }
-    }, [fromDate, toDate]);
+    }, [fetchStatsData]);
 
     useEffect(() => {
-        void fetchStats();
-    }, [fetchStats]);
+        let active = true;
+        fetchStatsData()
+            .then((next) => {
+                if (!active) return;
+                if (next) setData(next);
+                setLoading(false);
+            })
+            .catch((error) => {
+                if (!active) return;
+                console.error('Failed to fetch cost stats', error);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchStatsData]);
 
     const maxDayCost = useMemo(
         () => (data?.by_day || []).reduce((max, d) => Math.max(max, d.cost), 0),

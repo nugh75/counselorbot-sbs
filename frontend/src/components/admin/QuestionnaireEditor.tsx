@@ -174,18 +174,36 @@ export function QuestionnaireEditor() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const loadInstrument = useCallback(async (code: string) => {
-        if (!code) return;
+    const fetchInstrumentData = useCallback(async (code: string) => {
         const [fRes, iRes] = await Promise.all([
             fetch(`/api/admin/instruments/${code}/factors`),
             fetch(`/api/admin/instruments/${code}/items`),
         ]);
-        setMeta(instruments.find((x) => x.code === code) ?? null);
-        setFactors(await fRes.json());
-        setItems(await iRes.json());
-    }, [instruments]);
+        const [factorsData, itemsData] = await Promise.all([fRes.json(), iRes.json()]);
+        return { factorsData: factorsData as Factor[], itemsData: itemsData as Item[] };
+    }, []);
 
-    useEffect(() => { loadInstrument(selected); }, [selected, loadInstrument]);
+    const loadInstrument = useCallback(async (code: string) => {
+        if (!code) return;
+        const { factorsData, itemsData } = await fetchInstrumentData(code);
+        setMeta(instruments.find((x) => x.code === code) ?? null);
+        setFactors(factorsData);
+        setItems(itemsData);
+    }, [fetchInstrumentData, instruments]);
+
+    useEffect(() => {
+        if (!selected) return;
+        let active = true;
+        fetchInstrumentData(selected)
+            .then(({ factorsData, itemsData }) => {
+                if (!active) return;
+                setMeta(instruments.find((x) => x.code === selected) ?? null);
+                setFactors(factorsData);
+                setItems(itemsData);
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [selected, instruments, fetchInstrumentData]);
 
     useEffect(() => {
         if (subTab !== 'rules' || !selected) return;

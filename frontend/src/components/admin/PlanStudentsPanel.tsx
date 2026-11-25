@@ -237,23 +237,41 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
     const [feedback, setFeedback] = useState('');
     const [busy, setBusy] = useState(false);
 
+    const fetchPanelData = useCallback(async () => {
+        const [studentsRes, notesRes] = await Promise.all([
+            apiFetch(`${base}/students`),
+            withNotes ? apiFetch(`${base}/notes`) : Promise.resolve(new Response('[]')),
+        ]);
+        const nextStudents = studentsRes.ok
+            ? ((await studentsRes.json()) as { students: PlanStudent[] }).students
+            : null;
+        const nextNotes = notesRes.ok ? (await notesRes.json() as TeacherNote[]) : null;
+        return { nextStudents, nextNotes };
+    }, [base, withNotes]);
+
     const load = useCallback(async () => {
         try {
-            const [studentsRes, notesRes] = await Promise.all([
-                apiFetch(`${base}/students`),
-                withNotes ? apiFetch(`${base}/notes`) : Promise.resolve(new Response('[]')),
-            ]);
-            if (studentsRes.ok) {
-                const payload = await studentsRes.json() as { students: PlanStudent[] };
-                setStudents(payload.students);
-            }
-            if (notesRes.ok) setNotes(await notesRes.json() as TeacherNote[]);
+            const { nextStudents, nextNotes } = await fetchPanelData();
+            if (nextStudents) setStudents(nextStudents);
+            if (nextNotes) setNotes(nextNotes);
         } catch {
             setFeedback(texts.error);
         }
-    }, [base, withNotes, texts.error]);
+    }, [fetchPanelData, texts.error]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchPanelData()
+            .then(({ nextStudents, nextNotes }) => {
+                if (!active) return;
+                if (nextStudents) setStudents(nextStudents);
+                if (nextNotes) setNotes(nextNotes);
+            })
+            .catch(() => {
+                if (active) setFeedback(texts.error);
+            });
+        return () => { active = false; };
+    }, [fetchPanelData, texts.error]);
 
     const addNote = async (username: string) => {
         if (!noteText.trim()) return;

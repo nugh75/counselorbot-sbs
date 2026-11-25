@@ -103,14 +103,25 @@ export function RagDocsPanel() {
     const [scopingSource, setScopingSource] = useState<string | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
+    const fetchCollections = useCallback(async () => {
+        const res = await fetch('/api/admin/rag/collections');
+        if (res.status === 401 || res.status === 403) { window.location.href = '/'; return null; }
+        if (!res.ok) throw new Error('load failed');
+        return (await res.json()) as RagCollection[];
+    }, []);
+
+    const fetchDocs = useCallback(async (collection: string) => {
+        const res = await fetch(`/api/admin/rag/docs?collection=${encodeURIComponent(collection)}`);
+        if (!res.ok) throw new Error('load failed');
+        return (await res.json()) as RagDocsResponse;
+    }, []);
+
     const loadCollections = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch('/api/admin/rag/collections');
-            if (res.status === 401 || res.status === 403) { window.location.href = '/'; return; }
-            if (!res.ok) throw new Error('load failed');
-            const data: RagCollection[] = await res.json();
+            const data = await fetchCollections();
+            if (!data) return;
             setCollections(data);
             setSelected((prev) => (prev && data.some((c) => c.id === prev) ? prev : (data[0]?.id ?? '')));
         } catch (e) {
@@ -119,16 +130,14 @@ export function RagDocsPanel() {
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [fetchCollections, t]);
 
     const loadDocs = useCallback(async (collection: string) => {
         if (!collection) return;
         setDocsLoading(true);
         setError(null);
         try {
-            const res = await fetch(`/api/admin/rag/docs?collection=${encodeURIComponent(collection)}`);
-            if (!res.ok) throw new Error('load failed');
-            const data: RagDocsResponse = await res.json();
+            const data = await fetchDocs(collection);
             setDocs(data.docs || []);
             setStats(data.stats || null);
         } catch (e) {
@@ -137,12 +146,50 @@ export function RagDocsPanel() {
         } finally {
             setDocsLoading(false);
         }
-    }, [t]);
+    }, [fetchDocs, t]);
 
-    useEffect(() => { void loadCollections(); }, [loadCollections]);
-    useEffect(() => { if (selected) void loadDocs(selected); }, [selected, loadDocs]);
+    useEffect(() => {
+        let active = true;
+        fetchCollections()
+            .then((data) => {
+                if (!active || !data) return;
+                setCollections(data);
+                setSelected((prev) => (prev && data.some((c) => c.id === prev) ? prev : (data[0]?.id ?? '')));
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load RAG collections', e);
+                setError(t('admin.rag.error.load'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchCollections, t]);
+    useEffect(() => {
+        if (!selected) return;
+        let active = true;
+        fetchDocs(selected)
+            .then((data) => {
+                if (!active) return;
+                setDocs(data.docs || []);
+                setStats(data.stats || null);
+                setDocsLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load RAG docs', e);
+                setError(t('admin.rag.error.load'));
+                setDocsLoading(false);
+            });
+        return () => { active = false; };
+    }, [selected, fetchDocs, t]);
     const [previewCollection, setPreviewCollection] = useState(selected);
-    if (previewCollection !== selected) { setPreviewCollection(selected); setPreview(null); }
+    if (previewCollection !== selected) {
+        setPreviewCollection(selected);
+        setPreview(null);
+        setDocsLoading(Boolean(selected));
+        setError(null);
+    }
 
     const currentCollection = collections.find((c) => c.id === selected);
 

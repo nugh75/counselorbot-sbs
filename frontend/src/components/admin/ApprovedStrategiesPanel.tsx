@@ -52,25 +52,50 @@ export function ApprovedStrategiesPanel() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const fetchStrategies = useCallback(async () => {
+        const res = await fetch('/api/admin/approved-strategies');
+        if (res.status === 401 || res.status === 403) { window.location.href = '/'; return null; }
+        if (!res.ok) throw new Error('load failed');
+        const data: ApprovedStrategiesResponse = await res.json();
+        return {
+            strategies: data.strategies || [],
+            source: data.source || 'file',
+        };
+    }, []);
+
     const refresh = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch('/api/admin/approved-strategies');
-            if (res.status === 401 || res.status === 403) { window.location.href = '/'; return; }
-            if (!res.ok) throw new Error('load failed');
-            const data: ApprovedStrategiesResponse = await res.json();
-            setStrategies(data.strategies || []);
-            setSource(data.source || 'file');
+            const data = await fetchStrategies();
+            if (!data) return;
+            setStrategies(data.strategies);
+            setSource(data.source);
         } catch (e) {
             console.error('Failed to load approved strategies', e);
             setError(t('admin.approvedStrategies.error.load'));
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [fetchStrategies, t]);
 
-    useEffect(() => { void refresh(); }, [refresh]);
+    useEffect(() => {
+        let active = true;
+        fetchStrategies()
+            .then((data) => {
+                if (!active || !data) return;
+                setStrategies(data.strategies);
+                setSource(data.source);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load approved strategies', e);
+                setError(t('admin.approvedStrategies.error.load'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchStrategies, t]);
 
     const startNew = () => {
         setForm({ ...EMPTY, texts: { ...EMPTY_TEXTS } });

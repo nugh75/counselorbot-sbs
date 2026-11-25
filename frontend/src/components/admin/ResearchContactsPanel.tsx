@@ -148,28 +148,47 @@ export function ResearchContactsPanel() {
     const [linkLocale, setLinkLocale] = useState<LocaleCode>('en');
     const [query, setQuery] = useState('');
 
+    const fetchContacts = useCallback(async () => {
+        const res = await fetch('/api/admin/research-contacts');
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/';
+            return null;
+        }
+        if (!res.ok) throw new Error('load failed');
+        return (await res.json()) as ResearchContact[];
+    }, []);
+
     const refresh = useCallback(async () => {
         setLoading(true);
         setMessage('');
         try {
-            const res = await fetch('/api/admin/research-contacts');
-            if (res.status === 401 || res.status === 403) {
-                window.location.href = '/';
-                return;
-            }
-            if (!res.ok) throw new Error('load failed');
-            setContacts(await res.json());
+            const data = await fetchContacts();
+            if (!data) return;
+            setContacts(data);
         } catch (e) {
             console.error('Failed to load research contacts', e);
             setMessage(t('admin.rc.error.load'));
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [fetchContacts, t]);
 
     useEffect(() => {
-        void refresh();
-    }, [refresh]);
+        let active = true;
+        fetchContacts()
+            .then((data) => {
+                if (!active || !data) return;
+                setContacts(data);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load research contacts', e);
+                setMessage(t('admin.rc.error.load'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchContacts, t]);
 
     const activeCount = useMemo(() => contacts.filter((contact) => contact.is_active).length, [contacts]);
 

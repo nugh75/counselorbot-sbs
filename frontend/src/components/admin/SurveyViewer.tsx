@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { RefreshCw, Trash2, BarChart3, TrendingUp, Users, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
@@ -46,19 +46,23 @@ export function SurveyViewer() {
     const [expandedSurvey, setExpandedSurvey] = useState<number | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
+    const requestSurveys = useCallback(async () => {
+        const res = await fetch(`/api/admin/surveys`);
+        if (res.ok) {
+            return (await res.json()) as SurveyResponse[];
+        }
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/';
+        }
+        console.error('Failed to fetch surveys:', res.statusText);
+        return null;
+    }, []);
+
     const fetchSurveys = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/admin/surveys`);
-            if (res.ok) {
-                const data = await res.json();
-                setSurveys(data);
-            } else {
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/';
-                }
-                console.error('Failed to fetch surveys:', res.statusText);
-            }
+            const data = await requestSurveys();
+            if (data) setSurveys(data);
         } catch (error) {
             console.error('Failed to fetch surveys', error);
         } finally {
@@ -67,8 +71,20 @@ export function SurveyViewer() {
     };
 
     useEffect(() => {
-        fetchSurveys();
-    }, []);
+        let active = true;
+        requestSurveys()
+            .then((data) => {
+                if (!active) return;
+                if (data) setSurveys(data);
+                setLoading(false);
+            })
+            .catch((error) => {
+                if (!active) return;
+                console.error('Failed to fetch surveys', error);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [requestSurveys]);
 
     const handleDelete = async (id: number) => {
         setConfirmDeleteId(null);

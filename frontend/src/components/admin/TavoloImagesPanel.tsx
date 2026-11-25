@@ -31,20 +31,39 @@ export function TavoloImagesPanel() {
     const imageInput = useRef<HTMLInputElement>(null);
     const csvInput = useRef<HTMLInputElement>(null);
 
+    const fetchImages = useCallback(async () => {
+        const response = await fetch('/api/admin/tavolo-images');
+        if (response.status === 401 || response.status === 403) { window.location.href = '/'; return null; }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return parseAdminTavoloImages(await response.json());
+    }, []);
+
     const load = useCallback(async () => {
         setError('');
         try {
-            const response = await fetch('/api/admin/tavolo-images');
-            if (response.status === 401 || response.status === 403) { window.location.href = '/'; return; }
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            setImages(parseAdminTavoloImages(await response.json()));
+            const data = await fetchImages();
+            if (data) setImages(data);
         } catch {
             setError(t('admin.tavoloImages.error.load'));
             setImages([]);
         }
-    }, [t]);
+    }, [fetchImages, t]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchImages()
+            .then((data) => {
+                if (!active || !data) return;
+                setError('');
+                setImages(data);
+            })
+            .catch(() => {
+                if (!active) return;
+                setError(t('admin.tavoloImages.error.load'));
+                setImages([]);
+            });
+        return () => { active = false; };
+    }, [fetchImages, t]);
 
     const upload = async () => {
         if (!files.length || !csvFile) return;

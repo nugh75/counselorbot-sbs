@@ -81,36 +81,58 @@ export function CertifiedStrategiesPanel() {
     const [saving, setSaving] = useState(false);
     const [translating, setTranslating] = useState(false);
 
+    const fetchStrategies = useCallback(async () => {
+        const sr = await fetch('/api/admin/certified-strategies');
+        if (sr.status === 401 || sr.status === 403) { window.location.href = '/'; return null; }
+        return sr.ok ? ((await sr.json()) as CertifiedStrategy[]) : undefined;
+    }, []);
+
+    const fetchFactors = useCallback(async () => {
+        const ir = await fetch('/api/admin/instruments');
+        if (!ir.ok) return null;
+        const instruments: Instrument[] = await ir.json();
+        const entries = await Promise.all(instruments.map(async (inst) => {
+            const fr = await fetch(`/api/admin/instruments/${inst.code}/factors`);
+            const factors: Factor[] = fr.ok ? await fr.json() : [];
+            return [inst.code, factors] as const;
+        }));
+        return Object.fromEntries(entries.filter(([, f]) => f.length > 0));
+    }, []);
+
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
-            const sr = await fetch('/api/admin/certified-strategies');
-            if (sr.status === 401 || sr.status === 403) { window.location.href = '/'; return; }
-            if (sr.ok) setStrategies(await sr.json());
+            const data = await fetchStrategies();
+            if (data) setStrategies(data);
         } catch (e) {
             console.error('Failed to load certified strategies', e);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchStrategies]);
 
-    const loadFactors = useCallback(async () => {
-        try {
-            const ir = await fetch('/api/admin/instruments');
-            if (!ir.ok) return;
-            const instruments: Instrument[] = await ir.json();
-            const entries = await Promise.all(instruments.map(async (inst) => {
-                const fr = await fetch(`/api/admin/instruments/${inst.code}/factors`);
-                const factors: Factor[] = fr.ok ? await fr.json() : [];
-                return [inst.code, factors] as const;
-            }));
-            setFactorsByInstrument(Object.fromEntries(entries.filter(([, f]) => f.length > 0)));
-        } catch (e) {
-            console.error('Failed to load factors', e);
-        }
-    }, []);
-
-    useEffect(() => { void refresh(); void loadFactors(); }, [refresh, loadFactors]);
+    useEffect(() => {
+        let active = true;
+        fetchStrategies()
+            .then((data) => {
+                if (!active) return;
+                if (data) setStrategies(data);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load certified strategies', e);
+                setLoading(false);
+            });
+        fetchFactors()
+            .then((data) => {
+                if (active && data) setFactorsByInstrument(data);
+            })
+            .catch((e) => {
+                if (active) console.error('Failed to load factors', e);
+            });
+        return () => { active = false; };
+    }, [fetchStrategies, fetchFactors]);
 
     // Scope questionario derivato dai fattori selezionati (istrumento del fattore).
     const derivedQTypes = useMemo(() => {

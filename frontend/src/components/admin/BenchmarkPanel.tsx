@@ -68,23 +68,32 @@ export function BenchmarkPanel() {
         if (res.ok) setRuns(await res.json());
     }, []);
 
-    const refresh = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [pr, rr] = await Promise.all([
-                fetch('/api/admin/presets'),
-                fetch('/api/admin/benchmark/runs'),
-            ]);
-            if (pr.ok) setPresets((await pr.json()).filter((p: Preset) => p.is_active));
-            if (rr.ok) setRuns(await rr.json());
-        } catch (e) {
-            console.error('Failed to load benchmark data', e);
-        } finally {
-            setLoading(false);
-        }
+    const fetchBenchmarkData = useCallback(async () => {
+        const [pr, rr] = await Promise.all([
+            fetch('/api/admin/presets'),
+            fetch('/api/admin/benchmark/runs'),
+        ]);
+        const nextPresets = pr.ok ? (await pr.json() as Preset[]).filter((p) => p.is_active) : null;
+        const nextRuns = rr.ok ? (await rr.json() as BenchRun[]) : null;
+        return { nextPresets, nextRuns };
     }, []);
 
-    useEffect(() => { void refresh(); }, [refresh]);
+    useEffect(() => {
+        let active = true;
+        fetchBenchmarkData()
+            .then(({ nextPresets, nextRuns }) => {
+                if (!active) return;
+                if (nextPresets) setPresets(nextPresets);
+                if (nextRuns) setRuns(nextRuns);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load benchmark data', e);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchBenchmarkData]);
 
     const stopPoll = () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
 

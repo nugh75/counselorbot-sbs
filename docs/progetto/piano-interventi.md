@@ -172,9 +172,9 @@ Ordine consigliato: `#1028` → `#1029` → `#1030` + `#1031` → `#1032`.
 
 **Totale: 3 issue aperte** · **Milestone:** [#22](https://github.com/nugh75/counselorbot-sbs/milestone/22) (`1 open / 21 closed`), [#42](https://github.com/nugh75/counselorbot-sbs/milestone/42) (`1 open / 60 closed`), [#21](https://github.com/nugh75/counselorbot-sbs/milestone/21) *(milestone già chiusa su GitHub)*.
 
-- [ ] [#773](https://github.com/nugh75/counselorbot-sbs/issues/773) — `chore: refactor fetch-on-mount loaders flagged by react-hooks/set-state-in-effect`
+- [x] [#773](https://github.com/nugh75/counselorbot-sbs/issues/773) — `chore: refactor fetch-on-mount loaders flagged by react-hooks/set-state-in-effect`
   - **Milestone:** [#22 — Green test baseline](https://github.com/nugh75/counselorbot-sbs/milestone/22)
-  - **Stato:** `In corso / residui` — dopo PR `#1035` (Chat/QSA + Docente) e PR `#1036` (Area personale), restano solo i **39 errori nei 34 file** di `frontend/src/components/admin/` e l'abbassamento di `ESLINT_MAX_ERRORS` da `39` a `0` in [`.github/workflows/frontend-lint.yml`](../../.github/workflows/frontend-lint.yml).
+  - **Stato:** `Completata (PR in chiusura)` — dopo PR `#1035` (Chat/QSA + Docente) e PR `#1036` (Area personale), rifattorizzati gli ultimi **34 file** di `frontend/src/components/admin/` (**0 errori ESLint**) e portato `ESLINT_MAX_ERRORS` da `39` a `0` in [`.github/workflows/frontend-lint.yml`](../../.github/workflows/frontend-lint.yml).
 - [ ] [#911](https://github.com/nugh75/counselorbot-sbs/issues/911) — `Rewrite stale browser tests to match the current app`
   - **Milestone:** [#42 — UI consistency](https://github.com/nugh75/counselorbot-sbs/milestone/42)
   - **Stato:** `In corso / residui` — PR `#1038` ha già aggiornato due test browser admin; restano da eseguire file per file gli altri test Playwright in `frontend/tests/` contro un dev server isolato (`docs/operations/live-dev-environment.md`).
