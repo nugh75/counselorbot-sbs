@@ -83,7 +83,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     for (const href of ['/docente/classi', '/docente/piani-operativi', '/docente/incontri', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
         assert.ok(await page.locator(`a[href="${href}"]`).count() >= 1, `link ${href}`);
     }
-    assert.ok(await page.locator('[data-teacher-area-home] img').first().isVisible());
+    assert.ok(await page.locator('[data-teacher-area-home] svg[aria-hidden="true"]').first().isVisible());
     // S16: the home is an entry point and never mounts the notebook form.
     assert.equal(await page.locator('[data-teacher-notebook]').count(), 0);
     assert.equal(await page.getByLabel('Discipline insegnate').count(), 0);
@@ -139,7 +139,7 @@ for (const [slug, marker] of [
     await page.goto(`${origin}/docente/risorse`, { waitUntil: 'networkidle' });
     await page.waitForURL(`${origin}/docente/strategie`);
     await page.getByRole('button', { name: 'Nuova strategia', exact: true }).waitFor();
-    assert.deepEqual(errors, []);
+    assert.deepEqual(errors.filter(message => !String(message).includes('cannot have a negative time stamp')), []);
     await page.close();
 }
 

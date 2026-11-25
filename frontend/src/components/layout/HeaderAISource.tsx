@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GraduationCap, KeyRound, ShieldCheck, TriangleAlert, User } from 'lucide-react';
-import { aiSourceView, type AISource } from '@/lib/ai-source';
+import { aiSourceView, isAISource, type AISource } from '@/lib/ai-source';
 import { apiFetch } from '@/lib/auth';
 import { getActiveSessionCounselorId, subscribeToCounselor } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
@@ -28,7 +28,7 @@ export function HeaderAISource() {
         const query = counselorId ? `?counselor=${counselorId}` : '';
         apiFetch(`/api/me/ai-source${query}`, { cache: 'no-store' })
             .then(res => (res.ok ? res.json() : null))
-            .then(data => { if (active) setSource(data); })
+            .then(data => { if (active) setSource(isAISource(data) ? data : null); })
             .catch(() => { if (active) setSource(null); });
         return () => { active = false; };
     }, [counselorId, pathname]);
@@ -36,6 +36,7 @@ export function HeaderAISource() {
     if (!source) return null;
     const view = aiSourceView(source, lang);
     const Badge = BADGES[view.badge];
+    if (!Badge) return null;
     const shown = open || hover;
     return (
         <div className="relative" ref={containerRef} onBlur={onBlur}

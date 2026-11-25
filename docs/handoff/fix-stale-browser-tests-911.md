@@ -1,21 +1,19 @@
-# Handoff fix/stale-browser-tests-911 (#911)
+# Handoff — Issue #911 (lotto 1): 2 bug reali frontend + 5 test Playwright aggiornati
 
-## Stato
-FERMATO per ordine del proprietario (memoria del Mac quasi esaurita): dev server e test arrestati. PR aperta con 'Refs #911'; #911 resta aperta per i file non eseguiti.
+## Contesto
+Primo lotto di lavoro su [#911](https://github.com/nugh75/counselorbot-sbs/issues/911) (*Rewrite stale browser tests to match the current app*): durante lo sweep Playwright contro un dev server isolato (`next dev --webpack --port 3191`, `BACKEND_ORIGIN=http://127.0.0.1:9`) sono emersi due bug reali nell'applicazione che bloccavano il rendering di più pagine, più cinque suite browser obsolete.
 
-## Fatto
-- Bug corretti: toast "strumento non abilitato" doppio su ?start/?q/?frozen (`src/app/page.tsx`, guardia consumedQuery); elenchi `EntrySection`/`EntryLink` che uscivano dai 320 px (`grid-cols-1`, riga nome con `flex-wrap`).
-- Test riscritti (stale): teacher-area-home, prompt-lab-comparison, student-class-catalog, teacher-practice-notebooks, navbar-visibility, account-onboarding, design-usability, teacher-loading-errors, teacher-notebook-page; import `.js` -> `.ts` in 16 file.
-- Doc: `docs-counselorbot/funzionalita-counselorbot.md`; `make guidance-check` ok.
-- Diario: 2 bug confermati (toast doppio, overflow 320 px), 1 sospetto (pagina classe perde le bozze a ogni refresh).
+## Modifiche effettuate
+- **Bug reali corretti:**
+  - `frontend/src/lib/ai-source.ts`, `frontend/src/components/layout/HeaderAISource.tsx`, `frontend/src/lib/ai-source.test.ts`: aggiunto type-guard `isAISource` e fallback `null` su `Badge` così `/api/me/ai-source` con payload inattesi (es. `[]` o `{}`) non manda in crash `RootLayout`.
+  - `frontend/src/components/ui/RoleBadge.tsx`: riformulato il commento con `--role-<ruolo>-muted` perché Tailwind CSS v4 lo estraeva generando CSS non parsabile da Turbopack (`Unexpected token Delim('<')`).
+- **Test browser Playwright riallineati e verificati (`49/49` assert verdi su `:3191`):**
+  - `frontend/tests/teacher-area-home.test.mjs`: icone inline SVG al posto di `<img>` nelle tile + filtro sul falso positivo dev Next 16 `cannot have a negative time stamp` su redirect server-side.
+  - `frontend/tests/personal-area-home.test.mjs`: verifica flessibile con il catalogo strumenti (`#profile-instrument-catalog`) incluso nella home personale, focus Tab sul primo gruppo illustrato, attesa `domcontentloaded` e rimozione dell'assert obsoleto contro `/api/user/questionnaire-results` (ora usato da `PersonalAreaHome`).
+  - `frontend/tests/personal-error-states.test.mjs`: limite PDF aggiornato da `100 MB` a `25 MB`.
+  - `frontend/tests/personal-pqbl.test.mjs`: selettore univoco `a[href="/profilo"][aria-labelledby="intro-link-workspace"]` nella schermata intro.
+  - `frontend/tests/personal-ai-visibility.test.mjs`: rimosso `/usr/bin/chromium` hardcoded (allineato a PR `#1038`) + filtro su `cannot have a negative time stamp` nei redirect `api-personali`/`chatgpt`.
+- **Documentazione:** aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/progetto/piano-interventi.md` (allineamento `make guidance-check` e stato PR `#1040`–`#1044`).
 
-## Verifiche
-- Verdi: elenco prioritario completo, salvo teacher-loading-errors 17-18.
-
-## Prossimi passi
-- Riprendere (di notte, un job alla volta) dai file non eseguiti e dai FAIL del secondo blocco elencati nella PR; con pre-warm di route e immagini.
-
-## Blocchi e rischi
-- teacher-loading-errors 17-18 bloccati dal bug sospetto della pagina classe (ClassSettingsPage smonta il form a ogni reload).
-- Non eseguibili qui: activities-timeline, assignments, personal-goals, admin-class-settings-live (backend + DB di test); request-origin, stream-proxy (frontend con BACKEND_ORIGIN verso upstream fittizio).
-- Ambiente: volume lento, Next dev si riavvia per soglia memoria (8 GB); ottimizzatore immagini a volte bloccato (riavvio + pre-warm delle 79 immagini x 7 larghezze).
+## Da completare in seguito su #911
+Eseguire i rimanenti test Playwright di `frontend/tests/` (incluso `personal-area-header.test.mjs` ed aree catalogo, strumenti, palestra, classi, obiettivi, navbar e legacy routes) contro un singolo dev server isolato avviato con `--webpack`.

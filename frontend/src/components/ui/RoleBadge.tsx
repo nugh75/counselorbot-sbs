@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils';
 // Badge di ruolo: la tinta (token --role-* di globals.css, con i valori scuri)
 // non e' mai l'unico canale, c'e' sempre icona + testo. Il testo e' `text-ink`
 // sulla tinta; per il testo secondario su una card di ruolo usare
-// `text-role-<ruolo>-muted`, o su un contenitore
-// `[--ink-muted:var(--role-<ruolo>-muted)]` cosi' il `text-ink-muted` dei figli
-// si scurisce da solo; non il `text-ink-muted` di default.
+// `text-role-teacher-muted` (o analogo per ruolo), oppure impostando la
+// custom property `--ink-muted` al token `--role-*-muted` del contenitore
+// cosi' il `text-ink-muted` dei figli si scurisce da solo.
 export type Role = 'teacher' | 'student' | 'test';
 
 const STYLES: Record<Role, { box: string; icon: LucideIcon }> = {
