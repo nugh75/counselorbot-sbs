@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { isPromptConfigKey, messageParams, promptHealthId, promptLabel, promptOwnershipStatus, promptScopeAndKey, topSeverity, visibleSurfaces } from './prompt-health.ts';
+import { isFirstLevelPrompt, isPromptConfigKey, messageParams, promptHealthId, promptLabel, promptOwnershipStatus, promptScopeAndKey, topSeverity, visibleSurfaces } from './prompt-health.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { PROMPT_HEALTH_DICTS } from './i18n-prompt-health.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
@@ -59,6 +59,9 @@ test('ownership status helper and alignment dictionaries cover all six languages
     assert.deepEqual(promptScopeAndKey('config:prompt_generic'), { scope: 'config', key: 'prompt_generic' });
     assert.deepEqual(promptScopeAndKey('guided_step:sl-social'), { scope: 'guided_step', key: 'sl-social' });
     assert.equal(promptScopeAndKey('code:turn_contract'), null);
+    assert.equal(isFirstLevelPrompt(1), true);
+    assert.equal(isFirstLevelPrompt(2), false);
+    assert.equal(isFirstLevelPrompt(undefined), false);
 
     const alignmentKeys = Object.keys(PROMPT_ALIGNMENT_DICTS.it).sort();
     for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv'] as const) {
@@ -70,6 +73,9 @@ test('ownership status helper and alignment dictionaries cover all six languages
         assert.ok(PROMPT_ALIGNMENT_DICTS[lang]['admin.promptProposals.merge'], `${lang} proposals merge`);
         for (const status of ['factory', 'customised', 'factory_update', 'code'] as const) {
             assert.ok(PROMPT_HEALTH_DICTS[lang][`admin.promptHealth.ownership.${status}`], `${lang} ${status}`);
+        }
+        for (const key of ['label', '1', '2', 'confirmTitle', 'confirmBody', 'confirmConsequences', 'confirmAction', 'cancel'] as const) {
+            assert.ok(PROMPT_HEALTH_DICTS[lang][`admin.promptHealth.level.${key}`], `${lang} level ${key}`);
         }
     }
 });

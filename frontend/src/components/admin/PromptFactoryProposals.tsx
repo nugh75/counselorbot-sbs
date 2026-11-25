@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import {
+    isFirstLevelPrompt,
     lineDiff,
     type PromptFactoryProposal,
     type PromptFactoryProposalsResponse,
@@ -71,6 +72,7 @@ export function PromptFactoryProposals({
     const [busyId, setBusyId] = useState<string | null>(null);
     const [mergingId, setMergingId] = useState<string | null>(null);
     const [mergeDraft, setMergeDraft] = useState('');
+    const [confirmMergeFirstLevel, setConfirmMergeFirstLevel] = useState(false);
 
     const fetchProposals = useCallback(async () => {
         const res = await apiFetch('/api/admin/prompt-health/proposals', { cache: 'no-store' });
@@ -113,7 +115,7 @@ export function PromptFactoryProposals({
         proposal: PromptFactoryProposal,
         endpoint: 'accept' | 'ignore' | 'merge',
         successKey: string,
-        extraBody?: Record<string, string>,
+        extraBody?: Record<string, string | boolean>,
     ) => {
         setBusyId(proposal.prompt_id);
         setError(null);
@@ -141,6 +143,7 @@ export function PromptFactoryProposals({
             if (endpoint === 'merge') {
                 setMergingId(null);
                 setMergeDraft('');
+                setConfirmMergeFirstLevel(false);
             }
             setNotice(t(successKey, { prompt: promptName(proposal.prompt_id) }));
             await reload();
@@ -237,6 +240,18 @@ export function PromptFactoryProposals({
                                             >
                                                 {t(`admin.promptProposals.status.${proposal.status}`)}
                                             </span>
+                                            {proposal.level && (
+                                                <span
+                                                    className={cn(
+                                                        'rounded-full border px-2 py-0.5 text-2xs font-semibold',
+                                                        isFirstLevelPrompt(proposal.level)
+                                                            ? 'border-warning-line bg-warning-soft text-warning-ink'
+                                                            : 'border-line bg-surface-sunken text-ink-muted',
+                                                    )}
+                                                >
+                                                    {t(`admin.promptHealth.level.${proposal.level}`)}
+                                                </span>
+                                            )}
                                         </div>
                                         <code className="block break-all font-mono text-xs text-ink-muted">{proposal.prompt_id}</code>
                                     </div>
@@ -255,6 +270,7 @@ export function PromptFactoryProposals({
                                             variant="secondary"
                                             disabled={busyId !== null}
                                             onClick={() => {
+                                                setConfirmMergeFirstLevel(false);
                                                 if (isMerging) {
                                                     setMergingId(null);
                                                     setMergeDraft('');
@@ -317,7 +333,10 @@ export function PromptFactoryProposals({
                                                     id={`merge-draft-${proposal.prompt_id}`}
                                                     rows={10}
                                                     value={mergeDraft}
-                                                    onChange={(event) => setMergeDraft(event.target.value)}
+                                                    onChange={(event) => {
+                                                        setMergeDraft(event.target.value);
+                                                        setConfirmMergeFirstLevel(false);
+                                                    }}
                                                     className="w-full rounded-control border border-line-strong bg-surface p-3 font-mono text-xs text-ink"
                                                 />
                                             </div>
@@ -344,11 +363,18 @@ export function PromptFactoryProposals({
                                                 variant="primary"
                                                 disabled={isBusy}
                                                 onClick={() => {
+                                                    if (isFirstLevelPrompt(proposal.level) && !confirmMergeFirstLevel) {
+                                                        setConfirmMergeFirstLevel(true);
+                                                        return;
+                                                    }
                                                     void runAction(
                                                         proposal,
                                                         'merge',
                                                         'admin.promptProposals.mergedSuccess',
-                                                        { merged_text: mergeDraft },
+                                                        {
+                                                            merged_text: mergeDraft,
+                                                            confirm_first_level: isFirstLevelPrompt(proposal.level),
+                                                        },
                                                     );
                                                 }}
                                             >
@@ -358,7 +384,7 @@ export function PromptFactoryProposals({
                                                 type="button"
                                                 variant="secondary"
                                                 disabled={isBusy}
-                                                onClick={() => setMergeDraft(proposal.current_text)}
+                                                onClick={() => { setMergeDraft(proposal.current_text); setConfirmMergeFirstLevel(false); }}
                                             >
                                                 {t('admin.promptProposals.useCurrent')}
                                             </Button>
@@ -366,7 +392,7 @@ export function PromptFactoryProposals({
                                                 type="button"
                                                 variant="secondary"
                                                 disabled={isBusy}
-                                                onClick={() => setMergeDraft(proposal.factory_text)}
+                                                onClick={() => { setMergeDraft(proposal.factory_text); setConfirmMergeFirstLevel(false); }}
                                             >
                                                 {t('admin.promptProposals.useFactory')}
                                             </Button>
@@ -374,11 +400,47 @@ export function PromptFactoryProposals({
                                                 type="button"
                                                 variant="ghost"
                                                 disabled={isBusy}
-                                                onClick={() => { setMergingId(null); setMergeDraft(''); }}
+                                                onClick={() => { setMergingId(null); setMergeDraft(''); setConfirmMergeFirstLevel(false); }}
                                             >
                                                 {t('admin.promptProposals.cancel')}
                                             </Button>
                                         </div>
+                                        {confirmMergeFirstLevel && (
+                                            <div role="alertdialog" aria-label={t('admin.promptHealth.level.confirmTitle')}>
+                                                <Callout variant="warning" title={t('admin.promptHealth.level.confirmTitle')}>
+                                                    <p className="text-sm">{t('admin.promptHealth.level.confirmBody')}</p>
+                                                    <p className="mt-1 text-xs">{t('admin.promptHealth.level.confirmConsequences')}</p>
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="primary"
+                                                            disabled={isBusy}
+                                                            onClick={() => {
+                                                                void runAction(
+                                                                    proposal,
+                                                                    'merge',
+                                                                    'admin.promptProposals.mergedSuccess',
+                                                                    {
+                                                                        merged_text: mergeDraft,
+                                                                        confirm_first_level: true,
+                                                                    },
+                                                                );
+                                                            }}
+                                                        >
+                                                            {t('admin.promptHealth.level.confirmAction')}
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            disabled={isBusy}
+                                                            onClick={() => setConfirmMergeFirstLevel(false)}
+                                                        >
+                                                            {t('admin.promptHealth.level.cancel')}
+                                                        </Button>
+                                                    </div>
+                                                </Callout>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </li>

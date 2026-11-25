@@ -10,9 +10,9 @@ import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import {
-    canPropose, findingRanges, highlightSegments, lineDiff, mergeFindings, messageParams, otherSentence, promptLabel,
+    canPropose, findingRanges, highlightSegments, isFirstLevelPrompt, lineDiff, mergeFindings, messageParams, otherSentence, promptLabel,
     promptOwnershipStatus, promptScopeAndKey,
-    type PromptHealthFinding, type PromptHealthProposal, type PromptHealthRange, type PromptOwnershipStatus,
+    type PromptHealthFinding, type PromptHealthProposal, type PromptHealthRange, type PromptLevel, type PromptOwnershipStatus,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
 import { usePromptName, useSurfaceName } from './PromptHealthLabels';
@@ -26,6 +26,7 @@ export interface PromptCard {
     factory: string | null;
     editable: boolean;
     status?: PromptOwnershipStatus;
+    level?: PromptLevel;
     differs_from_factory: boolean;
     customised: boolean;
     consumer: string | null;
@@ -141,7 +142,13 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
     const [status, setStatus] = useState<'saved' | 'restored' | 'error' | null>(null);
     const [diff, setDiff] = useState(false);
     const [confirmRestore, setConfirmRestore] = useState(false);
+    const [confirmFirstLevel, setConfirmFirstLevel] = useState(false);
     const { card, draft } = panel;
+    const [shownDraft, setShownDraft] = useState(draft);
+    if (shownDraft !== draft) {
+        setShownDraft(draft);
+        setConfirmFirstLevel(false);
+    }
     const ranges = useMemo(() => findingRanges(findings, panel.id, draft), [findings, panel.id, draft]);
     const numbered = useMemo(() => {
         const byFinding = new Map(ranges.map(range => [range.findingId, range]));
@@ -167,11 +174,20 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
         if (range) { focused.current = true; select(range); }
     }, [focus, ranges, select]);
 
-    const save = async () => {
+    const save = async (confirmed = false) => {
+        if (isFirstLevelPrompt(card?.level) && !confirmed) {
+            setConfirmFirstLevel(true);
+            return;
+        }
+        setConfirmFirstLevel(false);
         setBusy(true);
         setStatus(null);
         try {
-            const result = await postJson<{ findings: PromptHealthFinding[] }>('/api/admin/prompt-health/save', { prompt_id: panel.id, text: draft });
+            const result = await postJson<{ findings: PromptHealthFinding[] }>('/api/admin/prompt-health/save', {
+                prompt_id: panel.id,
+                text: draft,
+                confirm_first_level: isFirstLevelPrompt(card?.level) && confirmed,
+            });
             const differs = card?.factory != null && draft !== card.factory;
             onSaved({ ...(card as PromptCard), text: draft, differs_from_factory: differs, customised: true, status: differs ? 'customised' : 'factory' }, result.findings);
             setStatus('saved');
@@ -210,8 +226,16 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
             <div className="min-w-0 flex-1">
                 <h3 id={`${listId}-title`} className="break-words text-sm font-semibold text-ink-strong">{name(panel.id)}</h3>
                 <details className="text-xs text-ink-muted"><summary className="cursor-pointer">{t('admin.promptHealth.resolve.references')}</summary><p className="break-words font-mono">{panel.id}</p></details>
-                {card && ownership && <p className="text-xs text-ink-muted">
-                    {t(`admin.promptHealth.ownership.${ownership}`)}
+                {card && ownership && <p className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+                    <span>{t(`admin.promptHealth.ownership.${ownership}`)}</span>
+                    {card.level && <span className={cn(
+                        'inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-semibold',
+                        isFirstLevelPrompt(card.level)
+                            ? 'border-warning-line bg-warning-soft text-warning-ink'
+                            : 'border-line bg-surface-sunken text-ink-muted',
+                    )}>
+                        {t(`admin.promptHealth.level.${card.level}`)}
+                    </span>}
                     {dirty && <> · <span className="font-semibold text-warning-ink">{t('admin.promptHealth.compare.unsaved')}</span></>}
                 </p>}
             </div>
@@ -256,7 +280,7 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
                 </ol>}
             </div>
             <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={save} disabled={busy || !dirty}>
+                <Button type="button" onClick={() => { void save(false); }} disabled={busy || !dirty}>
                     <Save className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.compare.save')}
                 </Button>
                 {card.factory != null && <Button type="button" variant="secondary" aria-expanded={diff} onClick={() => setDiff(value => !value)}>
@@ -268,6 +292,20 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
                         <RotateCcw className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.restore')}
                     </Button>)}
             </div>
+            {confirmFirstLevel && <div role="alertdialog" aria-label={t('admin.promptHealth.level.confirmTitle')}>
+                <Callout variant="warning" title={t('admin.promptHealth.level.confirmTitle')}>
+                    <p className="text-sm">{t('admin.promptHealth.level.confirmBody')}</p>
+                    <p className="mt-1 text-xs">{t('admin.promptHealth.level.confirmConsequences')}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        <Button type="button" variant="primary" disabled={busy} onClick={() => { void save(true); }}>
+                            {t('admin.promptHealth.level.confirmAction')}
+                        </Button>
+                        <Button type="button" variant="ghost" disabled={busy} onClick={() => setConfirmFirstLevel(false)}>
+                            {t('admin.promptHealth.level.cancel')}
+                        </Button>
+                    </div>
+                </Callout>
+            </div>}
             <div role="status">
                 {status === 'saved' && <Callout variant={findings.length ? 'warning' : 'success'}>
                     {findings.length ? t('admin.promptHealth.compare.savedWithWarnings') : t('admin.promptHealth.saved.none')}
