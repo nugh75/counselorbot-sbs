@@ -15,7 +15,6 @@ from backend.prompt_contract import (
     _self_questioning_contract,
     turn_contract,
 )
-from backend.prompt_factory_alignment import FORCED_FACTORY_KEYS
 from backend.qsa_essential import OBBDOCENZA_PHASES, OBBSTUDIO_PHASES, QSA_PHASES, directive
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -83,6 +82,11 @@ def test_a_qpcs_area_opens_with_a_short_definition():
     assert "short definition of one or two sentences" in _contract(advice_allowed=False)
 
 
-def test_rewritten_factory_texts_are_forced():
-    assert {"prompt_obiettivo_summary", "prompt_qpcs_analysis"} <= FORCED_FACTORY_KEYS["config"]
-    assert {"obbstudio-final", "obbdocenza-final"} <= FORCED_FACTORY_KEYS["guided_step"]
+def test_rewritten_factory_texts_keep_their_previous_hashes():
+    # #775: niente sovrascrittura forzata; gli hash precedenti aggiornano le righe non personalizzate.
+    import json
+    legacy = json.loads((ROOT / "backend" / "prompt_factory_legacy.json").read_text(encoding="utf-8"))
+    for key in ("prompt_obiettivo_summary", "prompt_qpcs_analysis"):
+        assert len(legacy["configs"][key]) >= 2, key
+    for key in ("obbstudio-final", "obbdocenza-final"):
+        assert len(legacy["steps"][key]) >= 2, key

@@ -151,24 +151,32 @@ def test_stale_stored_platform_context_cannot_contradict_the_code():
     assert "en/es/sv" not in _config_default("site_chat_platform_context")
 
 
-# --- Decisione 5.1: i testi di fabbrica cambiati sovrascrivono il database --
+# --- Testi di fabbrica cambiati: riconosciuti, mai sovrascritti in silenzio (#775) --
 
 CHANGED = ("prompt_qpcc_interview", "prompt_qpcc_summary", "site_chat_platform_context")
 
 
 @pytest.mark.parametrize("key", CHANGED)
-def test_changed_factory_texts_are_forced_and_registered(key):
-    from backend.prompt_factory_alignment import FORCED_FACTORY_KEYS
-    assert key in FORCED_FACTORY_KEYS["config"]
+def test_changed_factory_texts_are_registered(key):
+    # Gli hash precedenti restano registrati: le righe mai personalizzate si aggiornano.
     assert digest(_config_default(key)) in LEGACY["configs"][key]
     assert len(LEGACY["configs"][key]) >= 2, f"{key}: hash di fabbrica precedente perso"
 
 
-def test_alignment_overwrites_a_personalised_stale_qpcc_prompt():
+def test_alignment_lists_a_personalised_stale_qpcc_prompt_for_explicit_selection():
+    # #775: nessuna sovrascrittura forzata; il testo personalizzato va scelto esplicitamente.
     from backend import prompt_factory_alignment
+    admin_text = "ADMIN TEXT. Current step factors: A1, A2, A3, V1, V2, C1, C2, M1, M2, M3."
     with artifact_session() as db:
-        db.add(models.Config(key="prompt_qpcc_interview",
-                             value="ADMIN TEXT. Current step factors: A1, A2, A3, V1, V2, C1, C2, M1, M2, M3."))
+        db.add(models.Config(key="prompt_qpcc_interview", value=admin_text))
         db.flush()
         plan = prompt_factory_alignment.make_plan(db)
-        assert "prompt_qpcc_interview" in {c["key"] for c in plan["changes"]}
+        assert "prompt_qpcc_interview" not in {c["key"] for c in plan["changes"]}
+        preserved = {p["key"]: p for p in plan["preserved"]}
+        assert preserved["prompt_qpcc_interview"]["status"] == "customised"
+        result = prompt_factory_alignment.apply_review(
+            db, prompt_factory_alignment.review_hash(plan), author="test",
+            selected=[{"scope": "config", "key": "prompt_qpcc_interview"}],
+        )
+        assert result["updated"] == 1
+        assert db.query(models.Config).filter_by(key="prompt_qpcc_interview").one().value == _config_default("prompt_qpcc_interview")
