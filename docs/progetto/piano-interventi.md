@@ -142,9 +142,8 @@ Ordine consigliato: `#1028` → `#1029` → `#1030` + `#1031` → `#1032`.
   - **Stato:** `Completata (PR in chiusura)` — livelli `1` e `2` dichiarati in `backend/prompt_registry.py`, mostrati in «Salute dei prompt» (schede, catalogo, confronto, proposte) e doppia conferma esplicita lato UI e API per i prompt di 1° livello.
 - [x] [#777](https://github.com/nugh75/counselorbot-sbs/issues/777) — `feat: maintainer mode to promote an instance prompt to factory via pull request`
   - **Stato:** `Completata (PR in chiusura)` — azione «Rendi testo di fabbrica» attiva solo in modalità maintainer configurata (`PROMPT_MAINTAINER_MODE` + token GitHub), con risoluzione AST dei sorgenti di fabbrica e creazione PR via REST API.
-- [ ] [#779](https://github.com/nugh75/counselorbot-sbs/issues/779) — `feat: suggest an instance prompt change to the project by email or GitHub issue`
-  - **Stato:** `Pronta`.
-  - **Nota operativa:** da un prompt personalizzato, azione «Suggerisci al progetto» verso il maintainer via email (impostazioni mail dell'app) o GitHub issue.
+- [x] [#779](https://github.com/nugh75/counselorbot-sbs/issues/779) — `feat: suggest an instance prompt change to the project by email or GitHub issue`
+  - **Stato:** `Completata (PR in chiusura)` — azione «Suggerisci al progetto» disponibile in «Salute dei prompt» per prompt personalizzati, con invio via email (SMTP) o issue GitHub senza alterare il testo di fabbrica. Milestone [#45](https://github.com/nugh75/counselorbot-sbs/milestone/45) completata.
 
 ### 2B. Serie Prompt guidati 2–5: consolidamento e riduzione ridondanze (Milestone [#1](https://github.com/nugh75/counselorbot-sbs/milestone/1))
 

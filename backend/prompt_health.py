@@ -888,9 +888,10 @@ def prompt_card(db: Session, prompt_id: str) -> dict:
         "surfaces": None if turns is None else [label for label, _ in turns],
         "findings": with_acks(findings, acks(db), problem_numbers(db, [f["id"] for f in findings])),
     }
-    from . import prompt_maintainer
+    from . import prompt_maintainer, prompt_suggestions
     if (promote_cap := prompt_maintainer.promote_capability(prompt_id, differs)) is not None:
         card["maintainer_promote"] = promote_cap
+    card["suggestion_channels"] = prompt_suggestions.available_channels()
     return card
 
 

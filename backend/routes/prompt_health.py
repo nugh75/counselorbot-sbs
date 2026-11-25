@@ -1,5 +1,6 @@
 """Admin endpoints of the static prompt health check (#760). Warnings only: nothing here blocks a save."""
 import re
+import smtplib
 
 from typing import Literal
 
@@ -15,6 +16,7 @@ from .. import (
     prompt_health_llm,
     prompt_maintainer,
     prompt_registry,
+    prompt_suggestions,
 )
 
 router = APIRouter()
@@ -452,3 +454,35 @@ def promote_prompt_to_factory(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail="github_pr_failed") from exc
+
+
+# --- Prompt change suggestions to project (#779) ----------------------------------------
+
+class PromptSuggestRequest(PromptCheckRequest):
+    reason: str = Field(..., min_length=1, max_length=4000)
+    channel: Literal["email", "github"] | None = None
+
+
+@router.post("/admin/prompt-health/suggest")
+def suggest_prompt_change(
+    payload: PromptSuggestRequest,
+    current_user=Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Send an instance prompt suggestion by email or GitHub issue without altering factory (#779)."""
+    try:
+        return prompt_suggestions.submit_suggestion(
+            db,
+            payload.prompt_id,
+            payload.reason,
+            channel=payload.channel,
+            actor=current_user.get("username"),
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except (smtplib.SMTPException, OSError, RuntimeError) as exc:
+        raise HTTPException(status_code=502, detail="suggestion_delivery_failed") from exc
