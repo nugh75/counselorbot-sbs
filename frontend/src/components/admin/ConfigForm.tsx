@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, RefreshCw, Save, Server, Award, XCircle, Sparkles, ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
@@ -445,33 +445,28 @@ export function ConfigForm() {
 
     // --- Fetch all data ---
 
-    const fetchConfigs = async () => {
-        try {
-            const [configRes, envRes, apiKeysRes] = await Promise.all([
-                fetch('/api/admin/config', { headers: authHeaders() }),
-                fetch('/api/admin/config/env-status', { headers: authHeaders() }),
-                fetch('/api/admin/api-keys', { headers: authHeaders() }),
-            ]);
+    const requestConfigs = useCallback(async () => {
+        const [configRes, envRes, apiKeysRes] = await Promise.all([
+            fetch('/api/admin/config', { headers: authHeaders() }),
+            fetch('/api/admin/config/env-status', { headers: authHeaders() }),
+            fetch('/api/admin/api-keys', { headers: authHeaders() }),
+        ]);
 
-            if (configRes.ok) {
-                const data: ConfigItem[] = await configRes.json();
-                setConfigs(data);
-                const prov = data.find(c => c.key === 'active_provider')?.value;
-                const mod = data.find(c => c.key === 'model_name')?.value;
-                if (prov !== undefined) setActiveProvider(prov || '');
-                if (mod !== undefined) setActiveModel(mod || '');
-            } else if (configRes.status === 401 || configRes.status === 403) {
-                window.location.href = '/';
-            }
-
-            if (envRes.ok) setEnvOverrides(await envRes.json());
-            if (apiKeysRes.ok) setApiKeyStatuses(await apiKeysRes.json());
-        } catch (error) {
-            console.error('Failed to fetch config', error);
-        } finally {
-            setLoading(false);
+        if (configRes.status === 401 || configRes.status === 403) {
+            window.location.href = '/';
+            return null;
         }
-    };
+        const data: ConfigItem[] | null = configRes.ok ? await configRes.json() : null;
+        const envData: Record<string, boolean> | null = envRes.ok ? await envRes.json() : null;
+        const keyData: APIKeyStatus[] | null = apiKeysRes.ok ? await apiKeysRes.json() : null;
+        return { data, envData, keyData };
+    }, []);
+
+    const requestModels = useCallback(async (provider: string, signal: AbortSignal) => {
+        const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { headers: authHeaders(), signal });
+        const data = res.ok ? await res.json() : null;
+        return Array.isArray(data?.models) ? (data.models as string[]) : [];
+    }, []);
 
     const fetchModels = async (provider: string) => {
         modelRequest.current?.abort();
@@ -480,9 +475,8 @@ export function ConfigForm() {
         if (!provider) { setLiveModels([]); setModelsLoading(false); return; }
         setModelsLoading(true);
         try {
-            const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { headers: authHeaders(), signal: controller.signal });
-            const data = res.ok ? await res.json() : null;
-            if (!controller.signal.aborted) setLiveModels(Array.isArray(data?.models) ? data.models : []);
+            const models = await requestModels(provider, controller.signal);
+            if (!controller.signal.aborted) setLiveModels(models);
         } catch {
             if (!controller.signal.aborted) setLiveModels([]);
         } finally {
@@ -508,18 +502,60 @@ export function ConfigForm() {
     const activeKeyMissing = !!activeKeyField
         && !apiKeyStatuses.find(item => item.provider === activeProvider)?.configured;
 
-    useEffect(() => { fetchConfigs(); }, []);
+    useEffect(() => {
+        let active = true;
+        requestConfigs()
+            .then((result) => {
+                if (!active || !result) return;
+                if (result.data) {
+                    setConfigs(result.data);
+                    const prov = result.data.find(c => c.key === 'active_provider')?.value;
+                    const mod = result.data.find(c => c.key === 'model_name')?.value;
+                    if (prov !== undefined) setActiveProvider(prov || '');
+                    if (mod !== undefined) setActiveModel(mod || '');
+                }
+                if (result.envData) setEnvOverrides(result.envData);
+                if (result.keyData) setApiKeyStatuses(result.keyData);
+                setLoading(false);
+            })
+            .catch((error) => {
+                if (!active) return;
+                console.error('Failed to fetch config', error);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [requestConfigs]);
+
     const liveModelsAvailable = Boolean(activeProvider) && !activeKeyMissing;
     const [liveModelsWereAvailable, setLiveModelsWereAvailable] = useState(liveModelsAvailable);
     if (liveModelsWereAvailable !== liveModelsAvailable) {
         setLiveModelsWereAvailable(liveModelsAvailable);
         if (!liveModelsAvailable) setLiveModels([]);
     }
+    const modelTarget = liveModelsAvailable ? activeProvider : '';
+    const [shownModelTarget, setShownModelTarget] = useState(modelTarget);
+    if (shownModelTarget !== modelTarget) {
+        setShownModelTarget(modelTarget);
+        if (modelTarget) setModelsLoading(true);
+    }
     useEffect(() => {
         if (!activeProvider || activeKeyMissing) return;
-        void fetchModels(activeProvider);
-        return () => modelRequest.current?.abort();
-    }, [activeProvider, activeKeyMissing]);
+        modelRequest.current?.abort();
+        const controller = new AbortController();
+        modelRequest.current = controller;
+        requestModels(activeProvider, controller.signal)
+            .then((models) => {
+                if (controller.signal.aborted) return;
+                setLiveModels(models);
+                setModelsLoading(false);
+            })
+            .catch(() => {
+                if (controller.signal.aborted) return;
+                setLiveModels([]);
+                setModelsLoading(false);
+            });
+        return () => controller.abort();
+    }, [activeProvider, activeKeyMissing, requestModels]);
 
     // Opzioni della tendina: modelli live se disponibili, altrimenti fallback statico.
     // Il modello attivo viene sempre incluso così resta selezionato anche se non in elenco.

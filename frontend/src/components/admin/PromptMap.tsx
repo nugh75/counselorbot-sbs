@@ -588,17 +588,28 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
     const [changed, setChanged] = useState(false);
     const close = useCallback(() => onClose(changed), [changed, onClose]);
 
+    const fetchQuestions = useCallback(async () => {
+        const response = await apiFetch(QUESTIONS_API);
+        if (!response.ok) throw new Error('load');
+        const rows: AdminGuidedStepQuestion[] = await response.json();
+        return rows.filter(row => row.questionnaire_type === instrument && row.step_id === stepId);
+    }, [instrument, stepId]);
+
     const load = useCallback(async () => {
         try {
-            const response = await apiFetch(QUESTIONS_API);
-            if (!response.ok) throw new Error('load');
-            const rows: AdminGuidedStepQuestion[] = await response.json();
-            setItems(rows.filter(row => row.questionnaire_type === instrument && row.step_id === stepId));
+            setItems(await fetchQuestions());
         } catch {
             setError(t('admin.promptMap.questions.loadError'));
         }
-    }, [instrument, stepId, t]);
-    useEffect(() => { void load(); }, [load]);
+    }, [fetchQuestions, t]);
+
+    useEffect(() => {
+        let active = true;
+        fetchQuestions()
+            .then((rows) => { if (active) setItems(rows); })
+            .catch(() => { if (active) setError(t('admin.promptMap.questions.loadError')); });
+        return () => { active = false; };
+    }, [fetchQuestions, t]);
 
     const byLanguage = (code: string) => (items ?? []).filter(row => row.language === code)
         .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
@@ -1006,22 +1017,49 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
         return () => writeInstrumentParam(null);
     }, [instrument]);
 
+    const fetchMap = useCallback(async (target: string) => {
+        const response = await apiFetch(`/api/admin/prompt-map?instrument=${encodeURIComponent(target)}`);
+        if (!response.ok) throw new Error('map');
+        return (await response.json()) as PromptMapData;
+    }, []);
+
+    const [shownInstrument, setShownInstrument] = useState(instrument);
+    if (shownInstrument !== instrument) {
+        setShownInstrument(instrument);
+        if (instrument) {
+            setLoading(true);
+            setError(false);
+        }
+    }
+
     const load = useCallback(async (target: string) => {
         setLoading(true);
         setError(false);
         try {
-            const response = await apiFetch(`/api/admin/prompt-map?instrument=${encodeURIComponent(target)}`);
-            if (!response.ok) throw new Error('map');
-            const data: PromptMapData = await response.json();
-            setMap(data);
+            setMap(await fetchMap(target));
         } catch {
             setError(true);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchMap]);
 
-    useEffect(() => { if (instrument) void load(instrument); }, [instrument, load]);
+    useEffect(() => {
+        if (!instrument) return;
+        let active = true;
+        fetchMap(instrument)
+            .then((data) => {
+                if (!active) return;
+                setMap(data);
+                setLoading(false);
+            })
+            .catch(() => {
+                if (!active) return;
+                setError(true);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [instrument, fetchMap]);
 
     const reload = useCallback(() => {
         setStatus(t('admin.promptMap.saved'));

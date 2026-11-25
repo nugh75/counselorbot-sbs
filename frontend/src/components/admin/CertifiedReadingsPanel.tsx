@@ -96,30 +96,43 @@ export function CertifiedReadingsPanel() {
     const [fetchingSynopsis, setFetchingSynopsis] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const fetchReadings = useCallback(async () => {
+        const res = await fetch('/api/admin/certified-readings');
+        if (res.status === 401 || res.status === 403) { window.location.href = '/'; return null; }
+        return res.ok ? ((await res.json()) as Reading[]) : undefined;
+    }, []);
+
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/admin/certified-readings');
-            if (res.status === 401 || res.status === 403) { window.location.href = '/'; return; }
-            if (res.ok) setReadings(await res.json());
+            const data = await fetchReadings();
+            if (data) setReadings(data);
         } catch (e) {
             console.error('Failed to load certified readings', e);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchReadings]);
 
     useEffect(() => {
-        void refresh();
-        void (async () => {
-            try {
-                const res = await fetch('/api/admin/reading-themes');
-                if (res.ok) setThemes(await res.json());
-            } catch (e) {
-                console.error('Failed to load reading themes', e);
-            }
-        })();
-    }, [refresh]);
+        let active = true;
+        fetchReadings()
+            .then((data) => {
+                if (!active) return;
+                if (data) setReadings(data);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load certified readings', e);
+                setLoading(false);
+            });
+        fetch('/api/admin/reading-themes')
+            .then(async (res) => (res.ok ? ((await res.json()) as Theme[]) : undefined))
+            .then((data) => { if (active && data) setThemes(data); })
+            .catch((e) => { if (active) console.error('Failed to load reading themes', e); });
+        return () => { active = false; };
+    }, [fetchReadings]);
 
     const startNew = () => { setForm(EMPTY); setEditingId('new'); setError(null); };
 

@@ -57,40 +57,41 @@ export function ThreadGuardPanel() {
         }
     }, []);
 
-    const load = useCallback(async () => {
-        setLoading(true);
-        setStatus('idle');
-        setErrorMessage(null);
-        try {
-            const res = await fetch('/api/admin/thread-guard');
-            if (res.status === 401 || res.status === 403) {
-                window.location.href = '/';
-                return;
-            }
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data: GuardSettings = await res.json();
-            setEnabled(data.enabled);
-            const currentProvider = data.provider || '';
-            const currentModel = data.model || '';
-            setProvider(currentProvider);
-            setModel(currentModel);
-            setIsProviderActive(data.is_provider_active);
-            setActiveProviders(data.active_providers || []);
-
-            if (currentProvider) {
-                void fetchModels(currentProvider);
-            }
-        } catch (error) {
-            console.error('Failed to load thread guard config', error);
-            setStatus('error');
-        } finally {
-            setLoading(false);
+    const fetchThreadGuard = useCallback(async () => {
+        const res = await fetch('/api/admin/thread-guard');
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/';
+            return null;
         }
-    }, [fetchModels]);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()) as GuardSettings;
+    }, []);
 
     useEffect(() => {
-        void load();
-    }, [load]);
+        let active = true;
+        fetchThreadGuard()
+            .then((data) => {
+                if (!active || !data) return;
+                setEnabled(data.enabled);
+                const currentProvider = data.provider || '';
+                const currentModel = data.model || '';
+                setProvider(currentProvider);
+                setModel(currentModel);
+                setIsProviderActive(data.is_provider_active);
+                setActiveProviders(data.active_providers || []);
+                setLoading(false);
+                if (currentProvider) {
+                    void fetchModels(currentProvider);
+                }
+            })
+            .catch((error) => {
+                if (!active) return;
+                console.error('Failed to load thread guard config', error);
+                setStatus('error');
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchModels, fetchThreadGuard]);
 
     const handleProviderChange = (newProvider: string) => {
         setProvider(newProvider);

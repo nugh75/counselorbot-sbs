@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Database, Download, Filter, RefreshCw } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { publicOrigin } from '@/lib/runtime-config';
@@ -73,18 +73,34 @@ export function ValidationExportPanel() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [t]);
 
+    const filterQs = useMemo(() => queryString(filters), [filters]);
+    const [shownFilterQs, setShownFilterQs] = useState(filterQs);
+    if (shownFilterQs !== filterQs) {
+        setShownFilterQs(filterQs);
+        setLoading(true);
+        setMessage('');
+    }
+
+    const fetchValidationData = useCallback(async (qs: string) => {
+        const [summaryRes, rowsRes] = await Promise.all([
+            fetch(`/api/admin/validation/summary${qs}`),
+            fetch(`/api/admin/validation/responses${qs}`),
+        ]);
+        if (!summaryRes.ok || !rowsRes.ok) throw new Error('load failed');
+        const [nextSummary, nextRows] = await Promise.all([summaryRes.json(), rowsRes.json()]);
+        return {
+            nextSummary: nextSummary as ValidationSummary,
+            nextRows: nextRows as ValidationResponse[],
+        };
+    }, []);
+
     const load = async () => {
         setLoading(true);
         setMessage('');
         try {
-            const qs = queryString(filters);
-            const [summaryRes, rowsRes] = await Promise.all([
-                fetch(`/api/admin/validation/summary${qs}`),
-                fetch(`/api/admin/validation/responses${qs}`),
-            ]);
-            if (!summaryRes.ok || !rowsRes.ok) throw new Error('load failed');
-            setSummary(await summaryRes.json());
-            setRows(await rowsRes.json());
+            const { nextSummary, nextRows } = await fetchValidationData(filterQs);
+            setSummary(nextSummary);
+            setRows(nextRows);
         } catch {
             setMessage(t('admin.validation.error.load'));
         } finally {
@@ -93,9 +109,21 @@ export function ValidationExportPanel() {
     };
 
     useEffect(() => {
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [instrument, locale, version]);
+        let active = true;
+        fetchValidationData(filterQs)
+            .then(({ nextSummary, nextRows }) => {
+                if (!active) return;
+                setSummary(nextSummary);
+                setRows(nextRows);
+                setLoading(false);
+            })
+            .catch(() => {
+                if (!active) return;
+                setMessage(t('admin.validation.error.load'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchValidationData, filterQs, t]);
 
     const exportUrl = `/api/admin/validation/export.csv${queryString(filters)}`;
     const collectionPath = useMemo(() => {

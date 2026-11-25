@@ -67,41 +67,52 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
     const [selectedCollection, setSelectedCollection] = useState('');
     const [reindexing, setReindexing] = useState(false);
 
+    const fetchAssistantAdmin = useCallback(async () => {
+        const [configRes, collectionsRes, questionsRes, counselorsRes] = await Promise.all([
+            fetch('/api/admin/config'),
+            fetch('/api/site-chat/collections'),
+            fetch('/api/admin/assistant-questions'),
+            fetch('/api/admin/counselors'),
+        ]);
+        if (!configRes.ok || !collectionsRes.ok || !questionsRes.ok || !counselorsRes.ok) {
+            throw new Error('load failed');
+        }
+        const configItems: ConfigItem[] = await configRes.json();
+        const collectionItems: CollectionInfo[] = await collectionsRes.json();
+        const questionItems: AssistantQuestion[] = await questionsRes.json();
+        const counselorItems: Counselor[] = await counselorsRes.json();
+        const configMap = Object.fromEntries(configItems.map((item) => [item.key, item.value]));
+        const statsPairs = await Promise.all(collectionItems.map(async (collection) => {
+            try {
+                const res = await fetch(`/api/site-chat/status?collection=${encodeURIComponent(collection.id)}`);
+                return [collection.id, res.ok ? await res.json() : {}] as const;
+            } catch {
+                return [collection.id, {}] as const;
+            }
+        }));
+        return {
+            configMap,
+            collectionItems,
+            statsMap: Object.fromEntries(statsPairs),
+            questionItems,
+            counselorItems,
+        };
+    }, []);
+
     const load = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const [configRes, collectionsRes, questionsRes, counselorsRes] = await Promise.all([
-                fetch('/api/admin/config'),
-                fetch('/api/site-chat/collections'),
-                fetch('/api/admin/assistant-questions'),
-                fetch('/api/admin/counselors'),
-            ]);
-            if (!configRes.ok || !collectionsRes.ok || !questionsRes.ok || !counselorsRes.ok) {
-                throw new Error('load failed');
-            }
-            const configItems: ConfigItem[] = await configRes.json();
-            const collectionItems: CollectionInfo[] = await collectionsRes.json();
-            const questionItems: AssistantQuestion[] = await questionsRes.json();
-            const counselorItems: Counselor[] = await counselorsRes.json();
-            const configMap = Object.fromEntries(configItems.map((item) => [item.key, item.value]));
-            const statsPairs = await Promise.all(collectionItems.map(async (collection) => {
-                try {
-                    const res = await fetch(`/api/site-chat/status?collection=${encodeURIComponent(collection.id)}`);
-                    return [collection.id, res.ok ? await res.json() : {}] as const;
-                } catch {
-                    return [collection.id, {}] as const;
-                }
-            }));
-            setConfig(configMap);
-            setCollections(collectionItems);
-            setStatsByCollection(Object.fromEntries(statsPairs));
-            setQuestions(questionItems);
-            setCounselors(counselorItems);
+            const data = await fetchAssistantAdmin();
+            setConfig(data.configMap);
+            setCollections(data.collectionItems);
+            setStatsByCollection(data.statsMap);
+            setQuestions(data.questionItems);
+            setCounselors(data.counselorItems);
             setSelectedCollection((prev) => (
-                prev && collectionItems.some((collection) => collection.id === prev)
+                prev && data.collectionItems.some((collection) => collection.id === prev)
                     ? prev
-                    : (collectionItems[0]?.id ?? '')
+                    : (data.collectionItems[0]?.id ?? '')
             ));
         } catch (e) {
             console.error('Failed to load assistant admin status', e);
@@ -109,11 +120,33 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [fetchAssistantAdmin, t]);
 
     useEffect(() => {
-        void load();
-    }, [load]);
+        let active = true;
+        fetchAssistantAdmin()
+            .then((data) => {
+                if (!active) return;
+                setConfig(data.configMap);
+                setCollections(data.collectionItems);
+                setStatsByCollection(data.statsMap);
+                setQuestions(data.questionItems);
+                setCounselors(data.counselorItems);
+                setSelectedCollection((prev) => (
+                    prev && data.collectionItems.some((collection) => collection.id === prev)
+                        ? prev
+                        : (data.collectionItems[0]?.id ?? '')
+                ));
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load assistant admin status', e);
+                setError(t('admin.assistant.error.load'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchAssistantAdmin, t]);
 
     const selected = collections.find((collection) => collection.id === selectedCollection);
     const selectedStats = statsByCollection[selectedCollection] ?? {};

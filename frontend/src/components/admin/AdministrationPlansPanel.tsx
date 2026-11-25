@@ -178,35 +178,57 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
     const [replacementSource, setReplacementSource] = useState<AdministrationPlan | null>(null);
     const replacingPlan = replacementSource ? plans.find(plan => plan.id === replacementSource.id) ?? replacementSource : null;
 
+    const fetchPlansData = useCallback(async () => {
+        const [plansRes, contactsRes] = await Promise.all([
+            apiFetch('/api/admin/administration-plans'),
+            apiFetch('/api/admin/research-contacts'),
+        ]);
+        if (plansRes.status === 401 || plansRes.status === 403) {
+            window.location.href = '/';
+            return null;
+        }
+        if (!plansRes.ok) throw new Error('plans load failed');
+        const nextPlans: AdministrationPlan[] = await plansRes.json();
+        // Se l'endpoint non e' accessibile (rete o permessi), il pannello resta
+        // usabile con la lista contatti vuota (solo external_name liberi).
+        const nextContacts: ResearchContact[] = contactsRes.ok ? await contactsRes.json() : [];
+        return { nextPlans, nextContacts };
+    }, []);
+
     const refresh = useCallback(async () => {
         setLoading(true);
         setMessage('');
         setReplacementCode('');
         try {
-            const [plansRes, contactsRes] = await Promise.all([
-                apiFetch('/api/admin/administration-plans'),
-                apiFetch('/api/admin/research-contacts'),
-            ]);
-            if (plansRes.status === 401 || plansRes.status === 403) {
-                window.location.href = '/';
-                return;
-            }
-            if (!plansRes.ok) throw new Error('plans load failed');
-            setPlans(await plansRes.json());
-            // Se l'endpoint non e' accessibile (rete o permessi), il pannello resta
-            // usabile con la lista contatti vuota (solo external_name liberi).
-            setContacts(contactsRes.ok ? await contactsRes.json() : []);
+            const data = await fetchPlansData();
+            if (!data) return;
+            setPlans(data.nextPlans);
+            setContacts(data.nextContacts);
         } catch (e) {
             console.error('Failed to load administration plans', e);
             setMessage(t('admin.ap.error.load'));
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [fetchPlansData, t]);
 
     useEffect(() => {
-        void refresh();
-    }, [refresh]);
+        let active = true;
+        fetchPlansData()
+            .then((data) => {
+                if (!active || !data) return;
+                setPlans(data.nextPlans);
+                setContacts(data.nextContacts);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load administration plans', e);
+                setMessage(t('admin.ap.error.load'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchPlansData, t]);
 
     // A classroom link (#plan-<id>) opens the same plan here once the list is loaded.
     const [focusedPlanId, setFocusedPlanId] = useState<number | null>(null);

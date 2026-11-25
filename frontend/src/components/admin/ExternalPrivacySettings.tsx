@@ -21,18 +21,34 @@ export function ExternalPrivacySettings() {
     const [saved, setSaved] = useState(false);
     const dirty = !!policy && mode !== policy.mode;
     useDraftGuard(dirty, l('dirty'), { blocked: busy });
+    const fetchPolicy = useCallback(async () => {
+        const response = await apiFetch('/api/admin/external-privacy', { cache: 'no-store' });
+        if (response.status === 403) return 'forbidden' as const;
+        if (!response.ok) throw new Error();
+        const data: Policy = await response.json();
+        if (!['local', 'basic', 'custom'].includes(data.mode)) throw new Error();
+        return data;
+    }, []);
     const load = useCallback(async () => {
         setError(false);
         try {
-            const response = await apiFetch('/api/admin/external-privacy', { cache: 'no-store' });
-            if (response.status === 403) { setForbidden(true); return; }
-            if (!response.ok) throw new Error();
-            const data: Policy = await response.json();
-            if (!['local', 'basic', 'custom'].includes(data.mode)) throw new Error();
+            const data = await fetchPolicy();
+            if (data === 'forbidden') { setForbidden(true); return; }
             setPolicy(data); setMode(data.mode);
         } catch { setError(true); }
-    }, []);
-    useEffect(() => { if (!getViewAsAccount()) void load(); }, [load]);
+    }, [fetchPolicy]);
+    useEffect(() => {
+        if (getViewAsAccount()) return;
+        let active = true;
+        fetchPolicy()
+            .then((data) => {
+                if (!active) return;
+                if (data === 'forbidden') { setForbidden(true); return; }
+                setPolicy(data); setMode(data.mode);
+            })
+            .catch(() => { if (active) setError(true); });
+        return () => { active = false; };
+    }, [fetchPolicy]);
     if (forbidden || getViewAsAccount()) return null;
     const save = async () => {
         if (busy || mode === 'custom') return;

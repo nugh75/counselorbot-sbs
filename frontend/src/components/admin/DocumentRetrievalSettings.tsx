@@ -48,21 +48,37 @@ export function DocumentRetrievalSettings() {
     const dirty = !!draft && !!saved && JSON.stringify(draft) !== JSON.stringify(saved);
     useDraftGuard(dirty, l('dirty'), { blocked: busy });
 
-    const apply = (data: State) => {
+    const apply = useCallback((data: State) => {
         // An unexpected payload must not break the rest of the settings page.
         if (!data || !Array.isArray(data.providers) || !Array.isArray(data.collections) || !data.privacy) throw new Error();
         setState(data); setDraft(toDraft(data)); setJob(data.reindex_job ?? null);
-    };
+    }, []);
+    const fetchSettings = useCallback(async () => {
+        const response = await apiFetch('/api/admin/document-retrieval', { cache: 'no-store' });
+        if (response.status === 403) return 'forbidden' as const;
+        if (!response.ok) throw new Error();
+        return (await response.json()) as State;
+    }, []);
     const load = useCallback(async () => {
         setLoadError(false);
         try {
-            const response = await apiFetch('/api/admin/document-retrieval', { cache: 'no-store' });
-            if (response.status === 403) { setForbidden(true); return; }
-            if (!response.ok) throw new Error();
-            apply(await response.json());
+            const data = await fetchSettings();
+            if (data === 'forbidden') { setForbidden(true); return; }
+            apply(data);
         } catch { setLoadError(true); }
-    }, []);
-    useEffect(() => { if (!getViewAsAccount()) void load(); }, [load]);
+    }, [apply, fetchSettings]);
+    useEffect(() => {
+        if (getViewAsAccount()) return;
+        let active = true;
+        fetchSettings()
+            .then((data) => {
+                if (!active) return;
+                if (data === 'forbidden') { setForbidden(true); return; }
+                apply(data);
+            })
+            .catch(() => { if (active) setLoadError(true); });
+        return () => { active = false; };
+    }, [apply, fetchSettings]);
     // Poll the job while it runs (also after a page reload); refresh the indexes when it ends.
     useEffect(() => {
         if (!running) {

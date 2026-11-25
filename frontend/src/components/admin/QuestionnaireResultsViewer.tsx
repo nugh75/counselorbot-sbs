@@ -2,7 +2,7 @@
 
 import { factorTranslationKey } from '@/lib/questionnaires';
 
-import { useState, useEffect, useMemo, Fragment } from 'react';
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react';
 import { RefreshCw, FileText, Filter, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { useI18n } from '@/lib/i18n-context';
@@ -91,25 +91,35 @@ export function QuestionnaireResultsViewer() {
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [filterType, setFilterType] = useState<string>('');
 
+    const requestResults = useCallback(async (type?: string) => {
+        let url = '/api/admin/questionnaire-results';
+        const params = new URLSearchParams();
+        if (type) params.set('questionnaire_type', type);
+        const qs = params.toString();
+        if (qs) url += '?' + qs;
+
+        const res = await fetch(url);
+        if (res.ok) {
+            return (await res.json()) as QuestionnaireResult[];
+        }
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/';
+        }
+        console.error('Failed to fetch results:', res.statusText);
+        return null;
+    }, []);
+
+    const [shownFilterType, setShownFilterType] = useState(filterType);
+    if (shownFilterType !== filterType) {
+        setShownFilterType(filterType);
+        setLoading(true);
+    }
+
     const fetchResults = async (type?: string) => {
         setLoading(true);
         try {
-            let url = '/api/admin/questionnaire-results';
-            const params = new URLSearchParams();
-            if (type) params.set('questionnaire_type', type);
-            const qs = params.toString();
-            if (qs) url += '?' + qs;
-
-            const res = await fetch(url);
-            if (res.ok) {
-                const data = await res.json();
-                setResults(data);
-            } else {
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/';
-                }
-                console.error('Failed to fetch results:', res.statusText);
-            }
+            const data = await requestResults(type);
+            if (data) setResults(data);
         } catch (error) {
             console.error('Failed to fetch results', error);
         } finally {
@@ -118,8 +128,20 @@ export function QuestionnaireResultsViewer() {
     };
 
     useEffect(() => {
-        fetchResults(filterType || undefined);
-    }, [filterType]);
+        let active = true;
+        requestResults(filterType || undefined)
+            .then((data) => {
+                if (!active) return;
+                if (data) setResults(data);
+                setLoading(false);
+            })
+            .catch((error) => {
+                if (!active) return;
+                console.error('Failed to fetch results', error);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [filterType, requestResults]);
 
     const handleFilterChange = (type: string) => {
         setFilterType(type);

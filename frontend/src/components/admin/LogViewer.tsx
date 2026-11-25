@@ -419,92 +419,156 @@ export function LogViewer() {
         return false;
     }, []);
 
+    const requestLogs = useCallback(async () => {
+        const params = buildParams(true);
+        const countParams = buildParams(false);
+        const [logsRes, countRes] = await Promise.all([
+            fetch(`/api/admin/logs?${params.toString()}`),
+            fetch(`/api/admin/logs/count?${countParams.toString()}`),
+        ]);
+        if (handleAuthError(logsRes) || handleAuthError(countRes)) return null;
+        if (!logsRes.ok || !countRes.ok) throw new Error('logs fetch failed');
+        const [logData, countData] = await Promise.all([logsRes.json(), countRes.json()]);
+        return { logData, totalCount: Number(countData.count || 0) };
+    }, [buildParams, handleAuthError]);
+
     const fetchLogs = useCallback(async () => {
         setLoading(true);
         try {
-            const params = buildParams(true);
-            const countParams = buildParams(false);
-            const [logsRes, countRes] = await Promise.all([
-                fetch(`/api/admin/logs?${params.toString()}`),
-                fetch(`/api/admin/logs/count?${countParams.toString()}`),
-            ]);
-            if (handleAuthError(logsRes) || handleAuthError(countRes)) return;
-            if (!logsRes.ok || !countRes.ok) throw new Error('logs fetch failed');
-            const [logData, countData] = await Promise.all([logsRes.json(), countRes.json()]);
-            setLogs(logData);
-            setTotal(Number(countData.count || 0));
+            const data = await requestLogs();
+            if (!data) return;
+            setLogs(data.logData);
+            setTotal(data.totalCount);
         } catch (error) {
             console.error('Failed to fetch logs', error);
         } finally {
             setLoading(false);
         }
-    }, [buildParams, handleAuthError]);
+    }, [requestLogs]);
 
-    const fetchOptions = useCallback(async () => {
-        try {
-            const res = await fetch('/api/admin/logs/options');
-            if (handleAuthError(res)) return;
-            if (!res.ok) throw new Error('options fetch failed');
-            const data = await res.json();
-            setOptions({
-                actions: Array.isArray(data?.actions) ? data.actions : [],
-                providers: Array.isArray(data?.providers) ? data.providers : [],
-                questionnaire_types: Array.isArray(data?.questionnaire_types) ? data.questionnaire_types : [],
-                usernames: Array.isArray(data?.usernames) ? data.usernames : [],
-                anonymous_research_codes: Array.isArray(data?.anonymous_research_codes) ? data.anonymous_research_codes : [],
-                conversation_ids: Array.isArray(data?.conversation_ids) ? data.conversation_ids : [],
-                models: Array.isArray(data?.models) ? data.models : [],
-                phases: Array.isArray(data?.phases) ? data.phases : [],
-                modes: Array.isArray(data?.modes) ? data.modes : [],
-            });
-        } catch (error) {
-            console.error('Failed to fetch log filter options', error);
-        }
+    const requestOptions = useCallback(async () => {
+        const res = await fetch('/api/admin/logs/options');
+        if (handleAuthError(res)) return null;
+        if (!res.ok) throw new Error('options fetch failed');
+        const data = await res.json();
+        return {
+            actions: Array.isArray(data?.actions) ? data.actions : [],
+            providers: Array.isArray(data?.providers) ? data.providers : [],
+            questionnaire_types: Array.isArray(data?.questionnaire_types) ? data.questionnaire_types : [],
+            usernames: Array.isArray(data?.usernames) ? data.usernames : [],
+            anonymous_research_codes: Array.isArray(data?.anonymous_research_codes) ? data.anonymous_research_codes : [],
+            conversation_ids: Array.isArray(data?.conversation_ids) ? data.conversation_ids : [],
+            models: Array.isArray(data?.models) ? data.models : [],
+            phases: Array.isArray(data?.phases) ? data.phases : [],
+            modes: Array.isArray(data?.modes) ? data.modes : [],
+        };
     }, [handleAuthError]);
+
+    const requestStats = useCallback(async () => {
+        const params = buildParams(false);
+        const res = await fetch(`/api/admin/logs/stats?${params.toString()}`);
+        if (handleAuthError(res)) return null;
+        if (!res.ok) throw new Error('stats fetch failed');
+        return await res.json();
+    }, [buildParams, handleAuthError]);
 
     const fetchStats = useCallback(async () => {
         setStatsLoading(true);
         try {
-            const params = buildParams(false);
-            const res = await fetch(`/api/admin/logs/stats?${params.toString()}`);
-            if (handleAuthError(res)) return;
-            if (!res.ok) throw new Error('stats fetch failed');
-            setStats(await res.json());
+            const data = await requestStats();
+            if (data) setStats(data);
         } catch (error) {
             console.error('Failed to fetch log stats', error);
         } finally {
             setStatsLoading(false);
         }
-    }, [buildParams, handleAuthError]);
+    }, [requestStats]);
+
+    const requestHygiene = useCallback(async () => {
+        const [retentionRes, piiRes] = await Promise.all([
+            fetch('/api/admin/logs/retention-status'),
+            fetch('/api/admin/logs/pii-report'),
+        ]);
+        if (handleAuthError(retentionRes) || handleAuthError(piiRes)) return null;
+        if (!retentionRes.ok || !piiRes.ok) throw new Error('hygiene fetch failed');
+        const [retentionData, piiData] = await Promise.all([retentionRes.json(), piiRes.json()]);
+        return { retentionData, piiData };
+    }, [handleAuthError]);
 
     const fetchHygiene = useCallback(async () => {
         setHygieneLoading(true);
         try {
-            const [retentionRes, piiRes] = await Promise.all([
-                fetch('/api/admin/logs/retention-status'),
-                fetch('/api/admin/logs/pii-report'),
-            ]);
-            if (handleAuthError(retentionRes) || handleAuthError(piiRes)) return;
-            if (!retentionRes.ok || !piiRes.ok) throw new Error('hygiene fetch failed');
-            const [retentionData, piiData] = await Promise.all([retentionRes.json(), piiRes.json()]);
-            setRetention(retentionData);
-            setPiiReport(piiData);
+            const data = await requestHygiene();
+            if (!data) return;
+            setRetention(data.retentionData);
+            setPiiReport(data.piiData);
         } catch (error) {
             console.error('Failed to fetch data hygiene status', error);
         } finally {
             setHygieneLoading(false);
         }
-    }, [handleAuthError]);
+    }, [requestHygiene]);
+
+    const viewQueryKey = `${view}:${buildParams(true).toString()}`;
+    const [shownViewQueryKey, setShownViewQueryKey] = useState(viewQueryKey);
+    if (shownViewQueryKey !== viewQueryKey) {
+        setShownViewQueryKey(viewQueryKey);
+        if (view === 'logs') setLoading(true);
+        if (view === 'stats') setStatsLoading(true);
+        if (view === 'hygiene') setHygieneLoading(true);
+    }
 
     useEffect(() => {
-        if (view === 'logs') void fetchLogs();
-        if (view === 'stats') void fetchStats();
-        if (view === 'hygiene') void fetchHygiene();
-    }, [fetchHygiene, fetchLogs, fetchStats, view]);
+        let active = true;
+        if (view === 'logs') {
+            requestLogs()
+                .then((data) => {
+                    if (!active || !data) return;
+                    setLogs(data.logData);
+                    setTotal(data.totalCount);
+                    setLoading(false);
+                })
+                .catch((error) => {
+                    if (!active) return;
+                    console.error('Failed to fetch logs', error);
+                    setLoading(false);
+                });
+        } else if (view === 'stats') {
+            requestStats()
+                .then((data) => {
+                    if (!active) return;
+                    if (data) setStats(data);
+                    setStatsLoading(false);
+                })
+                .catch((error) => {
+                    if (!active) return;
+                    console.error('Failed to fetch log stats', error);
+                    setStatsLoading(false);
+                });
+        } else if (view === 'hygiene') {
+            requestHygiene()
+                .then((data) => {
+                    if (!active || !data) return;
+                    setRetention(data.retentionData);
+                    setPiiReport(data.piiData);
+                    setHygieneLoading(false);
+                })
+                .catch((error) => {
+                    if (!active) return;
+                    console.error('Failed to fetch data hygiene status', error);
+                    setHygieneLoading(false);
+                });
+        }
+        return () => { active = false; };
+    }, [requestHygiene, requestLogs, requestStats, view]);
 
     useEffect(() => {
-        void fetchOptions();
-    }, [fetchOptions]);
+        let active = true;
+        requestOptions()
+            .then((data) => { if (active && data) setOptions(data); })
+            .catch((error) => { if (active) console.error('Failed to fetch log filter options', error); });
+        return () => { active = false; };
+    }, [requestOptions]);
 
     useEffect(() => {
         if (!autoRefresh) return;

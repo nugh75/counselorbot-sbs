@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BrainCircuit, Check, Download, Filter, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
 import { LANGUAGES } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n-context';
@@ -96,18 +96,30 @@ export function TrainingDatasetPanel() {
         setDraftNotes(nextSelected?.review_notes || '');
     }
 
+    const filterQs = useMemo(() => queryString(filters), [filters]);
+    const [shownFilterQs, setShownFilterQs] = useState(filterQs);
+    if (shownFilterQs !== filterQs) {
+        setShownFilterQs(filterQs);
+        setLoading(true);
+        setMessage('');
+    }
+
+    const fetchDataset = useCallback(async (qs: string) => {
+        const [summaryRes, rowsRes] = await Promise.all([
+            fetch(`/api/admin/training-dataset/summary${qs}`),
+            fetch(`/api/admin/training-dataset/examples${qs}`),
+        ]);
+        if (!summaryRes.ok || !rowsRes.ok) throw new Error('load failed');
+        const [nextSummary, nextRows] = await Promise.all([summaryRes.json(), rowsRes.json()]);
+        return { nextSummary: nextSummary as TrainingSummary, nextRows: nextRows as TrainingExample[] };
+    }, []);
+
     const load = async () => {
         setLoading(true);
         setMessage('');
         try {
-            const qs = queryString(filters);
-            const [summaryRes, rowsRes] = await Promise.all([
-                fetch(`/api/admin/training-dataset/summary${qs}`),
-                fetch(`/api/admin/training-dataset/examples${qs}`),
-            ]);
-            if (!summaryRes.ok || !rowsRes.ok) throw new Error('load failed');
-            const nextRows = await rowsRes.json();
-            setSummary(await summaryRes.json());
+            const { nextSummary, nextRows } = await fetchDataset(filterQs);
+            setSummary(nextSummary);
             setExamples(nextRows);
             setSelectedId(nextRows[0]?.id ?? null);
         } catch {
@@ -118,9 +130,22 @@ export function TrainingDatasetPanel() {
     };
 
     useEffect(() => {
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [locale, phase, status]);
+        let active = true;
+        fetchDataset(filterQs)
+            .then(({ nextSummary, nextRows }) => {
+                if (!active) return;
+                setSummary(nextSummary);
+                setExamples(nextRows);
+                setSelectedId(nextRows[0]?.id ?? null);
+                setLoading(false);
+            })
+            .catch(() => {
+                if (!active) return;
+                setMessage(t('admin.training.loadError'));
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchDataset, filterQs, t]);
 
     const generate = async () => {
         setGenerating(true);

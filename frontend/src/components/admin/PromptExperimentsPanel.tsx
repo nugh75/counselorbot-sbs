@@ -275,28 +275,18 @@ export function PromptExperimentsPanel() {
     const hasDetail = useRef(false);
     const casesDirtyRef = useRef(false);
 
-    const loadOptions = useCallback(async () => {
-        optionsAbort.current?.abort();
-        const controller = new AbortController();
-        optionsAbort.current = controller;
-        try {
-            const res = await apiFetch(`${BASE}/options`, { signal: controller.signal });
-            if (res.status === 401 || res.status === 403) { window.location.href = '/'; return; }
-            if (!res.ok) throw await parseError(res);
-            const data = await res.json() as LabOptions;
-            if (controller.signal.aborted) return;
-            setOptions(data);
-            setOptionsError(null);
-            setForm((f) => ((f.designer || data.presets.length === 0) ? f : {
-                ...f,
-                designer: String(data.presets[0].id),
-                judge: String(data.presets[0].id),
-                target_key: f.target_key || (data.targets[0]?.id ?? ''),
-                goals: f.goals.length > 0 ? f.goals : [{ key: 1, text: '', criterion: '' }],
-            }));
-        } catch (e) {
-            if (!(e instanceof DOMException && e.name === 'AbortError')) setOptionsError(e instanceof Error ? e.message : String(e));
-        }
+    const fetchOptions = useCallback(async (signal: AbortSignal) => {
+        const res = await apiFetch(`${BASE}/options`, { signal });
+        if (res.status === 401 || res.status === 403) { window.location.href = '/'; return null; }
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as LabOptions;
+    }, []);
+
+    const fetchExperiments = useCallback(async (signal: AbortSignal) => {
+        const res = await apiFetch(BASE, { signal });
+        if (res.status === 401 || res.status === 403) { window.location.href = '/'; return null; }
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as Experiment[];
     }, []);
 
     const loadList = useCallback(async () => {
@@ -305,11 +295,8 @@ export function PromptExperimentsPanel() {
         listAbort.current = controller;
         setListLoading(true);
         try {
-            const res = await apiFetch(BASE, { signal: controller.signal });
-            if (res.status === 401 || res.status === 403) { window.location.href = '/'; return; }
-            if (!res.ok) throw await parseError(res);
-            const data = await res.json() as Experiment[];
-            if (controller.signal.aborted) return;
+            const data = await fetchExperiments(controller.signal);
+            if (controller.signal.aborted || !data) return;
             setExperiments(data);
             setListError(null);
         } catch (e) {
@@ -317,17 +304,56 @@ export function PromptExperimentsPanel() {
         } finally {
             if (!controller.signal.aborted) setListLoading(false);
         }
-    }, []);
+    }, [fetchExperiments]);
 
     useEffect(() => {
-        void loadOptions();
-        void loadList();
+        optionsAbort.current?.abort();
+        listAbort.current?.abort();
+        const optController = new AbortController();
+        const listController = new AbortController();
+        optionsAbort.current = optController;
+        listAbort.current = listController;
+
+        fetchOptions(optController.signal)
+            .then((data) => {
+                if (optController.signal.aborted || !data) return;
+                setOptions(data);
+                setOptionsError(null);
+                setForm((f) => ((f.designer || data.presets.length === 0) ? f : {
+                    ...f,
+                    designer: String(data.presets[0].id),
+                    judge: String(data.presets[0].id),
+                    target_key: f.target_key || (data.targets[0]?.id ?? ''),
+                    goals: f.goals.length > 0 ? f.goals : [{ key: 1, text: '', criterion: '' }],
+                }));
+            })
+            .catch((e) => {
+                if (!(e instanceof DOMException && e.name === 'AbortError')) {
+                    setOptionsError(e instanceof Error ? e.message : String(e));
+                }
+            });
+
+        fetchExperiments(listController.signal)
+            .then((data) => {
+                if (listController.signal.aborted || !data) return;
+                setExperiments(data);
+                setListError(null);
+                setListLoading(false);
+            })
+            .catch((e) => {
+                if (listController.signal.aborted) return;
+                if (!(e instanceof DOMException && e.name === 'AbortError')) {
+                    setListError(e instanceof Error ? e.message : String(e));
+                }
+                setListLoading(false);
+            });
+
         return () => {
-            optionsAbort.current?.abort();
-            listAbort.current?.abort();
+            optController.abort();
+            listController.abort();
             detailAbort.current?.abort();
         };
-    }, [loadOptions, loadList]);
+    }, [fetchOptions, fetchExperiments]);
 
     const fetchDetail = useCallback(async (silent: boolean) => {
         if (!selectedId || detailInflight.current) return;

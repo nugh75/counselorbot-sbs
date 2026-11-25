@@ -14,9 +14,8 @@ jobs:
       run:
         working-directory: frontend
     env:
-      # Errors still allowed while the loader refactor is pending (#773).
-      # Lower it as errors are fixed; at 0 any ESLint error fails the job.
-      ESLINT_MAX_ERRORS: '39'
+      # Zero ESLint errors allowed (#773 completed).
+      ESLINT_MAX_ERRORS: '0'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

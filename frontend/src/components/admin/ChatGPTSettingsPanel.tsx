@@ -6,11 +6,13 @@ import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { useI18n } from '@/lib/i18n-context';
 import { getViewAsAccount } from '@/lib/auth';
+import { useClientValue } from '@/lib/use-client-value';
 import { AudienceSwitches } from './AudienceSwitches';
 import { chatgptInstallationRequest, notifyChatGPTChange, type ChatGPTInstallationStatus } from '@/lib/chatgpt';
 
 export function ChatGPTSettingsPanel() {
     const { t } = useI18n();
+    const viewingAs = useClientValue(() => Boolean(getViewAsAccount()), false);
     const [settings, setSettings] = useState<ChatGPTInstallationStatus>();
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
@@ -18,7 +20,7 @@ export function ChatGPTSettingsPanel() {
     const [hidden, setHidden] = useState(false);
 
     useEffect(() => {
-        if (getViewAsAccount()) { setHidden(true); return; }
+        if (viewingAs) return;
         const controller = new AbortController();
         void chatgptInstallationRequest('GET', undefined, controller.signal).then(setSettings).catch(failure => {
             if (controller.signal.aborted) return;
@@ -26,7 +28,7 @@ export function ChatGPTSettingsPanel() {
             else setError(failure instanceof Error ? failure.message : 'chatgpt.errors.unavailable');
         });
         return () => controller.abort();
-    }, []);
+    }, [viewingAs]);
 
     const update = async () => {
         if (!settings) return;
@@ -45,7 +47,7 @@ export function ChatGPTSettingsPanel() {
         finally { setBusy(false); }
     };
 
-    if (hidden) return null;
+    if (hidden || viewingAs) return null;
     return <div id="chatgpt-settings" className="scroll-mt-24" data-testid="chatgpt-settings">
         <Card as="section" className="space-y-4">
             <h3 className="text-lg font-semibold text-ink">{t('chatgpt.admin.title')}</h3>

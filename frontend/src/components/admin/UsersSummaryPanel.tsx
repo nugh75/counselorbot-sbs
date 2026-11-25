@@ -186,19 +186,38 @@ export function UsersSummaryPanel() {
     const [query, setQuery] = useState('');
     const [tab, setTab] = useState<'users' | 'groups' | 'schools'>('users');
 
+    const fetchSummary = useCallback(async () => {
+        const res = await apiFetch('/api/admin/users-summary');
+        return res.ok ? ((await res.json()) as Summary) : null;
+    }, []);
+
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await apiFetch('/api/admin/users-summary');
-            if (res.ok) setData(await res.json());
+            const next = await fetchSummary();
+            if (next) setData(next);
         } catch (e) {
             console.error('Failed to load users summary', e);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchSummary]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        fetchSummary()
+            .then((next) => {
+                if (!active) return;
+                if (next) setData(next);
+                setLoading(false);
+            })
+            .catch((e) => {
+                if (!active) return;
+                console.error('Failed to load users summary', e);
+                setLoading(false);
+            });
+        return () => { active = false; };
+    }, [fetchSummary]);
 
     const filteredUsers = useMemo(() => {
         if (!data) return [];

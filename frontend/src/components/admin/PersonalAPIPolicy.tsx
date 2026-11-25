@@ -19,16 +19,32 @@ export function PersonalAPIPolicy() {
     const [error, setError] = useState(false);
     const [saved, setSaved] = useState(false);
     const [reason, setReason] = useState<'error' | 'keyMissing' | 'notConfigured'>('error');
+    const fetchPolicy = useCallback(async () => {
+        const response = await apiFetch('/api/admin/personal-api-policy', { cache: 'no-store' });
+        if (response.status === 403) return 'forbidden' as const;
+        if (!response.ok) throw new Error();
+        return (await response.json()) as Policy;
+    }, []);
     const load = useCallback(async () => {
         setError(false);
         try {
-            const response = await apiFetch('/api/admin/personal-api-policy', { cache: 'no-store' });
-            if (response.status === 403) { setForbidden(true); return; }
-            if (!response.ok) throw new Error();
-            setPolicy(await response.json());
+            const data = await fetchPolicy();
+            if (data === 'forbidden') { setForbidden(true); return; }
+            setPolicy(data);
         } catch { setError(true); }
-    }, []);
-    useEffect(() => { if (!getViewAsAccount()) void load(); }, [load]);
+    }, [fetchPolicy]);
+    useEffect(() => {
+        if (getViewAsAccount()) return;
+        let active = true;
+        fetchPolicy()
+            .then((data) => {
+                if (!active) return;
+                if (data === 'forbidden') { setForbidden(true); return; }
+                setPolicy(data);
+            })
+            .catch(() => { if (active) setError(true); });
+        return () => { active = false; };
+    }, [fetchPolicy]);
     if (forbidden || getViewAsAccount()) return null;
     const toggle = async (enabled: boolean) => {
         const previous = policy;
