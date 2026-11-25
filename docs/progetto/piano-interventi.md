@@ -138,9 +138,8 @@ Ordine consigliato: `#1028` → `#1029` → `#1030` + `#1031` → `#1032`.
 
 - [x] [#776](https://github.com/nugh75/counselorbot-sbs/issues/776) — `feat: factory prompt updates arrive as proposals to accept, ignore or merge`
   - **Stato:** `Completata (PR in chiusura)` — i prompt mai personalizzati si aggiornano automaticamente all'avvio preservando lo storico; i prompt personalizzati diversi dalla fabbrica compaiono in «Salute dei prompt» con contatore, diff e azioni *Accetta / Ignora / Unisci a mano* (+ Riapri).
-- [ ] [#778](https://github.com/nugh75/counselorbot-sbs/issues/778) — `feat: first-level and second-level prompts with double confirmation for first level`
-  - **Stato:** `Pronta`.
-  - **Nota operativa:** sfruttare il livello dichiarato nel prompt registry (`#760`, già chiusa) per imporre una schermata di conferma esplicita sulle conseguenze prima di modificare i prompt di 1° livello (contratto turno, privacy/sicurezza, formati privati, lingua).
+- [x] [#778](https://github.com/nugh75/counselorbot-sbs/issues/778) — `feat: first-level and second-level prompts with double confirmation for first level`
+  - **Stato:** `Completata (PR in chiusura)` — livelli `1` e `2` dichiarati in `backend/prompt_registry.py`, mostrati in «Salute dei prompt» (schede, catalogo, confronto, proposte) e doppia conferma esplicita lato UI e API per i prompt di 1° livello.
 - [ ] [#777](https://github.com/nugh75/counselorbot-sbs/issues/777) — `feat: maintainer mode to promote an instance prompt to factory via pull request`
   - **Stato:** `Pronta` (coordinare con `#776`).
   - **Nota operativa:** azione «Rendi testo di fabbrica» visibile solo sull'istanza maintainer configurata con token GitHub, per aprire una PR di aggiornamento sul file di fabbrica.

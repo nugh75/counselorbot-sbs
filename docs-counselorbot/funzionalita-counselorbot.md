@@ -4066,3 +4066,18 @@ release successiva modifica di nuovo il testo di fabbrica. Il pannello
 **Allinea prompt di fabbrica** resta nella stessa pagina come azione multipla
 sincronizzata con le proposte. Nessuna modifica alla Guida interfaccia; il
 deploy crea la nuova tabella via `create_all`.
+
+### Prompt di primo e secondo livello (#778)
+
+Nel registro dei prompt (`backend/prompt_registry.py`) ogni prompt dichiara un
+livello (`1` o `2`):
+- **1° livello (Nucleo):** contratto del turno, regole di privacy/sicurezza,
+  direttive di lingua e qualità, segnali tecnici di avanzamento passo.
+- **2° livello (Contenuti e tono):** istruzioni degli step, tono, contesti e
+  contenuti specifici.
+
+Nessun prompt è bloccato, ma in **Amministrazione › Salute dei prompt** il livello
+è mostrato sulle schede, nel catalogo e nelle proposte; modificare o unire a mano
+un prompt di 1° livello richiede una doppia conferma con avviso esplicito sulle
+conseguenze (`confirm_first_level`). Nessuna modifica ai dati o alla Guida
+interfaccia.
