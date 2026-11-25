@@ -136,9 +136,8 @@ Ordine consigliato: `#1028` → `#1029` → `#1030` + `#1031` → `#1032`.
 
 > La fondazione [#775](https://github.com/nugh75/counselorbot-sbs/issues/775) (*DB come unica sorgente runtime dei prompt*) è stata chiusa con PR `#1037` (`09cf498d`). Per decisione del proprietario (31/10/2026), tutte le funzioni sotto convivono nella pagina **«Salute dei prompt»** in Amministrazione.
 
-- [ ] [#776](https://github.com/nugh75/counselorbot-sbs/issues/776) — `feat: factory prompt updates arrive as proposals to accept, ignore or merge`
-  - **Stato:** `Pronta` (sbloccata da `#775`).
-  - **Nota operativa:** mostrare diff contro il testo dell'istanza con azioni *Accetta / Ignora / Unisci a mano*, aggiornamento automatico per i prompt mai personalizzati, contatore proposte pendenti e integrazione dell'azione bulk «Allinea prompt di fabbrica».
+- [x] [#776](https://github.com/nugh75/counselorbot-sbs/issues/776) — `feat: factory prompt updates arrive as proposals to accept, ignore or merge`
+  - **Stato:** `Completata (PR in chiusura)` — i prompt mai personalizzati si aggiornano automaticamente all'avvio preservando lo storico; i prompt personalizzati diversi dalla fabbrica compaiono in «Salute dei prompt» con contatore, diff e azioni *Accetta / Ignora / Unisci a mano* (+ Riapri).
 - [ ] [#778](https://github.com/nugh75/counselorbot-sbs/issues/778) — `feat: first-level and second-level prompts with double confirmation for first level`
   - **Stato:** `Pronta`.
   - **Nota operativa:** sfruttare il livello dichiarato nel prompt registry (`#760`, già chiusa) per imporre una schermata di conferma esplicita sulle conseguenze prima di modificare i prompt di 1° livello (contratto turno, privacy/sicurezza, formati privati, lingua).

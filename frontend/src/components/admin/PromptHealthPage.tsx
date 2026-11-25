@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { PromptFactoryAlignment } from '@/components/admin/PromptFactoryAlignment';
+import { PromptFactoryProposals } from '@/components/admin/PromptFactoryProposals';
 import { PromptHealthLlm } from '@/components/admin/PromptHealthLlm';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptUsagePanel } from '@/components/admin/PromptUsagePanel';
@@ -228,6 +229,7 @@ function PromptStatusCatalog({ statuses, paths, selectedId, onOpen }: {
 
 async function fetchHealth(): Promise<{
     run: PromptHealthRun | null;
+    pendingProposals: number;
     paths: PromptHealthPath[];
     promptStatuses: Record<string, PromptOwnershipStatus>;
     llm: PromptHealthFinding[];
@@ -237,19 +239,22 @@ async function fetchHealth(): Promise<{
     if (!health.ok || !map.ok) throw new Error('load');
     // Le contraddizioni del modello (#763) vengono dalla memoria: nessuna chiamata qui.
     const llmFindings: PromptHealthFinding[] = llm.ok ? (await llm.json()).findings : [];
-    const mapPayload = await map.json();
+    const [healthPayload, mapPayload] = await Promise.all([health.json(), map.json()]);
     return {
-        run: (await health.json()).run,
+        run: healthPayload.run,
+        pendingProposals: typeof healthPayload.pending_proposals === 'number' ? healthPayload.pending_proposals : 0,
         paths: mapPayload.paths,
         promptStatuses: mapPayload.prompt_statuses ?? {},
         llm: llmFindings,
     };
 }
 
-/** Pagina «Salute dei prompt» (#761, #775): problemi, stato prompt, cronologia, allineamento di fabbrica, confronto. */
+/** Pagina «Salute dei prompt» (#761, #775, #776): problemi, stato prompt, proposte e allineamento di fabbrica, confronto. */
 export function PromptHealthPage() {
     const { t, lang } = useI18n();
     const [run, setRun] = useState<PromptHealthRun | null>(null);
+    const [pendingProposals, setPendingProposals] = useState(0);
+    const [proposalsVersion, setProposalsVersion] = useState(0);
     const [paths, setPaths] = useState<PromptHealthPath[]>([]);
     const [promptStatuses, setPromptStatuses] = useState<Record<string, PromptOwnershipStatus>>({});
     const [error, setError] = useState(false);
@@ -265,14 +270,17 @@ export function PromptHealthPage() {
 
     const load = useCallback(() => fetchHealth().then(state => {
         setRun(state.run);
+        setPendingProposals(state.pendingProposals);
         setPaths(state.paths);
         setPromptStatuses(state.promptStatuses);
         setLlmFindings(state.llm);
+        setProposalsVersion(v => v + 1);
         setError(false);
     }).catch(() => setError(true)), []);
     useEffect(() => {
         fetchHealth().then(state => {
             setRun(state.run);
+            setPendingProposals(state.pendingProposals);
             setPaths(state.paths);
             setPromptStatuses(state.promptStatuses);
             setLlmFindings(state.llm);
@@ -318,7 +326,17 @@ export function PromptHealthPage() {
 
     return <div className="space-y-6">
         <Card as="section" aria-labelledby="prompt-health-title" className="space-y-3">
-            <h2 id="prompt-health-title" className="text-xl font-semibold text-ink-strong">{t('admin.promptHealth.page.title')}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+                <h2 id="prompt-health-title" className="text-xl font-semibold text-ink-strong">{t('admin.promptHealth.page.title')}</h2>
+                {pendingProposals > 0 && (
+                    <a
+                        href="#prompt-factory-proposals"
+                        className="inline-flex items-center rounded-full border border-warning-line bg-warning-soft px-2.5 py-0.5 text-xs font-semibold text-warning-ink hover:underline"
+                    >
+                        {t('admin.promptProposals.badge', { count: pendingProposals })}
+                    </a>
+                )}
+            </div>
             <p className="text-sm text-ink-muted">{t('admin.promptHealth.page.help')}</p>
             {run && <p className="text-sm text-ink-body">
                 {t('admin.promptHealth.overview.open', { count: open.length })}
@@ -339,6 +357,13 @@ export function PromptHealthPage() {
             </div>
             <PromptFactoryAlignment paths={paths} onApplied={() => { void load(); }} />
         </Card>
+
+        <PromptFactoryProposals
+            paths={paths}
+            refreshKey={proposalsVersion}
+            onChanged={() => { void load(); }}
+            onCountChange={setPendingProposals}
+        />
 
         <Card as="section" aria-labelledby="prompt-health-findings" className="space-y-3">
             <h2 id="prompt-health-findings" className="text-lg font-semibold text-ink-strong">{t('admin.promptHealth.findings.title')}</h2>

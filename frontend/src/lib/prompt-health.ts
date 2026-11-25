@@ -334,3 +334,25 @@ export function estimateCost(usd: number | null): string | null {
     if (usd == null) return null;
     return usd < 0.01 ? '< $0.01' : `$${usd.toFixed(2)}`;
 }
+
+// --- Proposte di aggiornamento di fabbrica (#776) -----------------------------------
+
+export interface PromptFactoryProposal {
+    prompt_id: string;
+    scope: 'config' | 'guided_step';
+    key: string;
+    status: 'factory_update' | 'customised';
+    current_text: string;
+    factory_text: string;
+    current_hash: string;
+    factory_hash: string;
+    resolution: 'ignored' | null;
+    dismissed_by: string | null;
+    dismissed_at: string | null;
+}
+
+export interface PromptFactoryProposalsResponse {
+    pending_count: number;
+    proposals: PromptFactoryProposal[];
+    ignored: PromptFactoryProposal[];
+}

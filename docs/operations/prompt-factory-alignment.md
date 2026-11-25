@@ -1,6 +1,6 @@
 # Allineamento dei prompt di fabbrica dall’amministrazione
 
-Il pulsante **Allinea prompt di fabbrica** vive dentro **Amministrazione › Salute dei prompt** (consolidato lì con #775; nessun secondo controllo in Configurazione). Si applica a tutte le istruzioni registrate delle chat e ai dodici percorsi guidati, non soltanto a QSA. L’interfaccia è tradotta in IT/EN/ES/FR/DE/SV; i testi di fabbrica per il modello rimangono in inglese.
+Il pulsante **Allinea prompt di fabbrica** e il pannello **Proposte di aggiornamento di fabbrica** vivono dentro **Amministrazione › Salute dei prompt** (consolidati lì con #775 e #776; nessun secondo controllo in Configurazione). I prompt mai personalizzati (`factory_owned`) si aggiornano automaticamente all'avvio dell'applicazione preservando le versioni precedenti in `prompt_revisions`; quelli personalizzati o non ancora allineati compaiono come proposte con diff e azioni singole (**Accetta**, **Ignora**, **Unisci a mano**) oltre alla selezione multipla di **Allinea prompt di fabbrica**. L’interfaccia è tradotta in IT/EN/ES/FR/DE/SV; i testi di fabbrica per il modello rimangono in inglese.
 
 ## Uso
 
@@ -55,6 +55,9 @@ riconoscere anche un database che non dispone dello storico.
 - `GET /api/admin/prompt-factory-alignment/preview`: versione del piano,
   differenze prima/dopo e stato (`factory_update` in `changes`, `customised` con diff in `preserved` per `reason="personalised"`), testi `different_instrument` conservati e `review_hash`.
 - `POST /api/admin/prompt-factory-alignment/apply`: accetta `{ "review_hash": "…" }` (applica tutti i `changes`, mai i personalizzati) oppure `{ "review_hash": "…", "selected": [{ "scope": "config"|"guided_step", "key": "…" }] }` (applica solo la selezione, inclusi eventuali personalizzati scelti esplicitamente; 422 su selezioni non ammesse, 409 se il piano è cambiato).
+- `GET /api/admin/prompt-health/proposals` (#776): restituisce `pending_count`, `proposals` e `ignored` (tracciate per versione di fabbrica nella tabella `prompt_factory_proposal_dismissals`).
+- `POST /api/admin/prompt-health/proposals/accept`, `/ignore`, `/reopen`, `/merge` (#776): accettano, ignorano per la versione corrente di fabbrica, riaprono o salvano un'unione manuale (con controllo ottimistico su `expected_current_hash` / `expected_factory_hash`, `409` su conflitto). Una release successiva che cambia il testo di fabbrica riapre automaticamente le proposte ignorate o unite in precedenza.
+- `GET /api/admin/prompt-health`: include anche `pending_proposals` per il badge contatore in Amministrazione.
 
 Entrambe usano il guard amministrativo esistente. Il client non può fornire
 testi da scrivere né destinazioni arbitrarie. Alla conferma il server ricostruisce

@@ -456,11 +456,18 @@ def _seed_and_migrate():
         try:
             reverted = prompt_revisions.restore_admin_owned(db, protected)
             recorded = prompt_revisions.reconcile(db)
+            from . import prompt_factory_proposals
+            auto_updated = prompt_factory_proposals.auto_apply_uncustomised(db)
             db.commit()
             if reverted:
                 logger.info("Prompt personalizzati ripristinati dopo le migrazioni: %s", reverted)
             if recorded:
                 logger.info("Revisioni di prompt registrate: %d", recorded)
+            if auto_updated["updated"]:
+                logger.info(
+                    "Prompt di fabbrica mai personalizzati aggiornati automaticamente: %d",
+                    auto_updated["updated"],
+                )
         except Exception as exc:  # lo storico non deve poter impedire l'avvio
             db.rollback()
             logger.warning("Storico prompt non aggiornato: %s", exc)

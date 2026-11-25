@@ -1,11 +1,13 @@
 """Admin endpoints of the static prompt health check (#760). Warnings only: nothing here blocks a save."""
 import re
 
+from typing import Literal
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from .. import auth, database, prompt_health, prompt_health_llm
+from .. import auth, database, prompt_factory_proposals, prompt_health, prompt_health_llm
 
 router = APIRouter()
 get_db = database.get_db
@@ -66,8 +68,15 @@ def latest_prompt_health(current_user=Depends(auth.get_current_active_admin), db
     """Latest stored run; `current` is false when the texts changed since it was computed."""
     run = prompt_health.latest_run(db)
     numbers = prompt_health.track_problems(db, run.findings or [], "static") if run is not None else {}
-    return {"run": prompt_health.serialize(run, current_hash=prompt_health.texts_hash(db),
-                                           marked=prompt_health.acks(db), numbers=numbers)}
+    return {
+        "run": prompt_health.serialize(
+            run,
+            current_hash=prompt_health.texts_hash(db),
+            marked=prompt_health.acks(db),
+            numbers=numbers,
+        ),
+        "pending_proposals": prompt_factory_proposals.pending_count(db),
+    }
 
 
 @router.post("/admin/prompt-health/run")
@@ -277,3 +286,118 @@ def llm_propose(payload: LlmProposeRequest, current_user=Depends(auth.get_curren
     except Exception as exc:  # model unreachable or unreadable answer
         prompt_health.logger.warning("Prompt health LLM proposal failed: %s", type(exc).__name__)
         raise HTTPException(status_code=502, detail="llm_proposal_failed") from exc
+
+
+# --- Factory prompt update proposals (#776) -----------------------------------------------
+
+class ProposalReopenRequest(BaseModel):
+    scope: Literal["config", "guided_step"]
+    key: str = Field(..., min_length=1, max_length=250)
+
+
+class ProposalActionRequest(ProposalReopenRequest):
+    expected_current_hash: str = Field(..., min_length=16, max_length=128)
+    expected_factory_hash: str = Field(..., min_length=16, max_length=128)
+
+
+class ProposalMergeRequest(ProposalActionRequest):
+    merged_text: str = Field(..., max_length=200_000)
+
+
+@router.get("/admin/prompt-health/proposals")
+def list_factory_proposals(
+    current_user=Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Pending and ignored factory prompt update proposals with diffs and counter."""
+    return prompt_factory_proposals.list_proposals(db)
+
+
+@router.post("/admin/prompt-health/proposals/accept")
+def accept_factory_proposal(
+    payload: ProposalActionRequest,
+    background: BackgroundTasks,
+    current_user=Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Accept one factory prompt proposal; preserves previous text in prompt_revisions."""
+    try:
+        result = prompt_factory_proposals.accept_proposal(
+            db,
+            payload.scope,
+            payload.key,
+            expected_current_hash=payload.expected_current_hash,
+            expected_factory_hash=payload.expected_factory_hash,
+            author=current_user.get("username"),
+        )
+    except LookupError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    prompt_id = result["prompt_id"]
+    background.add_task(_rerun_after_save)
+    background.add_task(_llm_after_change, prompt_id, _checker_actor(current_user))
+    return result
+
+
+@router.post("/admin/prompt-health/proposals/ignore")
+def ignore_factory_proposal(
+    payload: ProposalActionRequest,
+    current_user=Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Ignore one factory prompt proposal for this factory text version."""
+    try:
+        return prompt_factory_proposals.ignore_proposal(
+            db,
+            payload.scope,
+            payload.key,
+            expected_current_hash=payload.expected_current_hash,
+            expected_factory_hash=payload.expected_factory_hash,
+            author=current_user.get("username"),
+        )
+    except LookupError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/admin/prompt-health/proposals/reopen")
+def reopen_factory_proposal(
+    payload: ProposalReopenRequest,
+    current_user=Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Restore an ignored factory prompt proposal back to the pending list."""
+    try:
+        return prompt_factory_proposals.reopen_proposal(db, payload.scope, payload.key)
+    except LookupError as exc:
+        raise _not_found(exc) from exc
+
+
+@router.post("/admin/prompt-health/proposals/merge")
+def merge_factory_proposal(
+    payload: ProposalMergeRequest,
+    background: BackgroundTasks,
+    current_user=Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Save a manual merge of the current prompt and the factory proposal."""
+    try:
+        result = prompt_factory_proposals.merge_proposal(
+            db,
+            payload.scope,
+            payload.key,
+            merged_text=payload.merged_text,
+            expected_current_hash=payload.expected_current_hash,
+            expected_factory_hash=payload.expected_factory_hash,
+            author=current_user.get("username"),
+        )
+    except LookupError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    prompt_id = result["prompt_id"]
+    background.add_task(_rerun_after_save)
+    background.add_task(_llm_after_change, prompt_id, _checker_actor(current_user))
+    return result

@@ -63,6 +63,11 @@ test('ownership status helper and alignment dictionaries cover all six languages
     const alignmentKeys = Object.keys(PROMPT_ALIGNMENT_DICTS.it).sort();
     for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv'] as const) {
         assert.deepEqual(Object.keys(PROMPT_ALIGNMENT_DICTS[lang]).sort(), alignmentKeys, lang);
+        assert.ok(PROMPT_ALIGNMENT_DICTS[lang]['admin.promptProposals.title'], `${lang} proposals title`);
+        assert.ok(PROMPT_ALIGNMENT_DICTS[lang]['admin.promptProposals.badge'], `${lang} proposals badge`);
+        assert.ok(PROMPT_ALIGNMENT_DICTS[lang]['admin.promptProposals.accept'], `${lang} proposals accept`);
+        assert.ok(PROMPT_ALIGNMENT_DICTS[lang]['admin.promptProposals.ignore'], `${lang} proposals ignore`);
+        assert.ok(PROMPT_ALIGNMENT_DICTS[lang]['admin.promptProposals.merge'], `${lang} proposals merge`);
         for (const status of ['factory', 'customised', 'factory_update', 'code'] as const) {
             assert.ok(PROMPT_HEALTH_DICTS[lang][`admin.promptHealth.ownership.${status}`], `${lang} ${status}`);
         }

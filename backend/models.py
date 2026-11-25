@@ -2004,6 +2004,19 @@ class PromptHealthProblem(Base):
     resolved_at = Column(UTCDateTime, nullable=True, index=True)
 
 
+class PromptFactoryProposalDismissal(Base):
+    """Per-instance dismissal or manual merge resolution for a factory prompt update (#776)."""
+
+    __tablename__ = "prompt_factory_proposal_dismissals"
+
+    scope = Column(String, primary_key=True)
+    target_key = Column(String, primary_key=True)
+    dismissed_factory_hash = Column(String(64), nullable=False)
+    resolution = Column(String, nullable=False, default="ignored")
+    author = Column(String, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+
+
 class PromptHealthLlmResult(Base):
     """Contradictions a model found in one assembled request (#763), cached by
     the hash of check version, model, language and request text."""
