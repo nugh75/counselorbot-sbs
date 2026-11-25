@@ -381,3 +381,13 @@ export function canPromoteToFactory(card: {
         && card.differs_from_factory,
     );
 }
+
+export type SuggestionChannel = 'email' | 'github';
+
+/** True when an editable prompt differs from factory and can be suggested back to the project (#779). */
+export function canSuggestPrompt(card: {
+    editable?: boolean;
+    differs_from_factory?: boolean;
+}): boolean {
+    return Boolean(card.editable && card.differs_from_factory);
+}

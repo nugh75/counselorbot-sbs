@@ -4091,3 +4091,13 @@ dei prompt** l'azione **«Rendi testo di fabbrica»**, che apre una Pull Request
 GitHub (`POST /api/admin/prompt-health/promote-factory`) aggiornando il relativo
 file in `backend/prompts/*.md` o `backend/prompt_config.py`. Sulle istanze
 distribuite i testi di fabbrica restano in sola lettura e l'azione non compare.
+
+### Suggerimenti al progetto dai prompt personalizzati (#779)
+
+In **Amministrazione › Salute dei prompt**, per ogni prompt modificabile che
+differisce dal testo di fabbrica è disponibile l'azione **«Suggerisci al
+progetto»** (`POST /api/admin/prompt-health/suggest`), utilizzabile sia dalla
+scheda del prompt sia dal confronto affiancato. L'amministratore inserisce la
+motivazione e invia chiave, nome dell'istanza e diff al maintainer tramite
+email (impostazioni SMTP dell'istanza) oppure come issue GitHub; il testo di
+fabbrica resta invariato finché il maintainer non accetta la proposta.
