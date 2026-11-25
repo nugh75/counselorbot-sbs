@@ -142,6 +142,6 @@ test('the pQBL uploader promises only PDFs', async () => {
         const main = await page.locator('main').innerText();
         assert.doesNotMatch(main, /PDF o Immagine/);
         assert.doesNotMatch(main, /JPG/);
-        assert.match(main, /100 MB/);
+        assert.match(main, /25 MB/);
     } finally { await context.close(); }
 });

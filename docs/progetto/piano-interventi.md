@@ -137,13 +137,13 @@ Ordine consigliato: `#1028` → `#1029` → `#1030` + `#1031` → `#1032`.
 > La fondazione [#775](https://github.com/nugh75/counselorbot-sbs/issues/775) (*DB come unica sorgente runtime dei prompt*) è stata chiusa con PR `#1037` (`09cf498d`). Per decisione del proprietario (31/10/2026), tutte le funzioni sotto convivono nella pagina **«Salute dei prompt»** in Amministrazione.
 
 - [x] [#776](https://github.com/nugh75/counselorbot-sbs/issues/776) — `feat: factory prompt updates arrive as proposals to accept, ignore or merge`
-  - **Stato:** `Completata (PR in chiusura)` — i prompt mai personalizzati si aggiornano automaticamente all'avvio preservando lo storico; i prompt personalizzati diversi dalla fabbrica compaiono in «Salute dei prompt» con contatore, diff e azioni *Accetta / Ignora / Unisci a mano* (+ Riapri).
+  - **Stato:** `Completata (PR #1041 mergiata)` — i prompt mai personalizzati si aggiornano automaticamente all'avvio preservando lo storico; i prompt personalizzati diversi dalla fabbrica compaiono in «Salute dei prompt» con contatore, diff e azioni *Accetta / Ignora / Unisci a mano* (+ Riapri).
 - [x] [#778](https://github.com/nugh75/counselorbot-sbs/issues/778) — `feat: first-level and second-level prompts with double confirmation for first level`
-  - **Stato:** `Completata (PR in chiusura)` — livelli `1` e `2` dichiarati in `backend/prompt_registry.py`, mostrati in «Salute dei prompt» (schede, catalogo, confronto, proposte) e doppia conferma esplicita lato UI e API per i prompt di 1° livello.
+  - **Stato:** `Completata (PR #1042 mergiata)` — livelli `1` e `2` dichiarati in `backend/prompt_registry.py`, mostrati in «Salute dei prompt» (schede, catalogo, confronto, proposte) e doppia conferma esplicita lato UI e API per i prompt di 1° livello.
 - [x] [#777](https://github.com/nugh75/counselorbot-sbs/issues/777) — `feat: maintainer mode to promote an instance prompt to factory via pull request`
-  - **Stato:** `Completata (PR in chiusura)` — azione «Rendi testo di fabbrica» attiva solo in modalità maintainer configurata (`PROMPT_MAINTAINER_MODE` + token GitHub), con risoluzione AST dei sorgenti di fabbrica e creazione PR via REST API.
+  - **Stato:** `Completata (PR #1043 mergiata)` — azione «Rendi testo di fabbrica» attiva solo in modalità maintainer configurata (`PROMPT_MAINTAINER_MODE` + token GitHub), con risoluzione AST dei sorgenti di fabbrica e creazione PR via REST API.
 - [x] [#779](https://github.com/nugh75/counselorbot-sbs/issues/779) — `feat: suggest an instance prompt change to the project by email or GitHub issue`
-  - **Stato:** `Completata (PR in chiusura)` — azione «Suggerisci al progetto» disponibile in «Salute dei prompt» per prompt personalizzati, con invio via email (SMTP) o issue GitHub senza alterare il testo di fabbrica. Milestone [#45](https://github.com/nugh75/counselorbot-sbs/milestone/45) completata.
+  - **Stato:** `Completata (PR #1044 mergiata)` — azione «Suggerisci al progetto» disponibile in «Salute dei prompt» per prompt personalizzati, con invio via email (SMTP) o issue GitHub senza alterare il testo di fabbrica. Milestone [#45](https://github.com/nugh75/counselorbot-sbs/milestone/45) completata.
 
 ### 2B. Serie Prompt guidati 2–5: consolidamento e riduzione ridondanze (Milestone [#1](https://github.com/nugh75/counselorbot-sbs/milestone/1))
 
@@ -170,10 +170,10 @@ Ordine consigliato: `#1028` → `#1029` → `#1030` + `#1031` → `#1032`.
 
 - [x] [#773](https://github.com/nugh75/counselorbot-sbs/issues/773) — `chore: refactor fetch-on-mount loaders flagged by react-hooks/set-state-in-effect`
   - **Milestone:** [#22 — Green test baseline](https://github.com/nugh75/counselorbot-sbs/milestone/22)
-  - **Stato:** `Completata (PR in chiusura)` — dopo PR `#1035` (Chat/QSA + Docente) e PR `#1036` (Area personale), rifattorizzati gli ultimi **34 file** di `frontend/src/components/admin/` (**0 errori ESLint**) e portato `ESLINT_MAX_ERRORS` da `39` a `0` in [`.github/workflows/frontend-lint.yml`](../../.github/workflows/frontend-lint.yml).
+  - **Stato:** `Completata (PR #1040 mergiata)` — dopo PR `#1035` (Chat/QSA + Docente) e PR `#1036` (Area personale), rifattorizzati gli ultimi **34 file** di `frontend/src/components/admin/` (**0 errori ESLint**) e portato `ESLINT_MAX_ERRORS` da `39` a `0` in [`.github/workflows/frontend-lint.yml`](../../.github/workflows/frontend-lint.yml). Milestone [#22](https://github.com/nugh75/counselorbot-sbs/milestone/22) completata.
 - [ ] [#911](https://github.com/nugh75/counselorbot-sbs/issues/911) — `Rewrite stale browser tests to match the current app`
   - **Milestone:** [#42 — UI consistency](https://github.com/nugh75/counselorbot-sbs/milestone/42)
-  - **Stato:** `In corso / residui` — PR `#1038` ha già aggiornato due test browser admin; restano da eseguire file per file gli altri test Playwright in `frontend/tests/` contro un dev server isolato (`docs/operations/live-dev-environment.md`).
+  - **Stato:** `In corso / residui` — dopo PR `#1038`, questo lotto corregge due bug reali (`HeaderAISource` su payload inattesi + commento Tailwind in `RoleBadge`) e riallinea i primi 5 test Playwright (`teacher-area-home`, `personal-area-home`, `personal-error-states`, `personal-pqbl`, `personal-ai-visibility`). Restano da verificare gli altri test browser in `frontend/tests/` contro dev server isolato (`--webpack`, `docs/operations/live-dev-environment.md`).
 - [ ] [#83](https://github.com/nugh75/counselorbot-sbs/issues/83) — `feat: review and redesign the top navigation bar`
   - **Milestone:** [#21 — Navbar redesign](https://github.com/nugh75/counselorbot-sbs/milestone/21) *(chiusa)*
   - **Stato:** `In corso / residui` — il redesign è già su `main`. Restano 3 verifiche residue prima della chiusura: prova con screen reader reale, controllo/rigenerazione screenshot aggiornati delle sezioni post-redesign, verifica baseline suite frontend (`#911`).

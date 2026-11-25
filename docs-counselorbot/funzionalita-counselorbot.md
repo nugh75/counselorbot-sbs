@@ -4101,3 +4101,11 @@ scheda del prompt sia dal confronto affiancato. L'amministratore inserisce la
 motivazione e invia chiave, nome dell'istanza e diff al maintainer tramite
 email (impostazioni SMTP dell'istanza) oppure come issue GitHub; il testo di
 fabbrica resta invariato finché il maintainer non accetta la proposta.
+
+### Stabilità dell’header sorgente AI e badge di ruolo (#911)
+
+Il componente `HeaderAISource` (`frontend/src/components/layout/HeaderAISource.tsx`)
+valida ora la forma della risposta di `/api/me/ai-source` (`isAISource`) prima di
+mappare il badge di ruolo, evitando errori di runtime sull'intera pagina in caso
+di payload inattesi; il commento in `RoleBadge.tsx` è stato riscritto per non
+introdurre selettori Tailwind non validi in modalità dev.

@@ -59,6 +59,14 @@ const dictionaries: Record<Lang, Record<Key, string>> = {
 };
 
 const MANAGER: Record<AISource['source'], Key> = { system: 'byPlatform', own_api: 'byYou', teacher_api: 'byTeacher', chatgpt: 'byYou' };
+const OWNER_ROLES = new Set<AISource['owner_role']>(['admin', 'student', 'teacher']);
+
+export function isAISource(value: unknown): value is AISource {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    const candidate = value as Record<string, unknown>;
+    return typeof candidate.source === 'string' && candidate.source in MANAGER
+        && typeof candidate.owner_role === 'string' && OWNER_ROLES.has(candidate.owner_role as AISource['owner_role']);
+}
 
 export function aiSourceView(source: AISource, lang: Lang) {
     const t = dictionaries[lang] ?? it;

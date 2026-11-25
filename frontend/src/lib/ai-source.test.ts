@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { aiSourceView } from './ai-source.ts';
+import { aiSourceView, isAISource } from './ai-source.ts';
 
 const base = { owner_label: null, connection: 'api', model: 'm-1', fallback: false, fallback_reason: null, viewer_role: 'student' } as const;
 
@@ -38,4 +38,13 @@ test('the manage link follows the viewer role and every language is filled', () 
         const view = aiSourceView({ ...source, fallback: true }, lang);
         assert.ok(view.title && view.manage && view.warning && view.managed && view.detail, lang);
     }
+});
+
+test('isAISource rejects unexpected payloads safely', () => {
+    assert.equal(isAISource(null), false);
+    assert.equal(isAISource([]), false);
+    assert.equal(isAISource({}), false);
+    assert.equal(isAISource({ source: 'unknown', owner_role: 'admin' }), false);
+    assert.equal(isAISource({ source: 'system', owner_role: 'unknown' }), false);
+    assert.equal(isAISource({ ...base, source: 'system', owner_role: 'admin', provider: 'openai' }), true);
 });

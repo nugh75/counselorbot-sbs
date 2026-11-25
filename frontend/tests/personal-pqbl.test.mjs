@@ -85,7 +85,7 @@ for (const [locale, title] of [['it', 'Studiare da un PDF'], ['en', 'Study from 
             const intro = page.getByTestId('intro-screen');
             await intro.waitFor();
             assert.equal(await intro.locator('[data-testid="intro-activities"] nav > *').count(), 4);
-            const entry = intro.locator('a[href="/profilo"]');
+            const entry = intro.locator('a[href="/profilo"][aria-labelledby="intro-link-workspace"]');
             await entry.click();
             await page.locator('a[href="/profilo/pqbl"]').click();
             await page.getByRole('heading', { name: title, exact: true }).waitFor();
