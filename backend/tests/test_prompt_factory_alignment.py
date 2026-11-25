@@ -70,7 +70,13 @@ def test_preview_and_confirmation_update_every_path_and_keep_personalised_and_lo
             assert preview.status_code == 200
             plan = preview.json()
             assert len(plan["changes"]) == 14
-            assert plan["preserved"] == [{"scope": "config", "key": "prompt_generic", "reason": "personalised"}]
+            assert all(item["status"] == "factory_update" for item in plan["changes"])
+            assert len(plan["preserved"]) == 1
+            preserved = plan["preserved"][0]
+            assert preserved["scope"] == "config" and preserved["key"] == "prompt_generic"
+            assert preserved["reason"] == "personalised" and preserved["status"] == "customised"
+            assert preserved["before"] == "My English custom instructions."
+            assert preserved["after"] == configs["prompt_generic"]
             assert all(row.prompt == "Previous English factory instruction." for row in rows)
             assert db.query(models.PromptRevision).count() == before_revisions
             response = client.post("/api/admin/prompt-factory-alignment/apply", json={"review_hash": plan["review_hash"]})
@@ -219,3 +225,53 @@ def test_an_approved_factory_update_remains_eligible_for_later_factory_versions(
             assert len(next_plan["changes"]) == 1
             assert client.post("/api/admin/prompt-factory-alignment/apply", json={"review_hash": next_plan["review_hash"]}).status_code == 200
             assert row.prompt == "A later English factory introduction."
+
+
+def test_selective_bulk_alignment_supports_partial_factory_and_explicit_customised_with_restore():
+    with artifact_session() as db:
+        step_a = old_factory_step(db, prompt_config.DEFAULT_GUIDED_STEPS[0])
+        step_b = old_factory_step(db, prompt_config.DEFAULT_ZTPI_GUIDED_STEPS[0])
+        other_inst = old_factory_step(db, prompt_config.DEFAULT_QSAR_GUIDED_STEPS[0])
+        other_inst.questionnaire_type = "QSA"
+        custom_text = "My instance custom generic prompt."
+        db.add(models.Config(key="prompt_generic", value=custom_text))
+        prompt_revisions.record(db, "config", "prompt_generic", custom_text, prompt_revisions.ORIGIN_ADMIN, author="local-admin")
+        db.commit()
+        configs, _ = factory_catalog()
+        with client_for(db) as client:
+            plan = client.get("/api/admin/prompt-factory-alignment/preview").json()
+            assert {c["key"] for c in plan["changes"]} == {step_a.id, step_b.id}
+            # Reject different_instrument or unknown keys even with a valid review_hash.
+            bad = client.post("/api/admin/prompt-factory-alignment/apply", json={
+                "review_hash": plan["review_hash"],
+                "selected": [{"scope": "guided_step", "key": other_inst.id}],
+            })
+            assert bad.status_code == 422
+            # Empty selection is a no-op.
+            noop = client.post("/api/admin/prompt-factory-alignment/apply", json={
+                "review_hash": plan["review_hash"], "selected": [],
+            })
+            assert noop.status_code == 200 and noop.json()["updated"] == 0
+            # Select one factory update + one customised prompt explicitly; leave step_b untouched.
+            res = client.post("/api/admin/prompt-factory-alignment/apply", json={
+                "review_hash": plan["review_hash"],
+                "selected": [
+                    {"scope": "guided_step", "key": step_a.id},
+                    {"scope": "config", "key": "prompt_generic"},
+                ],
+            })
+            assert res.status_code == 200, res.text
+            assert res.json()["updated"] == 2
+            db.expire_all()
+            assert db.get(models.GuidedStep, step_a.id).prompt == prompt_config.DEFAULT_GUIDED_STEPS[0]["prompt"]
+            assert db.get(models.GuidedStep, step_b.id).prompt == "Previous English factory instruction."
+            assert db.get(models.Config, "prompt_generic").value == configs["prompt_generic"]
+            # Previous custom version is kept in history and restorable.
+            revs = client.get("/api/admin/prompt-revisions", params={"scope": "config", "target_key": "prompt_generic"}).json()
+            assert revs[0]["value"] == configs["prompt_generic"]
+            assert revs[0]["author"] == "alignment-operator"
+            prev_custom = next(r for r in revs if r["value"] == custom_text)
+            restored = client.post(f"/api/admin/prompt-revisions/{prev_custom['id']}/restore")
+            assert restored.status_code == 200
+            db.expire_all()
+            assert db.get(models.Config, "prompt_generic").value == custom_text

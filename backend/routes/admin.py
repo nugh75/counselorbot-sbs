@@ -1229,13 +1229,16 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     # Coordinate even an unchanged-text ownership claim with factory alignment.
     db_config = db.query(models.Config).filter(models.Config.key == config.key).with_for_update().first()
+    versioned = prompt_revisions.is_versioned_config_key(config.key)
     if db_config:
+        if versioned and (db_config.value or "") != (config.value or ""):
+            prompt_revisions.ensure_baseline(db, prompt_revisions.SCOPE_CONFIG, config.key, db_config.value)
         db_config.value = config.value
         db_config.description = config.description
     else:
         db_config = models.Config(key=config.key, value=config.value, description=config.description)
         db.add(db_config)
-    if prompt_revisions.is_versioned_config_key(config.key):
+    if versioned:
         prompt_revisions.record(
             db,
             prompt_revisions.SCOPE_CONFIG,
@@ -1272,8 +1275,11 @@ async def apply_prompt_factory_alignment(
     db: Session = Depends(get_db),
 ):
     from ..prompt_factory_alignment import apply_review
+    selected = None if approval.selected is None else [item.model_dump() for item in approval.selected]
     try:
-        return apply_review(db, approval.review_hash, author=current_user.get("username"))
+        return apply_review(db, approval.review_hash, author=current_user.get("username"), selected=selected)
+    except LookupError as exc:
+        raise HTTPException(status_code=422, detail="prompt_alignment_invalid_selection") from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail="prompt_alignment_changed") from exc
 
@@ -1672,6 +1678,8 @@ async def admin_update_guided_step(step_id: str, update: schemas.GuidedStepUpdat
     if not db_step:
         raise HTTPException(status_code=404, detail="Step not found")
     update_data = update.model_dump(exclude_unset=True)
+    if "prompt" in update_data and (db_step.prompt or "") != (update_data["prompt"] or ""):
+        prompt_revisions.ensure_baseline(db, prompt_revisions.SCOPE_GUIDED_STEP, db_step.id, db_step.prompt)
     for field, value in update_data.items():
         setattr(db_step, field, value)
     if "prompt" in update_data:

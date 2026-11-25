@@ -12,7 +12,6 @@ import { personalAPIText } from '@/lib/i18n-personal-api';
 import { ExternalPrivacySettings } from '@/components/admin/ExternalPrivacySettings';
 import { DocumentRetrievalSettings } from '@/components/admin/DocumentRetrievalSettings';
 import { Callout } from '@/components/ui/Callout';
-import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
 import { ModelContextSettings } from '@/components/admin/ModelContextSettings';
 import { getAuthUrls } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
@@ -45,20 +44,6 @@ interface APIKeyStatus {
 }
 
 type APIKeyVerification = 'idle' | 'checking' | 'working' | 'failed';
-
-interface GuidedStep {
-    id: string;
-    sort_order: number;
-    label: string;
-    prompt: string;
-    system_prompt_mode: string;
-    color_theme: string;
-    questionnaire_type: string;
-    label_i18n?: Record<string, string> | null;
-    component_defaults?: Record<string, boolean | number> | null;
-    // Chiave del prompt di sistema risolta dal backend come a runtime.
-    system_prompt_key?: string | null;
-}
 
 // --- Constants ---
 
@@ -421,12 +406,9 @@ function placeholderMappingsFrom(configs: ConfigItem[]): Record<string, [string,
 export function ConfigForm() {
     const { t, lang } = useI18n();
     const [configs, setConfigs] = useState<ConfigItem[]>([]);
-    const [savedConfigs, setSavedConfigs] = useState<ConfigItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState<string>(readSectionParam);
     const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
-    const [factoryAlignmentBusy, setFactoryAlignmentBusy] = useState(false);
-    const [pendingPromptSaves, setPendingPromptSaves] = useState(0);
 
     const showToast = (type: 'success' | 'error', msg: string) => {
         setToast({ type, msg });
@@ -449,8 +431,6 @@ export function ConfigForm() {
     const [customModelMode, setCustomModelMode] = useState(false);
     const [customModelDraft, setCustomModelDraft] = useState('');
 
-    // Dynamic guided steps
-    const [guidedSteps, setGuidedSteps] = useState<GuidedStep[]>([]);
     const [placeholderDraft, setPlaceholderDraft] = useState<Record<string, [string, string]>>(() => placeholderMappingsFrom(configs));
     const [placeholderConfigs, setPlaceholderConfigs] = useState(configs);
     if (placeholderConfigs !== configs) {
@@ -467,17 +447,15 @@ export function ConfigForm() {
 
     const fetchConfigs = async () => {
         try {
-            const [configRes, envRes, apiKeysRes, stepsRes] = await Promise.all([
+            const [configRes, envRes, apiKeysRes] = await Promise.all([
                 fetch('/api/admin/config', { headers: authHeaders() }),
                 fetch('/api/admin/config/env-status', { headers: authHeaders() }),
                 fetch('/api/admin/api-keys', { headers: authHeaders() }),
-                fetch('/api/admin/guided-steps', { headers: authHeaders() }),
             ]);
 
             if (configRes.ok) {
                 const data: ConfigItem[] = await configRes.json();
                 setConfigs(data);
-                setSavedConfigs(data);
                 const prov = data.find(c => c.key === 'active_provider')?.value;
                 const mod = data.find(c => c.key === 'model_name')?.value;
                 if (prov !== undefined) setActiveProvider(prov || '');
@@ -488,7 +466,6 @@ export function ConfigForm() {
 
             if (envRes.ok) setEnvOverrides(await envRes.json());
             if (apiKeysRes.ok) setApiKeyStatuses(await apiKeysRes.json());
-            if (stepsRes.ok) { const steps: GuidedStep[] = await stepsRes.json(); setGuidedSteps(steps); }
         } catch (error) {
             console.error('Failed to fetch config', error);
         } finally {
@@ -576,7 +553,6 @@ export function ConfigForm() {
     // --- Config helpers ---
 
     const handleSaveConfig = async (item: ConfigItem): Promise<boolean> => {
-        setPendingPromptSaves(count => count + 1);
         try {
             const res = await fetch('/api/admin/config', {
                 method: 'POST',
@@ -584,7 +560,6 @@ export function ConfigForm() {
                 body: JSON.stringify(item),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            setSavedConfigs(previous => [...previous.filter(c => c.key !== item.key), item]);
             showToast('success', t('admin.config.saved'));
             if (isPromptConfigKey(item.key)) void notifyPromptSaved(`config:${item.key}`);
             return true;
@@ -592,8 +567,6 @@ export function ConfigForm() {
             console.error('Failed to save config', error);
             showToast('error', t('admin.config.saveError'));
             return false;
-        } finally {
-            setPendingPromptSaves(count => count - 1);
         }
     };
 
@@ -698,16 +671,6 @@ export function ConfigForm() {
     // An unknown `?section=` (old link, removed instrument) falls back to the general settings.
     const activeSection = sectionGroups.some(group => group.items.some(item => item.id === section)) ? section : 'general';
 
-    const hasUnsavedChanges = pendingPromptSaves > 0
-        || configs.some(item => item.value !== savedConfigs.find(saved => saved.key === item.key)?.value);
-
-    const applyFactoryResult = (result: FactoryAlignmentResult) => {
-        const updateConfigs = (items: ConfigItem[]) => items.map(item =>
-            Object.hasOwn(result.config_values, item.key) ? { ...item, value: result.config_values[item.key] } : item);
-        setConfigs(updateConfigs);
-        setSavedConfigs(updateConfigs);
-    };
-
     return (
         <div className="space-y-8">
             {/* Toast feedback salvataggi — portal su body: evita l'antenato con transform
@@ -726,13 +689,8 @@ export function ConfigForm() {
                 document.body
             )}
 
-            <PromptFactoryAlignment disabled={hasUnsavedChanges}
-                stepLabels={Object.fromEntries(guidedSteps.map(step => [step.id, `${step.questionnaire_type} — ${step.label_i18n?.[lang] || step.label}`]))}
-                onApplied={applyFactoryResult} onBusyChange={setFactoryAlignmentBusy} />
-
             <PromptHealthPanel />
 
-            <fieldset disabled={factoryAlignmentBusy} className="contents">
             {/* Filtro di sezione: impostazioni e strumenti raggruppati */}
             <div className="border-b border-line pb-4">
                 <SectionFilter
@@ -1395,8 +1353,6 @@ export function ConfigForm() {
 
             {/* 3. Strumento attivo: prompt, testi e step separati in tab interne */}
             {activeSection === 'prompt-map' && <PromptMap componentLabels={promptComponentText(lang).labels} />}
-
-            </fieldset>
         </div>
     );
 }

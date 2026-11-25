@@ -59,39 +59,8 @@ def factory_owned(db, scope, key, value, *, legacy=None, cached=False):
     return versioned_factory or digest(value) in legacy[group].get(key, [])
 
 
-# Testi di fabbrica che il proprietario ha deciso di riscrivere anche dove
-# l'admin li aveva personalizzati (audit di coerenza dei prompt, decisione 5.1).
-# L'allineamento li sovrascrive una volta: quando una revisione registra gia' il
-# nuovo testo, le modifiche successive dell'admin tornano a essere conservate.
-FORCED_FACTORY_KEYS = {
-    "config": {
-        "prompt_qsar_second_level",  # #748: B01, D04
-        # #749: i passi sui fattori e le sintesi non danno strategie (A07, A08, A13).
-        "prompt_second_level", "prompt_qpcs_summary", "prompt_qpcc_summary",
-        "prompt_qap_summary", "prompt_meta_QSA_sl-social", "prompt_qpcs_analysis",
-        # #751: QPCC senza i fattori fissi del passo (A06), contesto dell'Assistente
-        # senza i fatti che ora genera il codice (C07).
-        "prompt_qpcc_interview", "site_chat_platform_context",
-        # #750: le sintesi Obiettivi possono chiudere con una domanda (A04);
-        # l'area QPCS si apre con una definizione breve (A10).
-        "prompt_obiettivo_summary",
-    },
-    # #749: sintesi senza strategie nuove, passo ZTPI descrittivo.
-    "guided_step": {
-        "sl-synthesis", "qsar-synthesis", "ztpi-btp", "qpcs-sintesi", "qpcc-sintesi", "qap-sintesi",
-        "obbstudio-final", "obbdocenza-final",  # #750: sintesi con una domanda finale (A04)
-    },
-}
-
-
-def _forced(db, scope, key, after):
-    if key not in FORCED_FACTORY_KEYS[scope]:
-        return False
-    return db.query(models.PromptRevision.id).filter(
-        models.PromptRevision.scope == scope,
-        models.PromptRevision.target_key == key,
-        models.PromptRevision.value == after,
-    ).first() is None
+# Silent forced overwrites (FORCED_FACTORY_KEYS) were removed in #775:
+# customised prompts are never overwritten unless explicitly selected by the operator.
 
 
 def make_plan(db, *, lock_rows=False):
@@ -114,11 +83,17 @@ def make_plan(db, *, lock_rows=False):
             if scope == "guided_step" and (row.questionnaire_type or "").upper() != steps[key]["questionnaire_type"].upper():
                 preserved.append({"scope": scope, "key": key, "reason": "different_instrument"})
                 continue
-            if not factory_owned(db, scope, key, before, legacy=legacy) and not _forced(db, scope, key, after):
-                preserved.append({"scope": scope, "key": key, "reason": "personalised"})
+            if not factory_owned(db, scope, key, before, legacy=legacy):
+                preserved.append({
+                    "scope": scope, "key": key, "reason": "personalised",
+                    "before": before, "after": after,
+                    "expected_hash": digest(before), "status": "customised",
+                })
                 continue
-            changes.append({"scope": scope, "key": key, "before": before, "after": after,
-                            "expected_hash": digest(before)})
+            changes.append({
+                "scope": scope, "key": key, "before": before, "after": after,
+                "expected_hash": digest(before), "status": "factory_update",
+            })
     return {"version": 1, "changes": changes, "preserved": preserved}
 
 
@@ -126,18 +101,50 @@ def review_hash(plan):
     return digest(json.dumps(plan, sort_keys=True, ensure_ascii=False, separators=(",", ":")))
 
 
-def apply_review(db, expected_review_hash, *, author):
-    """Recompute under row locks and accept only the exact reviewed batch."""
+def apply_review(db, expected_review_hash, *, author, selected=None):
+    """Recompute under row locks and accept only the exact reviewed batch.
+
+    When `selected` is None, applies all factory-owned `changes` and leaves
+    customised prompts untouched. When `selected` is given as a list of
+    `{"scope", "key"}` entries, applies only those items — including
+    customised prompts when explicitly selected — and preserves every
+    previous version in `prompt_revisions`.
+    """
     try:
         plan = make_plan(db, lock_rows=True)
         if review_hash(plan) != expected_review_hash:
             raise ValueError("Factory prompts changed since review")
-        updated = apply_plan(db, plan, author=author, origin=prompt_revisions.ORIGIN_MIGRATION)
+        if selected is None:
+            chosen = plan["changes"]
+        else:
+            eligible = {
+                (item["scope"], item["key"]): item
+                for item in (
+                    *plan["changes"],
+                    *(p for p in plan["preserved"] if p.get("reason") == "personalised"),
+                )
+            }
+            seen = set()
+            chosen = []
+            for item in selected:
+                pair = (item["scope"], item["key"])
+                if pair in seen:
+                    continue
+                if pair not in eligible:
+                    raise LookupError(f"Prompt not eligible for alignment: {pair[0]}/{pair[1]}")
+                seen.add(pair)
+                chosen.append(eligible[pair])
+        if not chosen:
+            return {"updated": 0, "config_values": {}, "step_prompts": {}}
+        updated = apply_plan(
+            db, {"version": 1, "changes": chosen},
+            author=author, origin=prompt_revisions.ORIGIN_MIGRATION,
+        )
     except Exception:
         db.rollback()
         raise
     return {
         "updated": updated,
-        "config_values": {c["key"]: c["after"] for c in plan["changes"] if c["scope"] == "config"},
-        "step_prompts": {c["key"]: c["after"] for c in plan["changes"] if c["scope"] == "guided_step"},
+        "config_values": {c["key"]: c["after"] for c in chosen if c["scope"] == "config"},
+        "step_prompts": {c["key"]: c["after"] for c in chosen if c["scope"] == "guided_step"},
     }

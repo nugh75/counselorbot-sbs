@@ -106,8 +106,8 @@ def _not_found(exc: Exception) -> HTTPException:
 
 @router.get("/admin/prompt-health/map")
 def prompt_health_map(current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    """Paths x steps with the prompts and turns of each step (the status comes from the findings)."""
-    return {"paths": prompt_health.turn_map(db)}
+    """Paths x steps with prompts, turns and ownership status of every stored prompt."""
+    return {"paths": prompt_health.turn_map(db), "prompt_statuses": prompt_health.all_prompt_statuses(db)}
 
 
 @router.get("/admin/prompt-health/prompt")

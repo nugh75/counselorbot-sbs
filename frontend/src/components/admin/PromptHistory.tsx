@@ -34,7 +34,7 @@ const TEXTS = {
         restored: 'Prompt ripristinato', restore: 'Ripristina',
         confirm: 'Riportare il prompt a questa versione? Il testo attuale resta nella cronologia.',
         inUse: 'in uso', chars: 'caratteri',
-        origin: { seed: 'di fabbrica', migration: 'aggiornamento automatico', admin: 'modifica manuale' } as Record<string, string>,
+        origin: { seed: 'di fabbrica', migration: 'aggiornamento di fabbrica', admin: 'modifica manuale' } as Record<string, string>,
         noFactory: "Questo prompt era già stato personalizzato prima che la cronologia esistesse: il testo di fabbrica non è fra le revisioni. Lo trovi in backend/prompts/.",
     },
     en: {
@@ -44,7 +44,7 @@ const TEXTS = {
         restored: 'Prompt restored', restore: 'Restore',
         confirm: 'Roll this prompt back to that version? The current text stays in the history.',
         inUse: 'in use', chars: 'characters',
-        origin: { seed: 'factory', migration: 'automatic update', admin: 'manual edit' } as Record<string, string>,
+        origin: { seed: 'factory', migration: 'factory update', admin: 'manual edit' } as Record<string, string>,
         noFactory: 'This prompt had already been customised before the history existed, so the factory text is not among the revisions. You will find it in backend/prompts/.',
     },
     es: {
@@ -54,7 +54,7 @@ const TEXTS = {
         restored: 'Prompt restaurado', restore: 'Restaurar',
         confirm: '¿Volver a esta versión del prompt? El texto actual permanece en el historial.',
         inUse: 'en uso', chars: 'caracteres',
-        origin: { seed: 'de fábrica', migration: 'actualización automática', admin: 'edición manual' } as Record<string, string>,
+        origin: { seed: 'de fábrica', migration: 'actualización de fábrica', admin: 'edición manual' } as Record<string, string>,
         noFactory: 'Este prompt ya se había personalizado antes de que existiera el historial, por lo que el texto de fábrica no está entre las revisiones. Lo encontrarás en backend/prompts/.',
     },
     fr: {
@@ -64,7 +64,7 @@ const TEXTS = {
         restored: 'Prompt restauré', restore: 'Restaurer',
         confirm: 'Revenir à cette version du prompt ? Le texte actuel reste dans l’historique.',
         inUse: 'utilisé', chars: 'caractères',
-        origin: { seed: 'd’origine', migration: 'mise à jour automatique', admin: 'modification manuelle' } as Record<string, string>,
+        origin: { seed: 'd’origine', migration: 'mise à jour d’usine', admin: 'modification manuelle' } as Record<string, string>,
         noFactory: 'Ce prompt avait déjà été personnalisé avant l’existence de l’historique : le texte d’origine ne figure pas parmi les révisions. Vous le trouverez dans backend/prompts/.',
     },
     de: {
@@ -74,7 +74,7 @@ const TEXTS = {
         restored: 'Prompt wiederhergestellt', restore: 'Wiederherstellen',
         confirm: 'Den Prompt auf diese Version zurücksetzen? Der aktuelle Text bleibt im Verlauf.',
         inUse: 'in Verwendung', chars: 'Zeichen',
-        origin: { seed: 'Werkszustand', migration: 'automatische Aktualisierung', admin: 'manuelle Änderung' } as Record<string, string>,
+        origin: { seed: 'Werkszustand', migration: 'Werksaktualisierung', admin: 'manuelle Änderung' } as Record<string, string>,
         noFactory: 'Dieser Prompt war bereits angepasst, bevor es den Verlauf gab: Der Werkstext gehört nicht zu den Versionen. Sie finden ihn unter backend/prompts/.',
     },
     sv: {
@@ -84,7 +84,7 @@ const TEXTS = {
         restored: 'Prompten återställd', restore: 'Återställ',
         confirm: 'Vill du återgå till den här versionen av prompten? Den nuvarande texten finns kvar i historiken.',
         inUse: 'används', chars: 'tecken',
-        origin: { seed: 'fabriksversion', migration: 'automatisk uppdatering', admin: 'manuell ändring' } as Record<string, string>,
+        origin: { seed: 'fabriksversion', migration: 'fabriksuppdatering', admin: 'manuell ändring' } as Record<string, string>,
         noFactory: 'Den här prompten hade redan anpassats innan historiken fanns, så fabrikstexten finns inte bland versionerna. Du hittar den i backend/prompts/.',
     },
 };
@@ -195,6 +195,7 @@ export function PromptHistory({
                                     </span>
                                     <span className="text-2xs text-ink-muted">{formatDate(revision.created_at)}</span>
                                     {revision.author && <span className="text-2xs text-ink-muted">· {revision.author}</span>}
+                                    {revision.note && <span className="text-2xs text-ink-muted">· {revision.note}</span>}
                                     <span className="text-2xs text-ink-muted">· {revision.value.length} {texts.chars}</span>
                                     {isLive && (
                                         <span className="rounded-full bg-success-soft px-2 py-1 text-2xs font-semibold text-success-ink">

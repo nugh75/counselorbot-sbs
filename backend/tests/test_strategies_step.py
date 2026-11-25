@@ -251,8 +251,7 @@ def test_one_whitelist_for_readings():
     assert "catalogue" in en["sources_intro"]
 
 
-def test_forced_keys_cover_the_rewritten_factory_texts():
-    from backend.prompt_factory_alignment import FORCED_FACTORY_KEYS
-    assert {"prompt_second_level", "prompt_qpcs_summary", "prompt_qpcc_summary", "prompt_qap_summary",
-            "prompt_meta_QSA_sl-social"} <= FORCED_FACTORY_KEYS["config"]
-    assert {"sl-synthesis", "qsar-synthesis"} <= FORCED_FACTORY_KEYS["guided_step"]
+def test_forced_factory_keys_are_removed():
+    """#775 removes silent forced overwrites: customised prompts require explicit selection."""
+    from backend import prompt_factory_alignment
+    assert not hasattr(prompt_factory_alignment, "FORCED_FACTORY_KEYS")

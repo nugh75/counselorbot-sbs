@@ -420,9 +420,10 @@ def _compare_actions():
     assert client.delete(f"/admin/prompt-health/acks/{finding['id']}").status_code == 200
     assert client.get("/admin/prompt-health").json()["run"]["counts"]["total"] == total
 
-    # Prompt card: text, factory text, findings, turns where it arrives.
+    # Prompt card: text, factory text, ownership status, findings, turns where it arrives.
     card = client.get("/admin/prompt-health/prompt", params={"id": "guided_step:savickas-intro"}).json()
     assert card["text"] == card["factory"] and card["differs_from_factory"] is False
+    assert card["status"] == prompt_health.STATUS_FACTORY
     assert card["findings"] == []  # problem #2 fixed: the intro no longer states a wrong step count
     assert card["surfaces"] and card["editable"] is True
 
@@ -434,13 +435,17 @@ def _compare_actions():
     saved = client.post("/admin/prompt-health/save", json={"prompt_id": "config:prompt_meta_QSA", "text": draft})
     assert saved.status_code == 200, saved.text
     assert "unknown_placeholder" in {f["code"] for f in saved.json()["findings"]}
-    assert client.get("/admin/prompt-health/prompt", params={"id": "config:prompt_meta_QSA"}).json()["text"] == draft
+    saved_card = client.get("/admin/prompt-health/prompt", params={"id": "config:prompt_meta_QSA"}).json()
+    assert saved_card["text"] == draft and saved_card["status"] == prompt_health.STATUS_CUSTOMISED
     restored = client.post("/admin/prompt-health/restore-factory", json={"prompt_id": "config:prompt_meta_QSA"})
     assert restored.status_code == 200, restored.text
     card = client.get("/admin/prompt-health/prompt", params={"id": "config:prompt_meta_QSA"}).json()
     assert card["text"] == card["factory"] and card["customised"] is False
+    assert card["status"] == prompt_health.STATUS_FACTORY
     assert client.post("/admin/prompt-health/save", json={"prompt_id": "code:turn_contract", "text": "x"}).status_code == 422
-    assert client.get("/admin/prompt-health/map").json()["paths"]
+    map_payload = client.get("/admin/prompt-health/map").json()
+    assert map_payload["paths"]
+    assert map_payload["prompt_statuses"]["config:prompt_meta_QSA"] == prompt_health.STATUS_FACTORY
     db = _Session()
     db.query(models.PromptRevision).filter(models.PromptRevision.target_key == "prompt_meta_QSA").delete()
     db.commit()

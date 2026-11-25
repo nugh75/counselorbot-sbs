@@ -1,20 +1,18 @@
 # Allineamento dei prompt di fabbrica dall’amministrazione
 
-Il pulsante **Allinea prompt di fabbrica** è comune alla pagina Amministrazione,
-sopra le schede delle risorse. Si applica a tutte le istruzioni registrate delle
-chat e ai dodici percorsi guidati, non soltanto a QSA. L’interfaccia è tradotta
-in IT/EN/ES/FR/DE/SV; i testi di fabbrica per il modello rimangono in inglese.
+Il pulsante **Allinea prompt di fabbrica** vive dentro **Amministrazione › Salute dei prompt** (consolidato lì con #775; nessun secondo controllo in Configurazione). Si applica a tutte le istruzioni registrate delle chat e ai dodici percorsi guidati, non soltanto a QSA. L’interfaccia è tradotta in IT/EN/ES/FR/DE/SV; i testi di fabbrica per il modello rimangono in inglese.
 
 ## Uso
 
 1. Aggiornare e avviare frontend e backend della stessa versione. Con Docker,
    aggiornare anche le immagini: il solo pull non cambia il codice nel container.
-2. Salvare o annullare le bozze nell’editor e attendere i salvataggi in corso.
-3. Aprire **Allinea prompt di fabbrica**. L’operazione è di sola lettura.
-4. Espandere gli elementi per confrontare testo attuale e nuovo testo; controllare
-   anche l’elenco dei prompt personalizzati o di altro strumento conservati.
-5. Se il confronto è corretto, premere **Conferma allineamento**. La pagina
-   aggiorna i testi applicati negli editor e registra le versioni precedenti.
+2. Aprire **Amministrazione › Salute dei prompt** e premere **Allinea prompt di fabbrica**. L’operazione è di sola lettura.
+3. Rivedere i due elenchi separati:
+   - **Aggiornamenti di fabbrica da rivedere** (selezionati di default, deselezionabili singolarmente o tutti insieme), con diff riga per riga e confronto prima/dopo;
+   - **Prompt personalizzati qui** (deselezionati di default, richiedono selezione esplicita), con diff rispetto alla fabbrica.
+4. Premere **Applica selezione** per applicare solo i prompt scelti. Ogni testo precedente resta in `prompt_revisions` ed è ripristinabile dalla cronologia.
+
+La sovrascrittura forzata (`FORCED_FACTORY_KEYS`) è stata rimossa in #775: nessun prompt personalizzato viene più sovrascritto senza selezione esplicita.
 
 Chiudere il pannello non applica nulla. Se non ci sono testi di fabbrica da
 aggiornare, manca il comando di conferma. Se il server segnala un conflitto,
@@ -55,10 +53,8 @@ riconoscere anche un database che non dispone dello storico.
 ## API
 
 - `GET /api/admin/prompt-factory-alignment/preview`: versione del piano,
-  differenze prima/dopo, testi conservati e `review_hash`.
-- `POST /api/admin/prompt-factory-alignment/apply`: accetta soltanto
-  `{ "review_hash": "…" }`; restituisce conteggio e valori effettivamente
-  aggiornati per sincronizzare gli editor.
+  differenze prima/dopo e stato (`factory_update` in `changes`, `customised` con diff in `preserved` per `reason="personalised"`), testi `different_instrument` conservati e `review_hash`.
+- `POST /api/admin/prompt-factory-alignment/apply`: accetta `{ "review_hash": "…" }` (applica tutti i `changes`, mai i personalizzati) oppure `{ "review_hash": "…", "selected": [{ "scope": "config"|"guided_step", "key": "…" }] }` (applica solo la selezione, inclusi eventuali personalizzati scelti esplicitamente; 422 su selezioni non ammesse, 409 se il piano è cambiato).
 
 Entrambe usano il guard amministrativo esistente. Il client non può fornire
 testi da scrivere né destinazioni arbitrarie. Alla conferma il server ricostruisce

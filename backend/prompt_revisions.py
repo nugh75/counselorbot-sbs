@@ -38,15 +38,20 @@ def is_versioned_config_key(key: str) -> bool:
 
     `configs` ospita anche impostazioni operative (provider attivo, flag PII,
     nomi di modello): versionarle riempirebbe la storia di rumore. Le chiavi
-    dichiarate nei registri di `prompt_config` sono l'elenco autorevole; le
-    varianti per lingua (`text_ztpi_conclusion__en`) seguono la chiave base.
+    dichiarate nei registri di `prompt_config` e le famiglie dinamiche del
+    registro prompt sono l'elenco autorevole; le varianti per lingua
+    (`text_ztpi_conclusion__en`) seguono la chiave base.
     """
+    from . import prompt_registry
     from .prompt_config import ALL_CONFIG_TEXT_DEFINITIONS
 
     known = {item["key"] for item in ALL_CONFIG_TEXT_DEFINITIONS}
     base = key.split("__", 1)[0]
-    return key in known or base in known or (
-        "__level_" in key and base.startswith(("guided_step:", "counselor_persona:", "prompt_meta_"))
+    return (
+        key in known
+        or base in known
+        or prompt_registry.config_entry(key) is not None
+        or ("__level_" in key and base.startswith(("guided_step:", "counselor_persona:", "prompt_meta_")))
     )
 
 
@@ -160,6 +165,28 @@ def write_live(db: Session, scope: str, target_key: str, value: str) -> bool:
     return True
 
 
+def ensure_baseline(
+    db: Session,
+    scope: str,
+    target_key: str,
+    current_value: Optional[str],
+) -> bool:
+    """Registra il testo vivo prima di sovrascriverlo, se non e' gia' l'ultima revisione.
+
+    Garantisce che ogni versione precedente resti nello storico e sia ripristinabile,
+    anche su database dove una riga e' stata seminata prima della prima modifica.
+    """
+    text = current_value or ""
+    previous = latest(db, scope, target_key)
+    if previous is not None and previous.value == text:
+        return False
+    origin = ORIGIN_SEED if previous is None else ORIGIN_MIGRATION
+    if record(db, scope, target_key, text, origin, note="versione precedente"):
+        db.flush()
+        return True
+    return False
+
+
 def restore(db: Session, revision: models.PromptRevision, author: Optional[str] = None) -> bool:
     """Riporta la riga viva al testo di una revisione passata.
 
@@ -169,6 +196,10 @@ def restore(db: Session, revision: models.PromptRevision, author: Optional[str] 
     stare).
     """
     scope, target_key = revision.scope, revision.target_key
+    current = live_value(db, scope, target_key)
+    if current is None:
+        return False
+    ensure_baseline(db, scope, target_key, current)
     if not write_live(db, scope, target_key, revision.value):
         return False
 

@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { PromptHistory } from '@/components/admin/PromptHistory';
 import {
     canPropose, findingRanges, highlightSegments, lineDiff, mergeFindings, messageParams, otherSentence, promptLabel,
-    type PromptHealthFinding, type PromptHealthProposal, type PromptHealthRange,
+    promptOwnershipStatus, promptScopeAndKey,
+    type PromptHealthFinding, type PromptHealthProposal, type PromptHealthRange, type PromptOwnershipStatus,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
 import { usePromptName, useSurfaceName } from './PromptHealthLabels';
@@ -23,6 +25,7 @@ export interface PromptCard {
     text: string | null;
     factory: string | null;
     editable: boolean;
+    status?: PromptOwnershipStatus;
     differs_from_factory: boolean;
     customised: boolean;
     consumer: string | null;
@@ -169,7 +172,8 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
         setStatus(null);
         try {
             const result = await postJson<{ findings: PromptHealthFinding[] }>('/api/admin/prompt-health/save', { prompt_id: panel.id, text: draft });
-            onSaved({ ...(card as PromptCard), text: draft, differs_from_factory: card?.factory != null && draft !== card.factory, customised: true }, result.findings);
+            const differs = card?.factory != null && draft !== card.factory;
+            onSaved({ ...(card as PromptCard), text: draft, differs_from_factory: differs, customised: true, status: differs ? 'customised' : 'factory' }, result.findings);
             setStatus('saved');
         } catch {
             setStatus('error');
@@ -184,7 +188,7 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
         setStatus(null);
         try {
             const result = await postJson<{ text: string }>('/api/admin/prompt-health/restore-factory', { prompt_id: panel.id });
-            onSaved({ ...(card as PromptCard), text: result.text, differs_from_factory: false, customised: false });
+            onSaved({ ...(card as PromptCard), text: result.text, differs_from_factory: false, customised: false, status: 'factory' });
             setStatus('restored');
         } catch {
             setStatus('error');
@@ -192,6 +196,9 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
             setBusy(false);
         }
     };
+
+    const historyTarget = promptScopeAndKey(panel.id);
+    const ownership = card ? promptOwnershipStatus(card) : null;
 
     const caret = (position: number) => {
         const hit = ranges.find(range => range.start <= position && position <= range.end);
@@ -203,8 +210,8 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
             <div className="min-w-0 flex-1">
                 <h3 id={`${listId}-title`} className="break-words text-sm font-semibold text-ink-strong">{name(panel.id)}</h3>
                 <details className="text-xs text-ink-muted"><summary className="cursor-pointer">{t('admin.promptHealth.resolve.references')}</summary><p className="break-words font-mono">{panel.id}</p></details>
-                {card && <p className="text-xs text-ink-muted">
-                    {card.customised ? t('admin.promptHealth.card.customised') : card.differs_from_factory ? t('admin.promptHealth.card.differs') : t('admin.promptHealth.card.factory')}
+                {card && ownership && <p className="text-xs text-ink-muted">
+                    {t(`admin.promptHealth.ownership.${ownership}`)}
                     {dirty && <> · <span className="font-semibold text-warning-ink">{t('admin.promptHealth.compare.unsaved')}</span></>}
                 </p>}
             </div>
@@ -280,6 +287,16 @@ function ComparePanel({ panel, paths, findings, checking, focus, proposal, propo
                 </div>
             </div>}
             {diff && card.factory != null && <DiffView before={card.factory} after={draft} />}
+            {historyTarget && <PromptHistory
+                scope={historyTarget.scope}
+                targetKey={historyTarget.key}
+                currentValue={card.text ?? ''}
+                onRestored={restoredValue => {
+                    const differs = card.factory != null && restoredValue !== card.factory;
+                    onSaved({ ...card, text: restoredValue, differs_from_factory: differs, customised: true, status: differs ? 'customised' : 'factory' });
+                    setStatus('restored');
+                }}
+            />}
         </>}
     </Card>;
 }
