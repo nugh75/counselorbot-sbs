@@ -70,6 +70,7 @@ export function PromptHealthPanel() {
     const { t, lang } = useI18n();
     const panelId = useId();
     const [run, setRun] = useState<PromptHealthRun | null>(null);
+    const [pendingProposals, setPendingProposals] = useState(0);
     const [open, setOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(false);
@@ -78,12 +79,18 @@ export function PromptHealthPanel() {
     const fetchRun = useCallback(async () => {
         const response = await apiFetch('/api/admin/prompt-health');
         if (!response.ok) throw new Error('load');
-        return ((await response.json()) as { run: PromptHealthRun | null }).run;
+        const payload = await response.json();
+        return {
+            run: payload.run as PromptHealthRun | null,
+            pendingProposals: typeof payload.pending_proposals === 'number' ? payload.pending_proposals : 0,
+        };
     }, []);
 
     const load = useCallback(async () => {
         try {
-            setRun(await fetchRun());
+            const summary = await fetchRun();
+            setRun(summary.run);
+            setPendingProposals(summary.pendingProposals);
             setError(false);
         } catch {
             setError(true);
@@ -93,9 +100,10 @@ export function PromptHealthPanel() {
     useEffect(() => {
         let active = true;
         fetchRun()
-            .then((nextRun) => {
+            .then((summary) => {
                 if (!active) return;
-                setRun(nextRun);
+                setRun(summary.run);
+                setPendingProposals(summary.pendingProposals);
                 setError(false);
             })
             .catch(() => {
@@ -138,6 +146,9 @@ export function PromptHealthPanel() {
             {t('admin.promptHealth.action')}
             {run && <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${severity ? SEVERITY_CLASS[severity] : 'border-success-line bg-success-soft text-success-ink'}`}>
                 {t('admin.promptHealth.count', { count: total })}
+            </span>}
+            {pendingProposals > 0 && <span className="rounded-full border border-warning-line bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning-ink">
+                {t('admin.promptProposals.badge', { count: pendingProposals })}
             </span>}
         </Button>
 
