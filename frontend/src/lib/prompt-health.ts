@@ -362,3 +362,22 @@ export interface PromptFactoryProposalsResponse {
     proposals: PromptFactoryProposal[];
     ignored: PromptFactoryProposal[];
 }
+
+export interface MaintainerPromoteInfo {
+    enabled: boolean;
+    promotable: boolean;
+    file_path?: string | null;
+    reason?: string | null;
+}
+
+/** True only in maintainer mode when this customised prompt maps cleanly to a factory file (#777). */
+export function canPromoteToFactory(card: {
+    differs_from_factory?: boolean;
+    maintainer_promote?: MaintainerPromoteInfo;
+}): boolean {
+    return Boolean(
+        card.maintainer_promote?.enabled
+        && card.maintainer_promote?.promotable
+        && card.differs_from_factory,
+    );
+}

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { isFirstLevelPrompt, isPromptConfigKey, messageParams, promptHealthId, promptLabel, promptOwnershipStatus, promptScopeAndKey, topSeverity, visibleSurfaces } from './prompt-health.ts';
+import { canPromoteToFactory, isFirstLevelPrompt, isPromptConfigKey, messageParams, promptHealthId, promptLabel, promptOwnershipStatus, promptScopeAndKey, topSeverity, visibleSurfaces } from './prompt-health.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { PROMPT_HEALTH_DICTS } from './i18n-prompt-health.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
@@ -62,6 +62,10 @@ test('ownership status helper and alignment dictionaries cover all six languages
     assert.equal(isFirstLevelPrompt(1), true);
     assert.equal(isFirstLevelPrompt(2), false);
     assert.equal(isFirstLevelPrompt(undefined), false);
+    assert.equal(canPromoteToFactory({ differs_from_factory: true }), false);
+    assert.equal(canPromoteToFactory({ differs_from_factory: false, maintainer_promote: { enabled: true, promotable: true } }), false);
+    assert.equal(canPromoteToFactory({ differs_from_factory: true, maintainer_promote: { enabled: true, promotable: false } }), false);
+    assert.equal(canPromoteToFactory({ differs_from_factory: true, maintainer_promote: { enabled: true, promotable: true } }), true);
 
     const alignmentKeys = Object.keys(PROMPT_ALIGNMENT_DICTS.it).sort();
     for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv'] as const) {
@@ -76,6 +80,9 @@ test('ownership status helper and alignment dictionaries cover all six languages
         }
         for (const key of ['label', '1', '2', 'confirmTitle', 'confirmBody', 'confirmConsequences', 'confirmAction', 'cancel'] as const) {
             assert.ok(PROMPT_HEALTH_DICTS[lang][`admin.promptHealth.level.${key}`], `${lang} level ${key}`);
+        }
+        for (const key of ['action', 'targetFile', 'noteLabel', 'notePlaceholder', 'confirm', 'submitting', 'saveFirst', 'unsupported', 'success', 'error'] as const) {
+            assert.ok(PROMPT_HEALTH_DICTS[lang][`admin.promptHealth.promote.${key}`], `${lang} promote ${key}`);
         }
     }
 });

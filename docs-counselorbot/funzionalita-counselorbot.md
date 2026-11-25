@@ -4081,3 +4081,13 @@ Nessun prompt è bloccato, ma in **Amministrazione › Salute dei prompt** il li
 un prompt di 1° livello richiede una doppia conferma con avviso esplicito sulle
 conseguenze (`confirm_first_level`). Nessuna modifica ai dati o alla Guida
 interfaccia.
+
+### Modalità maintainer per promozione a testo di fabbrica (#777)
+
+Sulle sole istanze configurate esplicitamente come istanza maintainer
+(`PROMPT_MAINTAINER_MODE=true` e token GitHub valido), i prompt modificabili
+che differiscono dal default di fabbrica mostrano in **Amministrazione › Salute
+dei prompt** l'azione **«Rendi testo di fabbrica»**, che apre una Pull Request su
+GitHub (`POST /api/admin/prompt-health/promote-factory`) aggiornando il relativo
+file in `backend/prompts/*.md` o `backend/prompt_config.py`. Sulle istanze
+distribuite i testi di fabbrica restano in sola lettura e l'azione non compare.
