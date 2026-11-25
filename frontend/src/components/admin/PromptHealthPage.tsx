@@ -17,8 +17,8 @@ import {
     type PromptCard, type PromptHealthPath, type PromptHealthStep,
 } from '@/components/admin/PromptCompare';
 import {
-    cellStatus, hasCodeSource, mergeFindings, promptOwnershipStatus, promptScopeAndKey, visibleSurfaces,
-    type PromptCellStatus, type PromptHealthFinding, type PromptHealthRun, type PromptOwnershipStatus,
+    cellStatus, hasCodeSource, isFirstLevelPrompt, mergeFindings, promptOwnershipStatus, promptScopeAndKey, visibleSurfaces,
+    type PromptCellStatus, type PromptHealthFinding, type PromptHealthRun, type PromptLevel, type PromptOwnershipStatus,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
 import { FindingCard } from './PromptHealthFinding';
@@ -46,6 +46,19 @@ function OwnershipBadge({ status }: { status: PromptOwnershipStatus }) {
     const { t } = useI18n();
     return <span className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-semibold', OWNERSHIP_BADGE[status])}>
         {t(`admin.promptHealth.ownership.${status}`)}
+    </span>;
+}
+
+function LevelBadge({ level }: { level?: PromptLevel }) {
+    const { t } = useI18n();
+    if (!level) return null;
+    return <span className={cn(
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-semibold',
+        isFirstLevelPrompt(level)
+            ? 'border-warning-line bg-warning-soft text-warning-ink'
+            : 'border-line bg-surface-sunken text-ink-muted',
+    )}>
+        {t(`admin.promptHealth.level.${level}`)}
     </span>;
 }
 
@@ -81,6 +94,7 @@ function PromptCardView({ id, paths, onCompare, onChanged, onClose }: {
             <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
                 <dt className="font-semibold text-ink-body">{t('admin.promptHealth.card.state')}</dt>
                 <dd>{ownership && <OwnershipBadge status={ownership} />}</dd>
+                {card.level && <><dt className="font-semibold text-ink-body">{t('admin.promptHealth.level.label')}</dt><dd><LevelBadge level={card.level} /></dd></>}
                 {card.consumer && <><dt className="font-semibold text-ink-body">{t('admin.promptHealth.card.consumer')}</dt><dd className="break-words font-mono text-xs text-ink-muted">{card.consumer}</dd></>}
                 <dt className="font-semibold text-ink-body">{t('admin.promptHealth.card.arrives')}</dt>
                 <dd className="break-words text-ink-muted">{where
@@ -139,9 +153,10 @@ function PathMap({ paths, findings, selected, onSelect }: {
     </div>;
 }
 
-/** Elenco completo dei prompt salvati nel database con stato rispetto alla fabbrica (#775). */
-function PromptStatusCatalog({ statuses, paths, selectedId, onOpen }: {
+/** Elenco completo dei prompt salvati nel database con stato rispetto alla fabbrica (#775, #778). */
+function PromptStatusCatalog({ statuses, levels, paths, selectedId, onOpen }: {
     statuses: Record<string, PromptOwnershipStatus>;
+    levels: Record<string, PromptLevel>;
     paths: PromptHealthPath[];
     selectedId: string | null;
     onOpen: (id: string) => void;
@@ -220,7 +235,10 @@ function PromptStatusCatalog({ statuses, paths, selectedId, onOpen }: {
                             {item.label}
                             <code className="ml-2 font-mono text-xs font-normal text-ink-muted">{item.id}</code>
                         </span>
-                        <OwnershipBadge status={item.status} />
+                        <span className="flex flex-wrap items-center gap-1.5">
+                            <LevelBadge level={levels[item.id]} />
+                            <OwnershipBadge status={item.status} />
+                        </span>
                     </button>
                 </li>)}
             </ul>}
@@ -232,6 +250,7 @@ async function fetchHealth(): Promise<{
     pendingProposals: number;
     paths: PromptHealthPath[];
     promptStatuses: Record<string, PromptOwnershipStatus>;
+    promptLevels: Record<string, PromptLevel>;
     llm: PromptHealthFinding[];
 }> {
     const [health, map, llm] = await Promise.all([apiFetch('/api/admin/prompt-health'), apiFetch('/api/admin/prompt-health/map'),
@@ -245,11 +264,12 @@ async function fetchHealth(): Promise<{
         pendingProposals: typeof healthPayload.pending_proposals === 'number' ? healthPayload.pending_proposals : 0,
         paths: mapPayload.paths,
         promptStatuses: mapPayload.prompt_statuses ?? {},
+        promptLevels: mapPayload.prompt_levels ?? {},
         llm: llmFindings,
     };
 }
 
-/** Pagina «Salute dei prompt» (#761, #775, #776): problemi, stato prompt, proposte e allineamento di fabbrica, confronto. */
+/** Pagina «Salute dei prompt» (#761, #775, #776, #778): problemi, stato prompt, proposte e allineamento di fabbrica, confronto. */
 export function PromptHealthPage() {
     const { t, lang } = useI18n();
     const [run, setRun] = useState<PromptHealthRun | null>(null);
@@ -257,6 +277,7 @@ export function PromptHealthPage() {
     const [proposalsVersion, setProposalsVersion] = useState(0);
     const [paths, setPaths] = useState<PromptHealthPath[]>([]);
     const [promptStatuses, setPromptStatuses] = useState<Record<string, PromptOwnershipStatus>>({});
+    const [promptLevels, setPromptLevels] = useState<Record<string, PromptLevel>>({});
     const [error, setError] = useState(false);
     const [busy, setBusy] = useState(false);
     const [step, setStep] = useState<PromptHealthStep | null>(null);
@@ -273,6 +294,7 @@ export function PromptHealthPage() {
         setPendingProposals(state.pendingProposals);
         setPaths(state.paths);
         setPromptStatuses(state.promptStatuses);
+        setPromptLevels(state.promptLevels);
         setLlmFindings(state.llm);
         setProposalsVersion(v => v + 1);
         setError(false);
@@ -283,6 +305,7 @@ export function PromptHealthPage() {
             setPendingProposals(state.pendingProposals);
             setPaths(state.paths);
             setPromptStatuses(state.promptStatuses);
+            setPromptLevels(state.promptLevels);
             setLlmFindings(state.llm);
         }).catch(() => setError(true));
     }, []);
@@ -395,7 +418,7 @@ export function PromptHealthPage() {
         <details className="rounded-card border border-line bg-surface p-6">
             <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptHealth.catalog.title')}</summary>
             <div className="mt-4">
-                <PromptStatusCatalog statuses={promptStatuses} paths={paths} selectedId={cardId} onOpen={openCard} />
+                <PromptStatusCatalog statuses={promptStatuses} levels={promptLevels} paths={paths} selectedId={cardId} onOpen={openCard} />
             </div>
         </details>
 

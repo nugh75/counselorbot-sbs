@@ -2,6 +2,11 @@
 
 export type PromptHealthSeverity = 'high' | 'medium' | 'low';
 export type PromptOwnershipStatus = 'factory' | 'customised' | 'factory_update' | 'code';
+export type PromptLevel = 1 | 2;
+
+export function isFirstLevelPrompt(level?: number | null): boolean {
+    return level === 1;
+}
 
 export function promptOwnershipStatus(card: {
     status?: PromptOwnershipStatus;
@@ -342,6 +347,7 @@ export interface PromptFactoryProposal {
     scope: 'config' | 'guided_step';
     key: string;
     status: 'factory_update' | 'customised';
+    level?: PromptLevel;
     current_text: string;
     factory_text: string;
     current_hash: string;
