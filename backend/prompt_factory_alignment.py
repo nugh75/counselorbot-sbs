@@ -140,6 +140,16 @@ def apply_review(db, expected_review_hash, *, author, selected=None):
             db, {"version": 1, "changes": chosen},
             author=author, origin=prompt_revisions.ORIGIN_MIGRATION,
         )
+        for item in chosen:
+            (
+                db.query(models.PromptFactoryProposalDismissal)
+                .filter(
+                    models.PromptFactoryProposalDismissal.scope == item["scope"],
+                    models.PromptFactoryProposalDismissal.target_key == item["key"],
+                )
+                .delete(synchronize_session=False)
+            )
+        db.commit()
     except Exception:
         db.rollback()
         raise
