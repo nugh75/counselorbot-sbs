@@ -25,8 +25,8 @@ from backend import (
     auth,
     models,
     prompt_factory_source,
-    prompt_health,
     prompt_maintainer,
+    prompt_registry,
     prompt_revisions,
 )
 from backend.routes import prompt_health as prompt_health_routes
@@ -127,8 +127,6 @@ def test_promote_to_factory_opens_github_pr_without_leaking_token(db, monkeypatc
     monkeypatch.setenv("PROMPT_MAINTAINER_GITHUB_REPO", "nugh75/counselorbot-sbs")
     monkeypatch.setenv("PROMPT_MAINTAINER_GITHUB_BASE_BRANCH", "main")
 
-    factory_original = prompt_health.prompt_card(db, "config:prompt_generic")["factory"] if False else None
-    from backend import prompt_registry
     entry = prompt_registry.config_entry("prompt_generic")
     assert entry is not None
     factory_original = prompt_registry.factory_text(entry) or ""
@@ -186,7 +184,6 @@ def test_promote_rejects_unchanged_prompt_with_409(db, monkeypatch):
     monkeypatch.setenv("PROMPT_MAINTAINER_MODE", "true")
     monkeypatch.setenv("PROMPT_MAINTAINER_GITHUB_TOKEN", "ghp_test_token")
 
-    from backend import prompt_registry
     entry = prompt_registry.config_entry("prompt_generic")
     assert entry is not None
     factory_text = prompt_registry.factory_text(entry) or ""

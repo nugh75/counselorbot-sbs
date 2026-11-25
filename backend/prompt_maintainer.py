@@ -18,7 +18,7 @@ from urllib.parse import quote
 import httpx
 from sqlalchemy.orm import Session
 
-from . import prompt_health, prompt_registry
+from . import models, prompt_registry
 from .prompt_factory_source import apply_factory_text, resolve_factory_source
 
 logger = logging.getLogger(__name__)
@@ -138,6 +138,27 @@ def _pr_body(
     return "\n".join(lines)
 
 
+def _load_editable_prompt(db: Session, prompt_id: str) -> tuple[str, str | None]:
+    """Load current text and factory default without importing `prompt_health`."""
+    kind, sep, key = prompt_id.partition(":")
+    if not sep or kind not in ("config", "guided_step"):
+        raise LookupError(prompt_id)
+    if kind == "config":
+        row = db.query(models.Config).filter(models.Config.key == key).first()
+        if row is None:
+            raise LookupError(prompt_id)
+        text = row.value or ""
+        entry = prompt_registry.config_entry(key)
+    else:
+        row = db.query(models.GuidedStep).filter(models.GuidedStep.id == key).first()
+        if row is None:
+            raise LookupError(prompt_id)
+        text = row.prompt or ""
+        entry = prompt_registry.step_entry(key)
+    factory = prompt_registry.factory_text(entry) if entry is not None else None
+    return text, factory
+
+
 def promote_prompt_to_factory(
     db: Session,
     prompt_id: str,
@@ -154,17 +175,16 @@ def promote_prompt_to_factory(
     base_branch = _base_branch()
     token = _read_secret_or_env("PROMPT_MAINTAINER_GITHUB_TOKEN")
 
-    card = prompt_health.prompt_card(db, prompt_id)
-    if not card.get("editable") or card.get("text") is None or card.get("factory") is None:
+    current_text, factory = _load_editable_prompt(db, prompt_id)
+    if factory is None:
         raise ValueError("prompt_not_promotable")
-    if not card.get("differs_from_factory"):
+    if current_text == factory:
         raise ValueError("prompt_matches_factory")
 
     source = resolve_factory_source(prompt_id)
     if source.kind not in ("md", "inline") or not source.file_path:
         raise ValueError(source.reason or "composed_or_dynamic_factory_source")
 
-    current_text: str = card["text"]
     headers = _github_headers(token)
     encoded_path = quote(source.file_path, safe="/")
     now_stamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
@@ -231,7 +251,7 @@ def promote_prompt_to_factory(
                         file_path=source.file_path,
                         actor=actor,
                         note=note,
-                        before=card["factory"],
+                        before=factory,
                         after=current_text,
                     ),
                 },
