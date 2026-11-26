@@ -754,7 +754,9 @@ test('zoom 200%: the bar still fits, the menu or the account panel opens', async
             await page.goto(`${origin}/guide`);
             const expected = expectedNavbar('R', width, { resume: { rows: FROZEN_ROWS.map(row => row.label) } });
             await eventually(() => names(header(page)), expected.bar, 'bar');
-            await header(page).getByText('Counselor Sintetico', { exact: true }).or(trigger(page)).first().waitFor();
+            await (width < 1024
+                ? trigger(page).waitFor()
+                : header(page).getByText('Counselor Sintetico', { exact: true }).waitFor());
             assert.deepEqual(await headerFit(page), { overlaps: [], outside: [], cut: [] }, `${width}px at 200%`);
             await noHorizontalScroll(page);
             await (width < 1024 ? trigger(page) : accountTrigger(page)).click();

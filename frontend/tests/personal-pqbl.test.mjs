@@ -4,7 +4,15 @@ import { chromium } from 'playwright';
 
 const origin = process.env.ACCOUNT_BASE_URL || 'http://127.0.0.1:3000';
 let browser;
-before(async () => { browser = await chromium.launch({ headless: true }); });
+before(async () => {
+    browser = await chromium.launch({ headless: true });
+    // Next dev compiles a route on its first hit; warm the legacy redirect and
+    // its target so a cold first navigation cannot be aborted mid-load.
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(`${origin}/profilo/pqbl`, { waitUntil: 'domcontentloaded' }).catch(() => {});
+    await context.close();
+});
 after(async () => { await browser.close(); });
 
 const progress = {
