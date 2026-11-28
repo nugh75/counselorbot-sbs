@@ -166,14 +166,14 @@ Ordine consigliato: `#1028` → `#1029` → `#1030` + `#1031` → `#1032`.
 
 ## Macro-Tema 3 — Qualità tecnica, test, lint e chiusura residui UI
 
-**Totale: 3 issue aperte** · **Milestone:** [#22](https://github.com/nugh75/counselorbot-sbs/milestone/22) (`1 open / 21 closed`), [#42](https://github.com/nugh75/counselorbot-sbs/milestone/42) (`1 open / 60 closed`), [#21](https://github.com/nugh75/counselorbot-sbs/milestone/21) *(milestone già chiusa su GitHub)*.
+**Totale: 2 issue aperte** · **Milestone:** [#22](https://github.com/nugh75/counselorbot-sbs/milestone/22) (`1 open / 21 closed`), [#42](https://github.com/nugh75/counselorbot-sbs/milestone/42) (`1 open / 60 closed`), [#21](https://github.com/nugh75/counselorbot-sbs/milestone/21) *(milestone già chiusa su GitHub)*.
 
 - [x] [#773](https://github.com/nugh75/counselorbot-sbs/issues/773) — `chore: refactor fetch-on-mount loaders flagged by react-hooks/set-state-in-effect`
   - **Milestone:** [#22 — Green test baseline](https://github.com/nugh75/counselorbot-sbs/milestone/22)
   - **Stato:** `Completata (PR #1040 mergiata)` — dopo PR `#1035` (Chat/QSA + Docente) e PR `#1036` (Area personale), rifattorizzati gli ultimi **34 file** di `frontend/src/components/admin/` (**0 errori ESLint**) e portato `ESLINT_MAX_ERRORS` da `39` a `0` in [`.github/workflows/frontend-lint.yml`](../../.github/workflows/frontend-lint.yml). Milestone [#22](https://github.com/nugh75/counselorbot-sbs/milestone/22) completata.
-- [ ] [#911](https://github.com/nugh75/counselorbot-sbs/issues/911) — `Rewrite stale browser tests to match the current app`
+- [x] [#911](https://github.com/nugh75/counselorbot-sbs/issues/911) — `Rewrite stale browser tests to match the current app`
   - **Milestone:** [#42 — UI consistency](https://github.com/nugh75/counselorbot-sbs/milestone/42)
-  - **Stato:** `In corso / residui` — dopo PR `#1038`, questo lotto corregge due bug reali (`HeaderAISource` su payload inattesi + commento Tailwind in `RoleBadge`) e riallinea i primi 5 test Playwright (`teacher-area-home`, `personal-area-home`, `personal-error-states`, `personal-pqbl`, `personal-ai-visibility`). Restano da verificare gli altri test browser in `frontend/tests/` contro dev server isolato (`--webpack`, `docs/operations/live-dev-environment.md`).
+  - **Stato:** `Completata` — sweep in quattro lotti: PR [#1045](https://github.com/nugh75/counselorbot-sbs/pull/1045) (personal area, navbar, legacy), [#1046](https://github.com/nugh75/counselorbot-sbs/pull/1046) (area, catalogo, strumenti, palestre, flat), [#1048](https://github.com/nugh75/counselorbot-sbs/pull/1048) (classi, obiettivi, incontri, istituti, taccuini), [#1049](https://github.com/nugh75/counselorbot-sbs/pull/1049) (admin, chat, prompt, forum e residui, lotto 3a) e questa PR del lotto 3b con `Fixes #911`. I test `*-live` restano opt-in (backend/DB sintetici reali) e non sono eseguiti in CI.
 - [ ] [#83](https://github.com/nugh75/counselorbot-sbs/issues/83) — `feat: review and redesign the top navigation bar`
   - **Milestone:** [#21 — Navbar redesign](https://github.com/nugh75/counselorbot-sbs/milestone/21) *(chiusa)*
   - **Stato:** `In corso / residui` — il redesign è già su `main`. Restano 3 verifiche residue prima della chiusura: prova con screen reader reale, controllo/rigenerazione screenshot aggiornati delle sezioni post-redesign, verifica baseline suite frontend (`#911`).

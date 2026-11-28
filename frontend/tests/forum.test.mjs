@@ -405,6 +405,7 @@ test('a class path step links to its exact forum discussion', async () => {
             mode: 'recommended', steps: [{ id: 7, tool_key: 'QSA', title: 'Reading QSA', state: 'not_done', can_self_mark: false }], done: 0, total: 1 }] }));
         await f.page.route('**/api/user/forum/links', route => route.fulfill({ json: { links: [{ kind: 'path_step', id: 7, topic_id: 102, group_id: 102 }] } }));
         await f.page.goto(`${origin}/profilo/piani-operativi`);
+        await f.page.getByRole('button', { name: /Reading QSA/ }).click();
         const link = f.page.getByRole('link', { name: 'Discuss in the class forum', exact: true });
         assert.equal(await link.getAttribute('href'), '/profilo/classi/102/forum?topic=102');
         await link.click();

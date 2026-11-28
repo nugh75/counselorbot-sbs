@@ -5,7 +5,7 @@ import { externalPrivacyText } from '../src/lib/i18n-external-privacy.ts';
 
 const origin = process.env.PRIVACY_BASE_URL || 'http://127.0.0.1:3135';
 let browser;
-before(async () => { browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true }); });
+before(async () => { browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) }); });
 after(async () => { await browser.close(); });
 async function fixture({ lang = 'it', width = 1440, mode = 'local', forbidden = false, dark = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 1100 } });

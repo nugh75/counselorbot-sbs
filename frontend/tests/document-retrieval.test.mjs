@@ -46,7 +46,13 @@ async function fixture({ lang = 'it', width = 1440, provider = 'ollama', blocked
                 data = state;
             } else if (url.pathname.endsWith('/test')) { write(); data = { ok: true, dimensions: 1024, elapsed_ms: 42, query_filter: blocked ? 'embedding_privacy_blocked' : 'ok' }; }
             else if (url.pathname.endsWith('/estimate')) data = { input_count: 212, estimated_tokens: 70400, estimated_cost_usd: 0.00704, price_known: true };
-            else if (url.pathname.endsWith('/reindex')) { write(); state.collections = [{ ...collection, building: true }]; data = { status: 'building' }; }
+            else if (url.pathname.endsWith('/reindex-all')) {
+                if (request.method() === 'POST') {
+                    write();
+                    state.job = { status: 'running', started_at: 1, collections: [{ id: 'competenzestrategiche', label: 'Competenze Strategiche (sito)', status: 'running', phase: 'collecting', done: 0, total: 212, error: null }] };
+                    data = { started: true, job: state.job, reason: null };
+                } else data = state.job ?? { status: 'idle', collections: [] };
+            }
             else data = state;
         } else if (url.pathname === '/api/admin/personal-api-policy') data = { enabled: false, encryption_ready: true };
         else if (url.pathname === '/api/admin/chatgpt/settings') data = { enabled: false, ready: true };
@@ -99,7 +105,7 @@ test('unreachable NER is explained and basic mode is changed only on explicit cl
     } finally { await f.context.close(); }
 });
 
-test('test, cost estimate and reindex for a collection', async () => {
+test('test, cost estimate and reindex for all collections', async () => {
     const f = await fixture({ provider: 'mistral' });
     try {
         await f.page.goto(`${origin}/admin`);
@@ -108,11 +114,11 @@ test('test, cost estimate and reindex for a collection', async () => {
         await panel.getByText(documentRetrievalText('it', 'testOk', { dimensions: 1024, ms: 42 }), { exact: true }).waitFor();
         const row = panel.getByTestId('retrieval-collection-competenzestrategiche');
         assert.ok(await row.getByText(documentRetrievalText('it', 'statusStale'), { exact: false }).isVisible());
-        await row.getByRole('button', { name: 'Stima costi', exact: true }).click();
-        await row.getByText(documentRetrievalText('it', 'estimateResult', { inputs: 212, tokens: (70400).toLocaleString('it'), cost: '< 0.01 USD' }), { exact: true }).waitFor();
-        await row.getByRole('button', { name: 'Reindicizza', exact: true }).click();
-        await row.getByText(documentRetrievalText('it', 'statusBuilding'), { exact: false }).waitFor();
-        assert.deepEqual(f.writes.map(w => w.path), ['/api/admin/document-retrieval/test', '/api/admin/document-retrieval/collections/competenzestrategiche/reindex']);
+        await panel.getByRole('button', { name: 'Reindicizza tutto', exact: true }).click();
+        await panel.getByText(documentRetrievalText('it', 'reindexConfirm', { inputs: 212, tokens: (70400).toLocaleString('it'), cost: '< 0.01 USD' }), { exact: true }).waitFor();
+        await panel.getByRole('button', { name: 'Avvia', exact: true }).click();
+        await panel.getByRole('progressbar', { name: 'Avanzamento della reindicizzazione' }).waitFor({ state: 'attached' });
+        assert.deepEqual(f.writes.map(w => w.path), ['/api/admin/document-retrieval/test', '/api/admin/document-retrieval/reindex-all']);
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });

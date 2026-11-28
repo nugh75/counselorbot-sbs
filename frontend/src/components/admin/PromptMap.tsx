@@ -443,7 +443,7 @@ function RefRow({ map, refItem, onGo, onOverride }: {
             <span className="font-semibold text-ink-muted">{target ? entryTitle(target, t, tf) : t(`admin.promptMap.role.${refItem.role}`)}</span>
             <code className="break-all font-mono text-2xs">{refItem.key}</code>
             <Badge kind={badgeFor({ destination: target?.destination ?? 'model', when: refItem.when })} />
-            <span className="inline-flex items-center gap-1">
+            <span className="inline-flex min-w-0 flex-wrap items-center gap-1">
                 {t('admin.promptMap.inheritedFrom')} <LevelTag level={refItem.level} name={name(map.instrument)} />
             </span>
             <button type="button" onClick={() => onGo(refItem.key)} className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">

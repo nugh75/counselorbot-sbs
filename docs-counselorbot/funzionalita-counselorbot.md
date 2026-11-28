@@ -511,7 +511,7 @@ testi sotto `text-xs` (`text-[11px]`, `text-[10px]`, `text-[9px]`) diventano `te
 triangoli) sono sostituiti da `ArrowLeft`, `ArrowRight` e `ChevronDown` di `lucide-react`.
 Nessun cambio di comportamento.
 
-**Riquadri IDEA e introduzione della chat sui colori del brand (#927).** Il percorso IDEA
+**Riquadri IDEA e introduzione della chat sui colori del brand (#927).** Sul telefono la mappa e i rami di IDEA si aprono da **Opzioni della conversazione → Mappa e rami**, nello stesso pannello a dialogo del desktop.  Il percorso IDEA
 (barra dei rami, albero dei rami, mappa, fonti e pannello laterale) e il riquadro
 introduttivo della chat guidata non usano più la seconda tinta teal: sfondi, bordi, testi,
 barre di avanzamento e caselle passano ai token del brand (petrol), le parti di
@@ -661,7 +661,7 @@ docente» dentro `/docente`). Seguono le icone di **Bussola**,
 **Assistente** e **Guida**: il nome appare come suggerimento al
 passaggio del puntatore o al focus ed è disponibile agli screen reader.
 A destra, separato, il gruppo della conversazione (strumento scelto, counselor,
-**Riprendi un’attività** quando ci sono attività da riprendere) e il menu
+Un errore transitorio durante l’aggiornamento dell’elenco non cancella le sessioni già mostrate: restano visibili accanto a **Riprova**. **Riprendi un’attività** quando ci sono attività da riprendere) e il menu
 dell’account sotto il nome: il nome e l’email non sono un link (l’unico ingresso a
 `/profilo` è «Area studente»), poi **Servizi piattaforma ai4educ** per
 ricercatori e admin, le **Preferenze** (tema, movimento, lettore audio, lingua con
@@ -3182,7 +3182,7 @@ ha quattro livelli, ciascuno apribile e richiudibile dalla propria intestazione,
 senza un menu laterale. Comune e Gruppi partono chiusi; Strumento e Step sono
 aperti, con il primo step espanso. La scelta delle sezioni aperte viene conservata
 nel browser per la mappa; «vai» apre anche la sezione di destinazione.
-Il registro degli strumenti supporta strumenti e percorsi dinamici configurati
+Su schermo stretto la riga «dal livello …» delle voci ereditate va a capo dentro la card, senza allargare la pagina. Il registro degli strumenti supporta strumenti e percorsi dinamici configurati
 nel database con metadati estesi (`is_active`, `tool_category`, `description_i18n`,
 `target_audience`, `icon`, `color_theme`, `interview_mode`): la mappa include
 automaticamente tutti gli strumenti registrati con risoluzione convenzionale

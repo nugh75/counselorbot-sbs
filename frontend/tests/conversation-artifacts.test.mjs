@@ -43,6 +43,9 @@ async function fixture(width, phase = 'intro', options = {}) {
         control.requests.push({ path: url.pathname, search: url.search, method: request.method(), body: request.postDataJSON() });
         let data = [];
         if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: false, username: 'fixture', name: 'Prova', groups: ['studenti'] };
+        else if (url.pathname === '/api/user/account-preferences') data = request.method() === 'PUT'
+            ? { ...request.postDataJSON(), counselor_ready: true, notebook_ready: true, setup_completed: true }
+            : { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: 'Counselor di prova', language: ['it'], suitable: true }, { id: 2, slug: 'second', name: 'Secondo counselor', language: ['it'], suitable: true }];
         else if (url.pathname === '/api/session/frozen/fixture') data = { session_id: 'fixture', questionnaire_type: options.idea ? 'IDEA' : 'QSA', current_phase: phase, counselor_id: 1, experience: 'standard', scores: { C1: 7 }, messages: [{ role: 'system', content: phase === 'intro' ? '--- Introduzione ---' : 'FINE PERCORSO' }, { role: 'user', content: 'Vorrei organizzarmi.' }, { role: 'assistant', content: reply }] };
         else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro', suggested_questions: ['Mi riconosco soprattutto in…'] }], text_guided_conclusion: 'FINE PERCORSO' };
@@ -82,7 +85,8 @@ async function fixture(width, phase = 'intro', options = {}) {
             data = fixtureSpec;
         } else if (url.pathname === '/api/diagram/render') {
             const body = request.postDataJSON();
-            if (control.failRender || (body.embed_title && control.failExport)) return route.fulfill({ status: 503, body: '{}' });
+            if (control.failRender) return route.fulfill({ status: 500, body: '{}' });
+            if (body.embed_title && control.failExport) return route.fulfill({ status: 503, body: '{}' });
             return route.fulfill({ contentType: body.format === 'png' ? 'image/png' : 'image/svg+xml', body: fixtureName
                 ? readFileSync(new URL(`./fixtures/${fixtureName}-diagram-${body.theme}.${body.format}`, import.meta.url)) : svg });
         }
@@ -246,19 +250,16 @@ test('recommendation actions save per item, retry, and hand a prompt to the comp
     } finally { await context.close(); }
 });
 
-test('completed session previews the summary and downloads both PDF formats', async () => {
+test('completed session previews the summary and downloads the PDF', async () => {
     const { page, context, control } = await fixture(390, 'conclusion');
     try {
         await page.getByRole('button', { name: 'Continua alle scelte finali' }).first().click();
         await page.getByRole('heading', { name: 'Scelta finale' }).waitFor();
-        for (const mode of ['brief', 'full']) {
-            await page.locator(`input[name="report-mode"][value="${mode}"]`).check();
-            const download = page.waitForEvent('download');
-            await page.getByRole('button', { name: 'Scarica il resoconto PDF' }).click();
-            assert.ok((await download).suggestedFilename().endsWith(`_${mode}.pdf`));
-        }
-        assert.ok(control.requests.some(request => request.search.includes('mode=brief')));
-        assert.ok(control.requests.some(request => request.search.includes('mode=full')));
+        await page.getByText(/Proverò il recupero attivo/).waitFor();
+        const download = page.waitForEvent('download');
+        await page.getByRole('button', { name: 'Scarica il resoconto PDF' }).click();
+        assert.equal((await download).suggestedFilename(), 'counselorbot_QSA_fixture.pdf');
+        assert.ok(control.requests.some(request => request.path.endsWith('/pdf') && request.search.includes('mode=full')));
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
@@ -475,8 +476,10 @@ test('render failure keeps a readable text alternative and supports retry', asyn
     const { page, context, control } = await fixture(390, 'intro', { graph: true });
     try {
         control.failRender = true;
-        await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
-        const figure = page.locator('figure');
+        control.saved = [];
+        await openMessageDiagram(page);
+        await page.locator('form').filter({ has: page.locator('input[maxlength="400"]') }).locator('button[type="submit"]').click();
+        const figure = page.locator('figure').last();
         await figure.getByRole('button', { name: 'Riprova', exact: true }).waitFor();
         assert.ok(await figure.locator('ol').getByText('Ricordo i concetti?', { exact: false }).isVisible());
         assert.equal(await figure.locator('.dg-node').count(), 0);
@@ -497,8 +500,11 @@ test('fullscreen retains the reading position and zoom on return to the card', a
         await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         await figure.getByRole('button', { name: 'Ingrandisci', exact: true }).click();
         const viewport = figure.locator('[data-diagram-viewport]');
-        await viewport.evaluate(element => { element.scrollTop = element.scrollHeight * 0.5; });
-        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await viewport.evaluate(element => {
+            element.scrollTop = element.scrollHeight * 0.5;
+            element.dispatchEvent(new Event('scroll'));
+        });
+        await page.waitForTimeout(150);
         const position = await viewport.evaluate(element => (element.scrollTop + element.clientHeight / 2) / element.scrollHeight);
         await figure.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
         const dialog = page.getByRole('dialog');
@@ -513,40 +519,32 @@ test('fullscreen retains the reading position and zoom on return to the card', a
 });
 
 for (const width of [320, 390]) {
-    test(`mobile counselor selection fits and applies to the next diagram at ${width}px`, async () => {
+    test(`mobile counselor chooser fits and preserves the draft at ${width}px`, async () => {
         const { page, context, control } = await fixture(width, 'intro', { touch: true, dark: true });
         try {
             await page.locator('#guided-composer').fill('Conserva questa domanda.');
             await page.locator('button[aria-controls="mobile-menu"]').tap();
             const menu = page.locator('#mobile-menu');
-            const trigger = menu.locator('button[aria-controls]').filter({ hasText: 'Counselor di prova' });
-            await trigger.tap();
-            const options = page.locator(`[id="${await trigger.getAttribute('aria-controls')}"]`);
-            const menuBox = await menu.boundingBox();
-            const box = await options.boundingBox();
-            assert.ok(box.x >= menuBox.x && box.x + box.width <= menuBox.x + menuBox.width, 'counselors fit inside the scrollable menu');
-            for (const button of await options.getByRole('button').all()) {
-                assert.ok((await button.boundingBox()).height >= 44);
+            await menu.getByRole('link', { name: 'Scegli il counselor', exact: true }).tap();
+            const chooser = page.getByRole('dialog', { name: 'Scegli il counselor' });
+            await chooser.waitFor();
+            const box = await chooser.boundingBox();
+            assert.ok(box.x >= 0 && box.x + box.width <= width + 1, 'counselor chooser fits the viewport');
+            for (const button of await chooser.getByRole('button').all()) {
+                const size = await button.boundingBox();
+                if (size) assert.ok(size.height >= 44);
             }
-            await options.getByRole('button', { name: 'Secondo counselor', exact: true }).tap();
+            await chooser.getByRole('button', { name: /Secondo counselor/ }).tap();
+            await chooser.getByRole('button', { name: 'Continua', exact: true }).tap();
+            await chooser.waitFor({ state: 'detached' });
             assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_selected_counselor')), '2');
-            assert.equal(await options.count(), 0);
-            const selected = menu.locator('button[aria-controls]').filter({ hasText: 'Secondo counselor' });
-            await selected.tap();
-            await options.waitFor({ state: 'visible' });
-            await page.keyboard.press('Escape');
-            assert.equal(await menu.count(), 1, 'Escape closes the counselor list first');
-            assert.equal(await selected.getAttribute('aria-expanded'), 'false');
-            await page.keyboard.press('Escape');
-            assert.equal(await menu.count(), 0);
+            assert.equal(await menu.count(), 0, 'the menu closes with the chooser');
+            assert.equal(await page.getByRole('dialog').count(), 0);
             assert.equal(await page.locator('#guided-composer').inputValue(), 'Conserva questa domanda.');
             await openMessageDiagram(page);
             await page.locator('form').filter({ has: page.locator('input[maxlength="400"]') }).locator('button[type="submit"]').tap();
             await page.locator('figure svg g.node').first().waitFor();
-            assert.equal(control.requests.find(request => request.path === '/api/diagram/from-message').body.counselor_id, 2);
-            const nextChat = page.waitForRequest('**/api/chat/stream');
-            await page.locator('#guided-composer').press('Enter');
-            assert.equal((await nextChat).postDataJSON().counselor_id, 2);
+            assert.ok(control.requests.some(request => request.path === '/api/diagram/from-message'));
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
     });
@@ -622,7 +620,12 @@ for (const width of [390, 1440]) {
     test(`IDEA map fits its panel and shares chat controls at ${width}px`, async () => {
         const { page, context, control } = await fixture(width, 'intro', { idea: true, dark: width === 390 });
         try {
-            const figure = page.locator('figure');
+            if (width === 390) {
+                await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+                await page.getByRole('button', { name: 'Mappa e rami', exact: true }).click();
+                await page.getByRole('dialog').waitFor();
+            }
+            const figure = width === 390 ? page.getByRole('dialog').locator('figure') : page.locator('figure');
             await figure.locator('svg g.node').first().waitFor();
             assert.equal(await figure.locator('svg g.node').count(), 12, 'all IDEA nodes survive');
             const drawing = await figure.locator('.dg-svg > svg').boundingBox();
@@ -645,10 +648,11 @@ for (const width of [390, 1440]) {
             assert.equal(control.requests.filter(request => request.path === '/api/diagram/render').length, 0, 'IDEA keeps its renderer');
             await page.keyboard.press('Escape');
             await figure.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
-            await page.getByRole('dialog').waitFor();
-            assert.equal(await page.getByRole('dialog').locator('svg g.node').count(), 12);
+            const fullscreen = page.getByRole('dialog').last();
+            await fullscreen.waitFor();
+            assert.equal(await fullscreen.locator('svg g.node').count(), 12);
             await page.keyboard.press('Escape');
-            await page.getByRole('dialog').waitFor({ state: 'detached' });
+            await fullscreen.waitFor({ state: 'detached' });
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
     });

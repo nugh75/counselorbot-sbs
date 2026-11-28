@@ -5,7 +5,7 @@ import { CHATGPT_DICTS } from '../src/lib/i18n-chatgpt.ts';
 
 const origin = process.env.CHATGPT_TEST_BASE_URL || 'http://127.0.0.1:3107';
 let browser;
-before(async () => { browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true }); });
+before(async () => { browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) }); });
 after(async () => { await browser.close(); });
 
 // #134: the wizard picks the helper from the browser's user agent.

@@ -238,9 +238,9 @@ test('each group names its instruments, highlights the selected one and the warn
         assert.equal(await groups.count(), 2);
         const first = groups.nth(0);
         const members = group => group.getByRole('list', { name: 'Strumenti del gruppo' }).getByRole('listitem');
-        assert.deepEqual(await members(first).allInnerTexts(), ['QSA', 'IDEA']);
+        assert.deepEqual(await members(first).allInnerTexts(), ['QSA', 'Idea']);
         assert.equal(await first.locator('[aria-current="true"]').innerText(), 'QSA');
-        assert.match(await first.innerText(), /Modificare qui cambia tutti gli strumenti del gruppo: QSA · IDEA\./);
+        assert.match(await first.innerText(), /Modificare qui cambia tutti gli strumenti del gruppo: QSA · Idea\./);
         const second = groups.nth(1);
         assert.deepEqual(await members(second).allInnerTexts(), ['QSA', 'ZTPI', 'Evento di studio']);
         assert.equal(await second.locator('[title="Evento significativo di studio"]').count(), 1);
@@ -255,7 +255,7 @@ test('each group names its instruments, highlights the selected one and the warn
         await card.getByRole('button', { name: 'Modifica' }).click();
         await card.locator('textarea').fill('Le tue domande');
         await card.getByRole('button', { name: 'Salva', exact: true }).click();
-        assert.match(await card.getByRole('alert').innerText(), /Condiviso: QSA · ZTPI · Evento di studio \(2 step\)\./);
+        assert.match(await card.getByText(/Condiviso: QSA · ZTPI · Evento di studio \(2 step\)\./).innerText(), /Condiviso: QSA · ZTPI · Evento di studio \(2 step\)\./);
         assert.equal(writes.length, 0);
     } finally { await f.close(); }
 });
@@ -269,7 +269,8 @@ test('editing a step instruction saves through the guided step API', async () =>
         await card.locator('textarea').fill('Nuova istruzione');
         await card.getByRole('button', { name: 'Salva', exact: true }).click();
         await page.waitForFunction(() => !document.querySelector('[data-entry-key="guided_step:cognitive:prompt"] textarea'));
-        assert.deepEqual(writes, [{ method: 'PUT', path: '/api/admin/guided-steps/cognitive', body: { prompt: 'Nuova istruzione' } }]);
+        assert.deepEqual(writes.filter(write => !write.path.includes('prompt-health')), [{ method: 'PUT', path: '/api/admin/guided-steps/cognitive', body: { prompt: 'Nuova istruzione' } }]);
+        assert.ok(writes.slice(1).every(write => write.path === '/api/admin/prompt-health/check-prompt'));
     } finally { await f.close(); }
 });
 
@@ -281,11 +282,11 @@ test('a shared prompt asks for confirmation before saving for all its users', as
         await card.getByRole('button', { name: 'Modifica' }).click();
         await card.locator('textarea').fill('Analisi aggiornata');
         await card.getByRole('button', { name: 'Salva', exact: true }).click();
-        assert.match(await card.getByRole('alert').innerText(), /Condiviso: cognitive · affective/);
+        assert.match(await card.getByText(/Condiviso: cognitive · affective/).innerText(), /Condiviso: cognitive · affective/);
         assert.equal(writes.length, 0);
         await card.getByRole('button', { name: 'Conferma: salva per tutti' }).click();
         await page.waitForFunction(() => !document.querySelector('[data-entry-key="prompt_factor"] textarea'));
-        assert.deepEqual(writes, [{ method: 'POST', path: '/api/admin/config', body: { key: 'prompt_factor', value: 'Analisi aggiornata', description: 'prompt_factor' } }]);
+        assert.deepEqual(writes.filter(write => !write.path.includes('prompt-health')), [{ method: 'POST', path: '/api/admin/config', body: { key: 'prompt_factor', value: 'Analisi aggiornata', description: 'prompt_factor' } }]);
     } finally { await f.close(); }
 });
 
@@ -571,6 +572,9 @@ for (const width of [1440, 390]) test(`manual model context settings preserve dr
             profiles: { 'ollama/fixture-small': { level: 'ristretto', context_tokens: 16384 } },
         } }));
         await f.page.goto(`${origin}/admin?section=general`);
+        const fallback = f.page.getByTestId('system-ai-fallback-section');
+        await fallback.locator('summary').first().evaluate(element => element.click());
+        await fallback.getByText('Impostazioni avanzate (ripieghi e timeout)').evaluate(element => element.click());
         const settings = f.page.getByRole('region', { name: 'Contesto per modello' });
         await settings.waitFor();
         assert.equal(f.writes.length, 0);
@@ -650,7 +654,7 @@ for (const width of [1440, 390]) test(`all prompt variants save independently an
             assert.ok(f.writes.some(write => write.body.key === `${key}__level_ristretto` && write.body.value === `Ristretto: ${key}`));
             assert.ok(f.writes.some(write => write.body.key === `${key}__level_minimo` && write.body.value === `Minimo: ${key}`));
         }
-        assert.equal(f.writes.length, 8);
+        assert.equal(f.writes.filter(write => !write.path.includes('prompt-health')).length, 8);
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
         await f.page.locator('[data-entry-key="prompt_factor"]').scrollIntoViewIfNeeded();
         await capture(f.page, `prompt-variants-${width}`);

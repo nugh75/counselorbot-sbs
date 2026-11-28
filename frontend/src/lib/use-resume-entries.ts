@@ -63,8 +63,11 @@ export function useResumeEntries(enabled = true): ResumeEntries {
             })])
                 .then(([snapshots, plans]) => {
                     if (!alive || current !== version) return;
-                    setSaved(mergePlanResumes(snapshots.status === 'fulfilled' ? snapshots.value : [],
-                        plans.status === 'fulfilled' ? plans.value : null));
+                    // Una lettura fallita non deve svuotare l'elenco già mostrato:
+                    // aggiorniamo solo quando entrambe le fonti rispondono.
+                    if (snapshots.status === 'fulfilled' && plans.status === 'fulfilled') {
+                        setSaved(mergePlanResumes(snapshots.value, plans.value));
+                    }
                     setError(snapshots.status === 'rejected' || plans.status === 'rejected');
                 })
                 .catch(() => { if (alive && current === version) setError(true); })

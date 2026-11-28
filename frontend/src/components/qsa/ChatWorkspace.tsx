@@ -25,7 +25,7 @@ function readPreferences(key: string, bounds: { min: number; max: number; initia
     } catch { return { open: true, width: bounds.initial }; }
 }
 
-type MobilePanel = 'path' | 'scores' | 'resources';
+type MobilePanel = 'path' | 'scores' | 'resources' | 'idea';
 type Props = {
     locale: string;
     subtitle: string;
@@ -115,7 +115,7 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, 
             }}
             className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg flex-col overflow-hidden rounded-card border border-line bg-surface p-0 text-ink-body shadow-card backdrop:bg-backdrop open:flex">
             <header className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-4 py-2">
-                <h2 id={`${id}-title`} className="text-base font-semibold">{t(mobilePanel === 'resources' ? 'recommendations.title' : `guided.${mobilePanel}`)}</h2>
+                <h2 id={`${id}-title`} className="text-base font-semibold">{t(mobilePanel === 'resources' ? 'recommendations.title' : mobilePanel === 'idea' ? 'idea.workspace.title' : `guided.${mobilePanel}`)}</h2>
                 <button type="button" autoFocus aria-label={l('close')} onClick={() => setMobileOpen(false)} className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control hover:bg-surface-raised"><X className="h-5 w-5" aria-hidden="true" /></button>
             </header>
             <div className="min-h-0 overflow-y-auto overscroll-contain p-3">{sidebar(() => setMobileOpen(false), mobilePanel)}</div>
