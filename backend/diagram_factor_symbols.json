@@ -704,5 +704,101 @@
       "Confidence",
       "Tilltro"
     ]
+  },
+  {
+    "id": "RIASEC:R",
+    "icon": "structure",
+    "labels": {
+      "it": "Realistico",
+      "en": "Realistic",
+      "es": "Realista",
+      "fr": "Réaliste",
+      "de": "Realistisch",
+      "sv": "Realistisk"
+    },
+    "aliases": [
+      "Realistic",
+      "Realistisk"
+    ]
+  },
+  {
+    "id": "RIASEC:I",
+    "icon": "search",
+    "labels": {
+      "it": "Investigativo",
+      "en": "Investigative",
+      "es": "Investigador",
+      "fr": "Investigateur",
+      "de": "Investigativ",
+      "sv": "Utredande"
+    },
+    "aliases": [
+      "Investigative",
+      "Utredande"
+    ]
+  },
+  {
+    "id": "RIASEC:A",
+    "icon": "explanation",
+    "labels": {
+      "it": "Artistico",
+      "en": "Artistic",
+      "es": "Artístico",
+      "fr": "Artistique",
+      "de": "Künstlerisch",
+      "sv": "Konstnärlig"
+    },
+    "aliases": [
+      "Artistic",
+      "Konstnärlig"
+    ]
+  },
+  {
+    "id": "RIASEC:S",
+    "icon": "cooperation",
+    "labels": {
+      "it": "Sociale",
+      "en": "Social",
+      "es": "Social",
+      "fr": "Social",
+      "de": "Sozial",
+      "sv": "Social"
+    },
+    "aliases": [
+      "Social",
+      "Social"
+    ]
+  },
+  {
+    "id": "RIASEC:E",
+    "icon": "route",
+    "labels": {
+      "it": "Imprenditoriale",
+      "en": "Enterprising",
+      "es": "Emprendedor",
+      "fr": "Entreprenant",
+      "de": "Unternehmerisch",
+      "sv": "Företagsam"
+    },
+    "aliases": [
+      "Enterprising",
+      "Företagsam"
+    ]
+  },
+  {
+    "id": "RIASEC:C",
+    "icon": "tasks",
+    "labels": {
+      "it": "Convenzionale",
+      "en": "Conventional",
+      "es": "Convencional",
+      "fr": "Conventionnel",
+      "de": "Konventionell",
+      "sv": "Konventionell"
+    },
+    "aliases": [
+      "Conventional",
+      "Konventionell"
+    ]
   }
 ]

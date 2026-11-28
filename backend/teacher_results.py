@@ -11,10 +11,18 @@ def result_detail(db, result, lang):
         username=result.username, session_id=result.session_id,
         questionnaire_type=result.questionnaire_type,
     ).first()
+    riasec = None
+    if result.questionnaire_type.upper() == "RIASEC" and isinstance(result.scores, dict):
+        from . import riasec as riasec_module
+
+        riasec = {
+            "holland_code": riasec_module.holland_code(result.scores),
+            "dimensions": riasec_module.dimension_payload(result.scores),
+        }
     return dict(
         id=result.id, username=result.username, session_id=result.session_id,
         questionnaire_type=result.questionnaire_type, scores=result.scores,
-        submitted_at=result.submitted_at,
+        submitted_at=result.submitted_at, riasec=riasec,
         summary=summary, summary_status=status, conversation=inputs['messages'],
         reading=None if reading is None else dict(
             strengths=reading.strengths or [], growth_areas=reading.growth_areas or [],

@@ -33,6 +33,8 @@ import {
     type VerificationRequest,
 } from '@/lib/institution-credentials';
 import { useClientValue } from '@/lib/use-client-value';
+import { RiasecProfile } from '@/components/qsa/RiasecProfile';
+import { RIASEC_CREDIT_EN, riasecText } from '@/lib/i18n-riasec';
 
 const QUESTIONNAIRE_SELECTION_HREF = '/profilo';
 
@@ -56,6 +58,11 @@ interface ScoreResponse {
     status: string;
     uses_validated_norms: boolean;
     results: ScoreResult[];
+    riasec?: {
+        dimensions: { code: string; raw_total: number; max_total: number }[];
+        top_codes: string[];
+        holland_code?: string;
+    };
 }
 
 // Safe UUID generation
@@ -134,6 +141,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [error, setError] = useState('');
     const [results, setResults] = useState<ScoreResult[] | null>(null);
+    const [riasecProfile, setRiasecProfile] = useState<ScoreResponse['riasec'] | null>(null);
     const [createdSessionId, setCreatedSessionId] = useState<string>('');
     const [startedAt, setStartedAt] = useState(() => Date.now());
     // Item, etichette dei fattori e scala vengono dal catalogo DB: nessuna
@@ -314,7 +322,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
         }
         if (answered !== displayItems.length) {
             setError(t('admin.run.missingAnswers'));
-            const firstMissing = displayItems.find((item) => !answers[item.number]);
+            const firstMissing = displayItems.find((item) => answers[item.number] === undefined);
             if (firstMissing) {
                 document.getElementById(`item-${firstMissing.number}`)?.scrollIntoView({
                     behavior: 'smooth',
@@ -386,6 +394,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
             clearAdministrationDraft();
             const profile: ScoreResponse = await res.json();
             setResults(profile.results);
+            setRiasecProfile(profile.riasec ?? null);
 
             const mappedScores: Record<string, number> = {};
             for (const r of profile.results) {
@@ -430,6 +439,38 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
     };
 
     if (results) {
+        if (instrument === 'RIASEC' && riasecProfile) {
+            return (
+                <div className="mx-auto max-w-3xl space-y-6">
+                    <Card as="section" variant="flat" className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <CheckCircle2 className="h-10 w-10 shrink-0 text-success" />
+                            <h1 className="text-2xl font-semibold text-ink">{t('admin.run.submittedTitle')}</h1>
+                        </div>
+                        <RiasecProfile dimensions={riasecProfile.dimensions} />
+                        <div className="rounded-control border border-line bg-surface-sunken p-3 text-xs leading-relaxed text-ink-muted">
+                            <p className="font-semibold text-ink-body">{riasecText(lang, 'credit.heading')}</p>
+                            <p className="mt-1">{RIASEC_CREDIT_EN}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('admin.run.back')} />
+                            <Button
+                                type="button"
+                                onClick={() => {
+                                    setAnswers({});
+                                    setResults(null);
+                                    setRiasecProfile(null);
+                                    setStartedAt(Date.now());
+                                    setMetadata((previous) => ({ ...previous, consent: false }));
+                                }}
+                            >
+                                {t('admin.run.restart')}
+                            </Button>
+                        </div>
+                    </Card>
+                </div>
+            );
+        }
         const dimensions = [...new Set(results.map((r) => r.dimension))];
         const renderResults = (dimension: string, title: string) => (
             <section className="space-y-4">
@@ -518,6 +559,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                             onClick={() => {
                                 setAnswers({});
                                 setResults(null);
+                                setRiasecProfile(null);
                                 setStartedAt(Date.now());
                                 setMetadata((previous) => ({ ...previous, consent: false }));
                             }}

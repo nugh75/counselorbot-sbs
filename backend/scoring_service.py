@@ -218,6 +218,7 @@ def compute_profile(
     instrument_code: str,
     locale: str,
     answers: Dict[int, int],
+    include_holland_code: bool = False,
 ) -> dict:
     """Calcola il profilo a partire dalle risposte item-level.
 
@@ -324,7 +325,7 @@ def compute_profile(
             "stanine_is_normed": is_normed,
         })
 
-    return {
+    profile = {
         "instrument": instrument_code,
         "locale": locale,
         "status": instrument.status,
@@ -332,6 +333,31 @@ def compute_profile(
         "uses_validated_norms": has_norms,
         "results": results,
     }
+    if instrument_code.upper() == "RIASEC":
+        from . import riasec
+
+        totals = {r["code"]: r["raw_total"] for r in results}
+        profile["riasec"] = {
+            "dimensions": riasec.dimension_payload(totals),
+            "top_codes": riasec.top_codes(totals),
+        }
+        # The three-letter code is for the teacher view only; the student API
+        # never receives it.
+        if include_holland_code:
+            profile["riasec"]["holland_code"] = riasec.holland_code(totals)
+    return profile
+
+
+def mapped_result_scores(profile: dict) -> Dict[str, int]:
+    """Punteggi da salvare in QuestionnaireResult.scores.
+
+    RIASEC keeps the raw area totals (0-40) because the three-letter code is
+    computed from them. The other instruments keep their 1-9 stanines, the
+    contract every existing consumer expects.
+    """
+    if str(profile.get("instrument", "")).upper() == "RIASEC":
+        return {r["code"]: int(round(r["raw_total"])) for r in profile["results"]}
+    return mapped_stanine_scores(profile)
 
 
 def mapped_stanine_scores(profile: dict) -> Dict[str, int]:

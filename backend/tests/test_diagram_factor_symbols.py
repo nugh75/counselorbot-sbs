@@ -26,7 +26,7 @@ def spec_for(label, **node):
 def test_dictionary_covers_all_catalogue_factors_with_existing_translations():
     expected = {f'{instrument.upper()}:{factor["code"].upper()}'
                 for instrument, entry in INSTRUMENT_CATALOG_DEFAULTS.items() for factor in entry['factors']}
-    assert len(FACTOR_SYMBOLS) == len(FACTORS) == 46
+    assert len(FACTOR_SYMBOLS) == len(FACTORS) == 52
     assert set(FACTORS) == expected
     for key, entry in FACTORS.items():
         if key.startswith('QPCC:'):

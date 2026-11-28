@@ -87,6 +87,13 @@ FACTOR_TRANS: dict[str, dict[str, tuple[str, str]]] = {
         "AD2": ("Controllo e autonomia", "Decidere e assumersi la responsabilità delle scelte"),
         "AD3": ("Curiosità ed esplorazione", "Esplorare opzioni e opportunità"),
         "AD4": ("Fiducia e problem solving", "Affrontare e risolvere i problemi"),
+        # RIASEC (O*NET Interest Profiler Short Form)
+        "R": ("Realistico", "Attività pratiche, manuali e concrete"),
+        "I": ("Investigativo", "Analisi, ricerca e comprensione"),
+        "A": ("Artistico", "Creatività ed espressione"),
+        "S": ("Sociale", "Relazione, insegnamento e aiuto"),
+        "E": ("Imprenditoriale", "Iniziativa, guida e negoziazione"),
+        "C": ("Convenzionale", "Organizzazione, dati e precisione"),
     },
     "en": {
         "C1": ("Elaborative strategies", "Ability to process information"),
@@ -130,6 +137,13 @@ FACTOR_TRANS: dict[str, dict[str, tuple[str, str]]] = {
         "AD2": ("Control & autonomy", "Deciding and taking responsibility for choices"),
         "AD3": ("Curiosity & exploration", "Exploring options and opportunities"),
         "AD4": ("Confidence & problem solving", "Facing and solving problems"),
+        # RIASEC (O*NET Interest Profiler Short Form)
+        "R": ("Realistic", "Practical, hands-on activities"),
+        "I": ("Investigative", "Analysis, research and understanding"),
+        "A": ("Artistic", "Creativity and expression"),
+        "S": ("Social", "Relating, teaching and helping"),
+        "E": ("Enterprising", "Initiative, leadership and negotiation"),
+        "C": ("Conventional", "Organisation, data and precision"),
     },
     "es": {
         "C1": ("Estrategias elaborativas", "Capacidad de procesar la información"),
@@ -173,6 +187,13 @@ FACTOR_TRANS: dict[str, dict[str, tuple[str, str]]] = {
         "AD2": ("Control y autonomía", "Decidir y asumir la responsabilidad de las decisiones"),
         "AD3": ("Curiosidad y exploración", "Explorar opciones y oportunidades"),
         "AD4": ("Confianza y resolución de problemas", "Afrontar y resolver problemas"),
+        # RIASEC (O*NET Interest Profiler Short Form)
+        "R": ("Realista", "Actividades prácticas y concretas"),
+        "I": ("Investigador", "Análisis, investigación y comprensión"),
+        "A": ("Artístico", "Creatividad y expresión"),
+        "S": ("Social", "Relación, enseñanza y ayuda"),
+        "E": ("Emprendedor", "Iniciativa, liderazgo y negociación"),
+        "C": ("Convencional", "Organización, datos y precisión"),
     },
     "fr": {
         "C1": ("Stratégies d'élaboration", "Capacité à traiter l'information"),
@@ -216,6 +237,13 @@ FACTOR_TRANS: dict[str, dict[str, tuple[str, str]]] = {
         "AD2": ("Contrôle et autonomie", "Décider et assumer la responsabilité de ses choix"),
         "AD3": ("Curiosité et exploration", "Explorer les options et les opportunités"),
         "AD4": ("Confiance et résolution de problèmes", "Affronter et résoudre les problèmes"),
+        # RIASEC (O*NET Interest Profiler Short Form)
+        "R": ("Réaliste", "Activités pratiques et concrètes"),
+        "I": ("Investigateur", "Analyse, recherche et compréhension"),
+        "A": ("Artistique", "Créativité et expression"),
+        "S": ("Social", "Relation, enseignement et aide"),
+        "E": ("Entreprenant", "Initiative, leadership et négociation"),
+        "C": ("Conventionnel", "Organisation, données et précision"),
     },
     "de": {
         "C1": ("Elaborationsstrategien", "Fähigkeit, Informationen zu verarbeiten"),
@@ -259,6 +287,13 @@ FACTOR_TRANS: dict[str, dict[str, tuple[str, str]]] = {
         "AD2": ("Kontrolle und Autonomie", "Entscheiden und Verantwortung für Entscheidungen übernehmen"),
         "AD3": ("Neugier und Erkundung", "Optionen und Möglichkeiten erkunden"),
         "AD4": ("Vertrauen und Problemlösung", "Probleme angehen und lösen"),
+        # RIASEC (O*NET Interest Profiler Short Form)
+        "R": ("Realistisch", "Praktische, konkrete Tätigkeiten"),
+        "I": ("Investigativ", "Analyse, Forschung und Verständnis"),
+        "A": ("Künstlerisch", "Kreativität und Ausdruck"),
+        "S": ("Sozial", "Beziehung, Unterrichten und Helfen"),
+        "E": ("Unternehmerisch", "Initiative, Führung und Verhandlung"),
+        "C": ("Konventionell", "Organisation, Daten und Genauigkeit"),
     },
     "sv": {
         "C1": ("Bearbetningsstrategier", "Förmåga att bearbeta information"),
@@ -302,6 +337,13 @@ FACTOR_TRANS: dict[str, dict[str, tuple[str, str]]] = {
         "AD2": ("Kontroll & självständighet", "Besluta och ta ansvar för val"),
         "AD3": ("Nyfikenhet & utforskande", "Utforska alternativ och möjligheter"),
         "AD4": ("Tilltro & problemlösning", "Möta och lösa problem"),
+        # RIASEC (O*NET Interest Profiler Short Form)
+        "R": ("Realistisk", "Praktiska och konkreta aktiviteter"),
+        "I": ("Utredande", "Analys, forskning och förståelse"),
+        "A": ("Konstnärlig", "Kreativitet och uttryck"),
+        "S": ("Social", "Relation, undervisning och hjälp"),
+        "E": ("Företagsam", "Initiativ, ledarskap och förhandling"),
+        "C": ("Konventionell", "Organisation, data och noggrannhet"),
     },
 }
 
@@ -1002,7 +1044,8 @@ def generate_questionnaire_pdf(
         pdf_bytes.seek(0)
         return pdf_bytes
 
-    if scores:
+    is_riasec = questionnaire_type.upper() == "RIASEC"
+    if scores and not is_riasec:
         _render_score_chart(pdf, questionnaire_type, scores, lang, ui, content_w)
 
     has_inverted = False
@@ -1018,6 +1061,14 @@ def generate_questionnaire_pdf(
         pdf.set_font("Helvetica", "I", 10)
         pdf.set_text_color(60, 60, 70)
         pdf.multi_cell(content_w, 6, _latin1(ui["savickas_2"]), new_x="LMARGIN", new_y="NEXT")
+    elif scores and is_riasec:
+        # Raw area totals (0-40), not the 1-9 scale of the other instruments.
+        _section_heading(pdf, ui["by_factor"], content_w)
+        for code, value in scores.items():
+            pdf.set_font("Helvetica", "", 10)
+            pdf.set_text_color(25, 25, 30)
+            pdf.cell(0, 7, _latin1(f"{code}: {int(round(float(value)))}/40"),
+                     new_x="LMARGIN", new_y="NEXT")
     elif scores:
         has_factor_info = any(code in trans for code in scores)
 

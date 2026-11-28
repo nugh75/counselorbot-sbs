@@ -565,6 +565,15 @@ function HomeFlow() {
         const requestedId = params.get('start') || params.get('q');
         if (!requestedId) { returnToStudentArea(); return; }
 
+        // RIASEC is administered item by item and returns an exploratory
+        // profile, so it uses the existing compilation runner instead of the
+        // factor-score form and the guided chat.
+        if (requestedId === 'RIASEC' && params.get('from') !== 'plan') {
+            consumeEntry();
+            router.replace('/somministrazione/RIASEC');
+            return;
+        }
+
         const startedFromPlan = params.get('from') === 'plan';
         const pathId = Number(params.get('path_id'));
         const stepId = Number(params.get('path_step_id'));

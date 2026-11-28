@@ -6,6 +6,7 @@ Vedi docs/validazione/progetto-validazione-qsa-qsar-sv-en.md.
 """
 
 from .qpcc import FACTORS as QPCC_FACTORS
+from .riasec import INSTRUMENT_SPEC as RIASEC_INSTRUMENT
 
 INSTRUMENT_CATALOG_DEFAULTS = {
     "QSA": {
@@ -363,4 +364,7 @@ INSTRUMENT_CATALOG_DEFAULTS = {
             {"item_number": 24, "factor_code": "AD4", "reverse_scoring": False, "text_en": "Solving problems.", "text_sv": "Lösa problem."},
         ],
     },
+    # O*NET Interest Profiler Short Form: official items and license credit live
+    # in backend/riasec.py (do not paraphrase the item text).
+    "RIASEC": RIASEC_INSTRUMENT,
 }

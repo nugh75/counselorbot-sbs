@@ -50,6 +50,14 @@ const it: Dict = {
     'factor.AD2.name': 'Controllo e autonomia', 'factor.AD2.desc': 'Decidere e assumersi la responsabilità delle scelte',
     'factor.AD3.name': 'Curiosità ed esplorazione', 'factor.AD3.desc': 'Esplorare opzioni e opportunità',
     'factor.AD4.name': 'Fiducia e problem solving', 'factor.AD4.desc': 'Affrontare e risolvere i problemi',
+    // RIASEC (O*NET Interest Profiler Short Form)
+    'factor.R.name': 'Realistico', 'factor.R.desc': 'Attività pratiche, manuali e concrete',
+    'factor.I.name': 'Investigativo', 'factor.I.desc': 'Analisi, ricerca e comprensione',
+    'factor.A.name': 'Artistico', 'factor.A.desc': 'Creatività ed espressione',
+    'factor.S.name': 'Sociale', 'factor.S.desc': 'Relazione, insegnamento e aiuto',
+    'factor.E.name': 'Imprenditoriale', 'factor.E.desc': 'Iniziativa, guida e negoziazione',
+    'factor.C.name': 'Convenzionale', 'factor.C.desc': 'Organizzazione, dati e precisione',
+    'dimension.interest': 'Interessi professionali',
     // Dimensioni degli strumenti (raggruppamento dei fattori nel profilo).
     'dimension.cognitive': 'Fattori cognitivi e metacognitivi',
     'dimension.affective': 'Fattori affettivi e motivazionali',
@@ -146,6 +154,14 @@ const en: Dict = {
     'factor.AD2.name': 'Control & autonomy', 'factor.AD2.desc': 'Deciding and taking responsibility for choices',
     'factor.AD3.name': 'Curiosity & exploration', 'factor.AD3.desc': 'Exploring options and opportunities',
     'factor.AD4.name': 'Confidence & problem solving', 'factor.AD4.desc': 'Facing and solving problems',
+    // RIASEC (O*NET Interest Profiler Short Form)
+    'factor.R.name': 'Realistic', 'factor.R.desc': 'Practical, hands-on activities',
+    'factor.I.name': 'Investigative', 'factor.I.desc': 'Analysis, research and understanding',
+    'factor.A.name': 'Artistic', 'factor.A.desc': 'Creativity and expression',
+    'factor.S.name': 'Social', 'factor.S.desc': 'Relating, teaching and helping',
+    'factor.E.name': 'Enterprising', 'factor.E.desc': 'Initiative, leadership and negotiation',
+    'factor.C.name': 'Conventional', 'factor.C.desc': 'Organisation, data and precision',
+    'dimension.interest': 'Career interests',
     // Dimensioni degli strumenti (raggruppamento dei fattori nel profilo).
     'dimension.cognitive': 'Cognitive and metacognitive factors',
     'dimension.affective': 'Affective and motivational factors',
@@ -242,6 +258,14 @@ const es: Dict = {
     'factor.AD2.name': 'Control y autonomía', 'factor.AD2.desc': 'Decidir y asumir la responsabilidad de las decisiones',
     'factor.AD3.name': 'Curiosidad y exploración', 'factor.AD3.desc': 'Explorar opciones y oportunidades',
     'factor.AD4.name': 'Confianza y resolución de problemas', 'factor.AD4.desc': 'Afrontar y resolver problemas',
+    // RIASEC (O*NET Interest Profiler Short Form)
+    'factor.R.name': 'Realista', 'factor.R.desc': 'Actividades prácticas y concretas',
+    'factor.I.name': 'Investigador', 'factor.I.desc': 'Análisis, investigación y comprensión',
+    'factor.A.name': 'Artístico', 'factor.A.desc': 'Creatividad y expresión',
+    'factor.S.name': 'Social', 'factor.S.desc': 'Relación, enseñanza y ayuda',
+    'factor.E.name': 'Emprendedor', 'factor.E.desc': 'Iniciativa, liderazgo y negociación',
+    'factor.C.name': 'Convencional', 'factor.C.desc': 'Organización, datos y precisión',
+    'dimension.interest': 'Intereses profesionales',
     // Dimensioni degli strumenti (raggruppamento dei fattori nel profilo).
     'dimension.cognitive': 'Factores cognitivos y metacognitivos',
     'dimension.affective': 'Factores afectivos y motivacionales',
@@ -338,6 +362,14 @@ const fr: Dict = {
     'factor.AD2.name': 'Contrôle et autonomie', 'factor.AD2.desc': 'Décider et assumer la responsabilité de ses choix',
     'factor.AD3.name': 'Curiosité et exploration', 'factor.AD3.desc': 'Explorer les options et les opportunités',
     'factor.AD4.name': 'Confiance et résolution de problèmes', 'factor.AD4.desc': 'Affronter et résoudre les problèmes',
+    // RIASEC (O*NET Interest Profiler Short Form)
+    'factor.R.name': 'Réaliste', 'factor.R.desc': 'Activités pratiques et concrètes',
+    'factor.I.name': 'Investigateur', 'factor.I.desc': 'Analyse, recherche et compréhension',
+    'factor.A.name': 'Artistique', 'factor.A.desc': 'Créativité et expression',
+    'factor.S.name': 'Social', 'factor.S.desc': 'Relation, enseignement et aide',
+    'factor.E.name': 'Entreprenant', 'factor.E.desc': 'Initiative, leadership et négociation',
+    'factor.C.name': 'Conventionnel', 'factor.C.desc': 'Organisation, données et précision',
+    'dimension.interest': 'Intérêts professionnels',
     // Dimensioni degli strumenti (raggruppamento dei fattori nel profilo).
     'dimension.cognitive': 'Facteurs cognitifs et métacognitifs',
     'dimension.affective': 'Facteurs affectifs et motivationnels',
@@ -434,6 +466,14 @@ const de: Dict = {
     'factor.AD2.name': 'Kontrolle und Autonomie', 'factor.AD2.desc': 'Entscheiden und Verantwortung für Entscheidungen übernehmen',
     'factor.AD3.name': 'Neugier und Erkundung', 'factor.AD3.desc': 'Optionen und Möglichkeiten erkunden',
     'factor.AD4.name': 'Vertrauen und Problemlösung', 'factor.AD4.desc': 'Probleme angehen und lösen',
+    // RIASEC (O*NET Interest Profiler Short Form)
+    'factor.R.name': 'Realistisch', 'factor.R.desc': 'Praktische, konkrete Tätigkeiten',
+    'factor.I.name': 'Investigativ', 'factor.I.desc': 'Analyse, Forschung und Verständnis',
+    'factor.A.name': 'Künstlerisch', 'factor.A.desc': 'Kreativität und Ausdruck',
+    'factor.S.name': 'Sozial', 'factor.S.desc': 'Beziehung, Unterrichten und Helfen',
+    'factor.E.name': 'Unternehmerisch', 'factor.E.desc': 'Initiative, Führung und Verhandlung',
+    'factor.C.name': 'Konventionell', 'factor.C.desc': 'Organisation, Daten und Genauigkeit',
+    'dimension.interest': 'Berufliche Interessen',
     // Dimensioni degli strumenti (raggruppamento dei fattori nel profilo).
     'dimension.cognitive': 'Kognitive und metakognitive Faktoren',
     'dimension.affective': 'Affektive und motivationale Faktoren',
@@ -530,6 +570,14 @@ const sv: Dict = {
     'factor.AD2.name': 'Kontroll & självständighet', 'factor.AD2.desc': 'Besluta och ta ansvar för val',
     'factor.AD3.name': 'Nyfikenhet & utforskande', 'factor.AD3.desc': 'Utforska alternativ och möjligheter',
     'factor.AD4.name': 'Tilltro & problemlösning', 'factor.AD4.desc': 'Möta och lösa problem',
+    // RIASEC (O*NET Interest Profiler Short Form)
+    'factor.R.name': 'Realistisk', 'factor.R.desc': 'Praktiska och konkreta aktiviteter',
+    'factor.I.name': 'Utredande', 'factor.I.desc': 'Analys, forskning och förståelse',
+    'factor.A.name': 'Konstnärlig', 'factor.A.desc': 'Kreativitet och uttryck',
+    'factor.S.name': 'Social', 'factor.S.desc': 'Relation, undervisning och hjälp',
+    'factor.E.name': 'Företagsam', 'factor.E.desc': 'Initiativ, ledarskap och förhandling',
+    'factor.C.name': 'Konventionell', 'factor.C.desc': 'Organisation, data och noggrannhet',
+    'dimension.interest': 'Yrkesintressen',
     // Dimensioni degli strumenti (raggruppamento dei fattori nel profilo).
     'dimension.cognitive': 'Kognitiva och metakognitiva faktorer',
     'dimension.affective': 'Affektiva och motivationella faktorer',

@@ -11,6 +11,7 @@ import { readingText } from '@/lib/i18n-reading';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { QUESTIONNAIRES, isReusableProfile, type QuestionnaireType } from '@/lib/questionnaires';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
+import { RiasecProfile } from '@/components/qsa/RiasecProfile';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { noticingMessageId } from '@/lib/teacher-noticing';
@@ -30,6 +31,7 @@ type Detail = StudentResult & {
     summary: string | null;
     conversation: Array<{ role: string; text: string }>;
     reading: { strengths: string[]; growth_areas: string[]; note: string; updated_at: string | null } | null;
+    riasec?: { holland_code: string; dimensions: { code: string; raw_total: number; max_total: number }[] } | null;
 };
 type Props = { base: string; username: string; result: StudentResult };
 
@@ -102,7 +104,9 @@ function StudentResultDetails({ path, username, result }: { path: string; userna
         {pdfError && <Callout variant="danger">{l('pdfError')}</Callout>}
         <section className="space-y-2" aria-label={t('profile.factorBreakdown')}>
             <h3 className="font-semibold text-ink">{t('profile.factorBreakdown')}</h3>
-            {legacy ? <p>{t('q.QPCC.legacyProfile')}</p> : data.scores && Object.keys(data.scores).length > 0 && questionnaire
+            {legacy ? <p>{t('q.QPCC.legacyProfile')}</p> : data.riasec
+                ? <RiasecProfile dimensions={data.riasec.dimensions} showCode code={data.riasec.holland_code} />
+                : data.scores && Object.keys(data.scores).length > 0 && questionnaire
                 ? <ProfileVisualization scores={data.scores} questionnaire={questionnaire} />
                 : <p className="text-ink-muted">{l('noScores')}</p>}
         </section>

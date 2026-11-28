@@ -35,7 +35,8 @@ test('the owned pages have no boxed Card', () => {
     // di stato (classe disattivata, strumento non disponibile).
     const runner = read('components/administration/QuestionnaireRunner.tsx');
     assert.equal((runner.match(/<Card(?![^>]*variant="flat")[^>]*>/g) ?? []).length, 2);
-    assert.equal((runner.match(/<Card [^>]*variant="flat"/g) ?? []).length, 4);
+    // The RIASEC exploratory result adds one flat card (no boxed Card).
+    assert.equal((runner.match(/<Card [^>]*variant="flat"/g) ?? []).length, 5);
     // La Bussola tiene un solo riquadro: il pannello della conversazione.
     const bussola = read('app/bussola/page.tsx');
     assert.equal((bussola.match(/<Card(?![^>]*variant="flat")[^>]*>/g) ?? []).length, 1);

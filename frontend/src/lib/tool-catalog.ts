@@ -20,6 +20,7 @@ export const ACTIVE_QUESTIONNAIRE_IDS: readonly QuestionnaireType[] = [
     'QPCS',
     'QPCC',
     'QAP',
+    'RIASEC',
     'SAVICKAS',
     'EVENTO_STUDIO',
     'EVENTO_PROFESSIONALE',
@@ -31,7 +32,7 @@ export const ACTIVE_QUESTIONNAIRE_IDS: readonly QuestionnaireType[] = [
 export const TOOL_CATEGORIES: readonly ToolCategoryDefinition[] = [
     {
         id: 'assessment',
-        questionnaireIds: ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'],
+        questionnaireIds: ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP', 'RIASEC'],
     },
     {
         id: 'guided',

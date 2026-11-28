@@ -102,6 +102,17 @@ const QAP_FACTOR_DEFINITIONS: FactorDefinition[] = [
     { code: 'AD4', name: 'Fiducia e problem solving', description: 'Affrontare e risolvere i problemi', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
 ];
 
+// RIASEC interest areas (O*NET Interest Profiler Short Form). Each area is a
+// single factor, scored 0-40; see backend/riasec.py for the licensed item text.
+const RIASEC_FACTOR_DEFINITIONS: FactorDefinition[] = [
+    { code: 'R', name: 'Realistico', description: 'Attività pratiche, manuali e concrete', lowLabel: '', midLabel: '', highLabel: '' },
+    { code: 'I', name: 'Investigativo', description: 'Analisi, ricerca e comprensione', lowLabel: '', midLabel: '', highLabel: '' },
+    { code: 'A', name: 'Artistico', description: 'Creatività ed espressione', lowLabel: '', midLabel: '', highLabel: '' },
+    { code: 'S', name: 'Sociale', description: 'Relazione, insegnamento e aiuto', lowLabel: '', midLabel: '', highLabel: '' },
+    { code: 'E', name: 'Imprenditoriale', description: 'Iniziativa, guida e negoziazione', lowLabel: '', midLabel: '', highLabel: '' },
+    { code: 'C', name: 'Convenzionale', description: 'Organizzazione, dati e precisione', lowLabel: '', midLabel: '', highLabel: '' },
+];
+
 // ZTPI factor definitions (T1-T5, scala 1-9)
 // T1 e T4 sono fattori INVERTITI (punteggio basso = Forza)
 const ZTPI_FACTOR_DEFINITIONS: FactorDefinition[] = [
@@ -250,6 +261,17 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         invertedFactors: [],
         color: 'bg-chart-3',
         icon: 'briefcase',
+    },
+    RIASEC: {
+        id: 'RIASEC',
+        name: 'RIASEC',
+        fullName: 'O*NET Interest Profiler Short Form',
+        description: 'Sessanta attività lavorative per esplorare i tuoi interessi più forti',
+        factorPrefix: ['R', 'I', 'A', 'S', 'E', 'C'],
+        factors: RIASEC_FACTOR_DEFINITIONS,
+        invertedFactors: [],
+        color: 'bg-chart-accent',
+        icon: 'compass',
     },
 };
 

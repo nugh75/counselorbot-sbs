@@ -5,6 +5,7 @@ import { factorTranslationKey } from '@/lib/questionnaires';
 
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/Card';
+import { RiasecProfile } from '@/components/qsa/RiasecProfile';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import {
     ZTPIFactorCode,
@@ -230,6 +231,14 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
 export function ProfileVisualization({ scores, questionnaire }: ProfileVisualizationProps) {
     const { t, tf } = useI18n();
     const [view, setView] = useState<string>('all');
+    if (questionnaire.id === 'RIASEC') {
+        const dimensions = ['R', 'I', 'A', 'S', 'E', 'C'].map((code) => ({
+            code,
+            raw_total: scores[code] ?? 0,
+            max_total: 40,
+        }));
+        return <RiasecProfile dimensions={dimensions} />;
+    }
     const invertedSet = new Set(questionnaire.invertedFactors);
     const isZTPI = questionnaire.id === 'ZTPI';
     const positiveLegend = isZTPI ? t('profile.legend.ztpiPositive') : t('profile.strength');
