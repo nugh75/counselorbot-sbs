@@ -12,6 +12,8 @@ const question = 'Sei sicuro di voler eliminare questa attività?';
 async function fixture({ width = 1280, lang = 'it', actions = [action('uno'), action('due')], restricted = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, serviceWorkers: 'block', reducedMotion: 'reduce' });
     await context.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
+    // Next dev only: the dev-tools indicator (nextjs-portal) can cover bottom buttons at 390px.
+    await context.addInitScript(() => document.addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: 'nextjs-portal { display: none !important; }' }))));
     const page = await context.newPage();
     page.setDefaultTimeout(20000);
     page.setDefaultNavigationTimeout(60000);
@@ -55,15 +57,17 @@ for (const width of [390, 1280]) {
             await f.page.goto(`${origin}/profilo/compilazioni`, { waitUntil: 'domcontentloaded' });
             const list = f.page.getByRole('region', { name: 'Attività in corso', exact: true });
             await list.waitFor();
-            assert.equal(await list.getByRole('listitem').count(), 5);
+            // The in-progress entries are links inside the section's navigation (EntrySection).
+            assert.equal(await list.getByRole('navigation').getByRole('link').count(), 5);
             assert.match(await list.textContent(), /In corso/);
             await f.page.getByText('Ritrova i risultati dei questionari e i dialoghi collegati.', { exact: true }).waitFor();
             await f.page.getByRole('heading', { name: 'Risultato della compilazione', exact: true }).waitFor();
             await f.page.getByText('Dialogo già presente.', { exact: true }).waitFor();
-            assert.equal(await list.getByRole('link', { name: 'Vedi tutte le attività' }).getAttribute('href'), '/profilo/azioni');
+            // «Vedi tutte le attività» sits right after the section, outside its region.
+            assert.equal(await f.page.getByRole('link', { name: 'Vedi tutte le attività', exact: true }).getAttribute('href'), '/profilo/azioni');
             assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await f.page.screenshot({ path: `../output/playwright/active-actions-${width}.png`, fullPage: true });
-            await list.getByRole('link', { name: 'Apri l’attività: Attività c', exact: true }).click();
+            await list.getByRole('link', { name: 'Attività c', exact: true }).click();
             await f.page.waitForURL('**/profilo/azioni#action-c');
             await f.page.waitForFunction(() => document.activeElement?.id === 'action-c');
             assert.deepEqual(f.state.errors, []);
@@ -118,7 +122,7 @@ test('failed activity load leaves results available and supports retry', async (
         await f.page.getByRole('heading', { name: 'Risultato della compilazione', exact: true }).waitFor();
         f.state.failRead = false;
         await alert.getByRole('button', { name: 'Riprova', exact: true }).click();
-        await f.page.getByRole('link', { name: 'Apri l’attività: Attività uno', exact: true }).waitFor();
+        await f.page.getByRole('region', { name: 'Attività in corso', exact: true }).getByRole('link', { name: 'Attività uno', exact: true }).waitFor();
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });

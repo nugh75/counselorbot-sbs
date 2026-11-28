@@ -1,6 +1,8 @@
 import { chatLayoutLabel } from '../src/lib/i18n-chat-layout.ts';
 import { chatPreferenceLabel } from '../src/lib/chat-preferences.ts';
 import { visualLabel } from '../src/lib/i18n-visual-tools.ts';
+import { visibleGuideTasks, guideTaskHref } from '../src/lib/guide-tasks.ts';
+import { guideTaskCopy } from '../src/lib/i18n-guide-tasks.ts';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -176,9 +178,14 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
             const menu = page.locator('.chat-options:visible');
             await menu.waitFor();
             assert.equal(await page.getByText('Tools', { exact: true }).count(), 0);
-            await page.getByRole('radio', { name: new RegExp(chatPreferenceLabel(options.locale, 'format')) }).first().waitFor();
-            const compactChoices = await page.getByRole('radio').count();
-            assert.equal(compactChoices >= 6, true, `format and length use compact icon choices: ${compactChoices}`);
+            // #682: each setting is a row that opens its compact selector in a sub-level.
+            const formatRow = menu.getByRole('button', { name: new RegExp(`^${chatPreferenceLabel(options.locale, 'format')}:`) });
+            await formatRow.waitFor();
+            await formatRow.click();
+            const formatChoices = menu.getByRole('radio').filter({ visible: true });
+            await formatChoices.first().waitFor();
+            assert.ok(await formatChoices.count() >= 2, 'format uses compact icon choices');
+            await page.keyboard.press('Escape');
             await page.keyboard.press('Escape');
             if (options.width < 1024) {
                 assert.equal(await panel.count(), 0, 'resources do not occupy space below the chat');
@@ -208,7 +215,7 @@ test('the conversation menu toggles the desktop sidebar and remembers its visibi
             await trigger.click();
             const menu = page.locator('.chat-options:visible');
             await menu.waitFor();
-            await menu.getByRole('button', { name: l('panel'), exact: true }).click();
+            await menu.getByRole('button', { name: new RegExp(`^${l('panel')}`) }).click();
         };
         await panel.waitFor();
         const original = await chat.boundingBox();
@@ -366,22 +373,17 @@ for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it',
     test(`updated guide loads and enlarges all screenshots at ${options.width}px in ${options.locale}`, async () => {
         const { page, context, control } = await fixture(options.width, 'intro', options);
         try {
-            await page.goto(`${origin}/guide`, { waitUntil: 'networkidle' });
-            const sections = page.locator('li[id^="guide-section-"]');
-            assert.equal(await sections.count(), 15);
-            for (let n = 1; n <= 15; n++) {
-                const link = page.locator(`a[href="#guide-section-${n}"]`);
-                const section = page.locator(`#guide-section-${n}`);
-                assert.ok((await link.innerText()).includes(await section.locator('h2').innerText()));
-                assert.ok((await section.locator('p').first().innerText()).length > 100);
-                assert.ok(await section.locator('figure').count() > 0, `Missing screenshot: personal section ${n}`);
-                await link.click();
-                assert.equal(new URL(page.url()).hash, `#guide-section-${n}`);
-            }
-            assert.doesNotMatch(await page.locator('main').innerText(), /guide\.(section|chat)\w*/);
-            const figures = page.locator('figure');
-            assert.equal(await figures.count(), 19);
-            for (const figure of await figures.all()) {
+            // The guide is task-based (#989): each task has its own article and figure.
+            const tasks = visibleGuideTasks('student', { personalAPI: false, chatgpt: false });
+            assert.ok(tasks.length >= 15, `student tasks: ${tasks.length}`);
+            for (const task of tasks) {
+                const copy = guideTaskCopy(options.locale, task.id);
+                await page.goto(`${origin}${guideTaskHref(task.id, 'student')}`, { waitUntil: 'networkidle' });
+                const article = page.locator(`#guide-task-${task.id}`);
+                await article.waitFor();
+                assert.equal(await article.locator('h2').innerText(), copy.title);
+                const figure = article.locator('figure');
+                assert.equal(await figure.count(), 1, `Missing screenshot: ${task.id}`);
                 const thumbnail = figure.locator('img');
                 await thumbnail.scrollIntoViewIfNeeded();
                 await thumbnail.evaluate(img => img.decode());
@@ -394,10 +396,9 @@ for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it',
                 await page.keyboard.press('Escape');
                 assert.equal(await page.getByRole('dialog').count(), 0);
                 assert.equal(await button.evaluate(el => el === document.activeElement), true);
+                assert.doesNotMatch(await article.innerText(), /guide\.\w+/);
+                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `overflow: ${task.id}`);
             }
-            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-            assert.doesNotMatch(await page.locator('main').innerText(), /guide\.chat\./);
-            await page.locator('#guide-chat-controls').scrollIntoViewIfNeeded();
             await page.screenshot({ path: `/tmp/guide-reviewed-${options.width}.png` });
             assert.deepEqual(control.errors, []);
 
@@ -433,8 +434,9 @@ for (const [locale, width] of [['it', 390], ['en', 1440], ['de', 320], ['es', 39
             await page.getByLabel(l('snapshotTitle'), { exact: true }).fill('Presentazione');
             await page.getByLabel(l('reflection'), { exact: true }).fill('Note del percorso');
             await page.getByRole('button', { name: l('preview'), exact: true }).click();
-            await page.locator('pre').waitFor();
-            assert.match(await page.locator('pre').innerText(), /Provare con un compagno/);
+            const preview = page.locator('pre').filter({ visible: true });
+            await preview.waitFor();
+            assert.match(await preview.innerText(), /Provare con un compagno/);
             control.failCopy = true;
             await portfolioButtons.last().click();
             // La pagina mostra l'errore due volte (in cima e nella sezione copia): basta la prima.

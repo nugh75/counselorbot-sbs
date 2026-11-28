@@ -442,7 +442,7 @@ for (const [locale, width, dark, title] of [['de', 320, true, 'Fragebogenanalyse
         try {
             await page.goto(`${origin}/?view=intro`);
             const intro = page.getByTestId('intro-screen');
-            await intro.getByRole('heading', { name: title, exact: true }).waitFor();
+            await intro.getByRole('link', { name: title, exact: true }).waitFor();
             assert.equal(await intro.locator('[data-testid="intro-activities"] nav > *').count(), 4);
             assert.equal(await intro.locator('details[open]').count(), 0);
             assert.equal((await intro.innerText()).includes('app.intro.'), false);
@@ -476,7 +476,7 @@ test('data and privacy explains conditional protection and returns to the introd
         assert.match(await page.locator('main').innerText(), /revocabili/);
         await page.getByRole('link', { name: 'Torna alla presentazione', exact: true }).click();
         await page.getByTestId('intro-screen').waitFor();
-        assert.equal(await page.getByRole('heading', { name: 'Analisi questionari', exact: true }).isVisible(), true);
+        assert.equal(await page.getByTestId('intro-screen').getByRole('link', { name: 'Analisi questionari', exact: true }).isVisible(), true);
         assert.deepEqual(writes, []);
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
@@ -521,7 +521,7 @@ for (const width of [390, 1440]) {
         const { page, context, errors } = await fixture({ width });
         try {
             await page.emulateMedia({ reducedMotion: width >= 640 ? 'no-preference' : 'reduce' });
-            for (const [label, target] of [['Esplora le analisi', 'tools-assessment'], ['Esplora i percorsi', 'tools-guided']]) {
+            for (const [label, target] of [['Analisi questionari', 'tools-assessment'], ['Percorsi guidati', 'tools-guided']]) {
                 await page.goto(`${origin}/?view=intro`);
                 await page.getByTestId('intro-screen').getByRole('link', { name: label, exact: true }).click();
                 await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
