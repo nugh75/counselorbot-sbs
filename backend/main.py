@@ -2111,8 +2111,13 @@ def _seed_instruments_catalog(db):
             code=code,
             name_en=spec.get("name_en"),
             name_sv=spec.get("name_sv"),
+            name_it=spec.get("name_it"),
+            name_es=spec.get("name_es"),
+            name_i18n=spec.get("name_i18n"),
             response_scale_min=spec.get("response_scale_min", 1),
             response_scale_max=spec.get("response_scale_max", 4),
+            response_labels=spec.get("response_labels"),
+            description_i18n=spec.get("description_i18n"),
             report_scale_type=spec.get("report_scale_type", "stanine"),
             status="experimental",
             is_active=True,
@@ -2145,6 +2150,9 @@ def _seed_instruments_catalog(db):
                 reverse_scoring=bool(it.get("reverse_scoring")),
                 text_en=it.get("text_en"),
                 text_sv=it.get("text_sv"),
+                text_it=it.get("text_it"),
+                text_es=it.get("text_es"),
+                text_i18n=it.get("text_i18n"),
                 active=True,
             ))
         seeded = True

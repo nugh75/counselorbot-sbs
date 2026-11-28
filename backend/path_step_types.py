@@ -626,6 +626,15 @@ def valid_scores(db, instrument_code, scores):
         row.code
         for row in db.query(models.Factor).filter_by(instrument_code=instrument_code)
     }
+    if instrument_code.upper() == "RIASEC":
+        # RIASEC keeps the raw area totals (0-40) so the high-point code can be
+        # recomputed from the stored result.
+        return (
+            bool(factors)
+            and isinstance(scores, dict)
+            and set(scores) == factors
+            and all(type(value) is int and 0 <= value <= 40 for value in scores.values())
+        )
     return (
         bool(factors)
         and isinstance(scores, dict)

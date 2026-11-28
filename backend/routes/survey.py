@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 # Strumenti con risultati propri: i questionari e Idea + i due percorsi evento.
 # I percorsi Obiettivo restano fuori: la sintesi precompila gli obiettivi.
 HISTORIC_SURVEY_TYPES = (
-    "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA",
+    "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "RIASEC", "IDEA",
     "EVENTO_STUDIO", "EVENTO_PROFESSIONALE",
 )
 INSTRUMENT_TYPES = DynamicInstrumentSet(HISTORIC_SURVEY_TYPES)
@@ -378,7 +378,7 @@ async def score_instrument(
                 status_code=401,
                 detail="Authentication required to save validation responses with an anonymous research code",
             )
-        factor_scores = scoring_service.mapped_stanine_scores(profile)
+        factor_scores = scoring_service.mapped_result_scores(profile)
         # Context first: a rejected administration must not leave any write behind.
         context_metadata = dict(payload.response_metadata or {})
         administration_plan_id, research_contact_id = _resolve_administration_context(
