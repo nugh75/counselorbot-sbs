@@ -5,6 +5,7 @@ import { TargetedGoals } from '@/components/goals/TargetedGoals';
 import { useRouter } from 'next/navigation';
 import {
     Check,
+    ClipboardList,
     Copy,
     FileText,
     MessageSquare,
@@ -388,6 +389,9 @@ export function ClassOverviewTab({
                     illustration={<Route className="h-8 w-8 shrink-0 text-link" aria-hidden />} name={l('classPaths')} description={l('classPathsDesc')} />
                 <EntryLink idPrefix="class-overview" id="forum" href="#" onOpen={() => onSelectTab('forum')}
                     illustration={<MessageSquare className="h-8 w-8 shrink-0 text-link" aria-hidden />} name={l('classForum')} description={l('classForumDesc')} />
+                {!adminRoute && <EntryLink idPrefix="class-overview" id="assignments"
+                    href={`/docente/assegnazioni?group=${encodeURIComponent(group.name)}`}
+                    illustration={<ClipboardList className="h-8 w-8 shrink-0 text-link" aria-hidden />} name={l('classAssignments')} description={l('classAssignmentsDesc')} />}
             </EntrySection>
 
             <TargetedGoals target={{ groupId: group.id }} />
