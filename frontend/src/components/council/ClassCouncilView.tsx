@@ -52,6 +52,22 @@ function StudentSheet({ student, lang }: { student: CouncilStudent; lang: string
                 </details>}
             </div>)}</div>
         </Section>
+        <Section title={l('sharedConversations')} empty={l('sharedConversationsEmpty')} count={student.shared_conversations.length}>
+            <div className="divide-y divide-line">{student.shared_conversations.map(conversation => <div key={conversation.id} className="py-3 first:pt-0 last:pb-0">
+                <p className="text-sm font-semibold text-ink">
+                    {conversation.questionnaire_type || l('sharedConversations')}
+                    <span className="ml-2 font-normal text-ink-muted">
+                        · {conversation.whole_chat ? l('shareWholeChat') : l('sharedExtract')} · {l('sharedUntil')} {date(conversation.expires_at)}
+                    </span>
+                </p>
+                <div className="mt-2 space-y-2 text-sm">
+                    {conversation.messages.map((message, index) => <div key={index}>
+                        <p className="font-semibold text-ink-body">{message.role === 'student' ? l('studentOne') : 'CounselorBot'}</p>
+                        <p className="whitespace-pre-line break-words text-ink-body">{message.text}</p>
+                    </div>)}
+                </div>
+            </div>)}</div>
+        </Section>
         <Section title={l('assignments')} empty={l('nothing')} count={student.assignments.length}>
             <div className="divide-y divide-line">{student.assignments.map((item, index) => <div key={index} className="py-3 text-sm first:pt-0 last:pb-0">
                 <p className="font-semibold text-ink">{item.title}{item.due_date && <span className="font-normal text-ink-muted"> · {l('due')} {date(item.due_date)}</span>}</p>

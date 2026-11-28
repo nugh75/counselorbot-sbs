@@ -189,6 +189,7 @@ const localeSpecificFiles = new Set([
 const translatedFeedbackKeys = new Map([
     ['components/council/ClassCouncilView.tsx', new Set(['networkError'])],
     ['components/teacher/ClassCouncilTab.tsx', new Set(['createError', 'ownerOnly'])],
+    ['components/teacher/CouncilSharePanel.tsx', new Set(['shareSelectHint', 'shareError'])],
 ]);
 const visibleAttributes = new Set(['placeholder', 'title', 'aria-label', 'alt']);
 

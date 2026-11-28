@@ -238,6 +238,7 @@ except Exception as exc:  # pragma: no cover - dipende dalla concorrenza dei wor
 from importlib import import_module
 
 import_module("backend.migrations.20261128_student_group_image_url").migrate(database.engine)
+import_module("backend.migrations.20261128_class_council_shares").migrate(database.engine)
 import_module("backend.migrations.20261009_teacher_institutes").migrate(database.engine)
 import_module("backend.migrations.20261009_institute_credentials").migrate(database.engine)
 import_module("backend.migrations.20261009_typed_administration_steps").migrate(database.engine)

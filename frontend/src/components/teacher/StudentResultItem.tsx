@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { noticingMessageId } from '@/lib/teacher-noticing';
 import { NoticingPanel } from './NoticingPanel';
+import { CouncilSharePanel } from './CouncilSharePanel';
 import { useTeacherResource } from './useTeacherResource';
 
 export interface StudentResult {
@@ -31,9 +32,9 @@ type Detail = StudentResult & {
     conversation: Array<{ role: string; text: string }>;
     reading: { strengths: string[]; growth_areas: string[]; note: string; updated_at: string | null } | null;
 };
-type Props = { base: string; username: string; result: StudentResult };
+type Props = { base: string; username: string; result: StudentResult; sharePath?: string };
 
-function StudentResultDetails({ path, username, result }: { path: string; username: string; result: StudentResult }) {
+function StudentResultDetails({ path, username, result, sharePath }: { path: string; username: string; result: StudentResult; sharePath?: string }) {
     const { lang, t } = useI18n();
     const l = (key: Parameters<typeof classCompilationsText>[1]) => classCompilationsText(lang, key);
     const parse = useCallback((payload: unknown): Detail => {
@@ -136,10 +137,11 @@ function StudentResultDetails({ path, username, result }: { path: string; userna
                 </div>)}
             </div>
         </section>
+        {sharePath && <CouncilSharePanel path={sharePath} resultId={result.id} messages={data.conversation} />}
     </div>;
 }
 
-function ResultItem({ base, username, result }: Props) {
+function ResultItem({ base, username, result, sharePath }: Props) {
     const { lang } = useI18n();
     const [open, setOpen] = useState(false);
     const id = useId();
@@ -157,7 +159,7 @@ function ResultItem({ base, username, result }: Props) {
             <FileText className="h-4 w-4 shrink-0" aria-hidden />{l('detail')}
             <span className="sr-only">{username} · {result.questionnaire_type}{result.submitted_at ? ` · ${new Date(result.submitted_at).toLocaleString(lang)}` : ''}</span>
         </Button>
-        <div id={id} hidden={!open}>{open && <StudentResultDetails path={path} username={username} result={result} />}</div>
+        <div id={id} hidden={!open}>{open && <StudentResultDetails path={path} username={username} result={result} sharePath={sharePath} />}</div>
     </div>;
 }
 

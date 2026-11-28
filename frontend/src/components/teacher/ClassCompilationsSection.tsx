@@ -38,7 +38,8 @@ function ClassCompilations({ groupId }: { groupId: number }) {
     return <ul className="divide-y divide-line" aria-label={l('title')}>
         {results.map(({ username, result }) => <li key={result.id} className="min-w-0 py-4">
             <p className="mb-2 break-words font-semibold text-ink"><span className="sr-only">{l('student')}: </span>{username}</p>
-            <StudentResultItem base={base} username={username} result={result} />
+            <StudentResultItem base={base} username={username} result={result}
+                sharePath={`/api/teacher/groups/${groupId}/students/${encodeURIComponent(username)}`} />
         </li>)}
     </ul>;
 }

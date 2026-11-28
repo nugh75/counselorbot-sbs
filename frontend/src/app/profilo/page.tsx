@@ -32,6 +32,7 @@ import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
 import { AssignmentsPanel } from '@/components/teacher/AssignmentsPanel';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
+import { CouncilStudentSharesCard } from '@/components/profile/CouncilStudentSharesCard';
 import { ClassContentGate } from '@/components/profile/ClassContentGate';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
@@ -803,6 +804,7 @@ export default function ProfilePage() {
             {activeSection === 'assignments' && <ClassContentGate><AssignmentsPanel showHeading={false} /></ClassContentGate>}
             {activeSection === 'groups' && <ClassContentGate><div className="space-y-4">
                 <MyGroupsCard lang={lang} showHeading={false} canManageGroups={canUseTeacherAssistant(identity)} />
+                <CouncilStudentSharesCard />
                 {/* F30 (lotto 5A): i messaggi del docente sono leggibili anche nella pagina Classi,
                     accanto al riepilogo di chi vede cosa. */}
                 <TeacherNotesCard lang={lang} />

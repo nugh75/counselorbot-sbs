@@ -79,6 +79,28 @@ const texts = {
     criteria: ['Criteri', 'Criteria', 'Criterios', 'Critères', 'Kriterien', 'Kriterier'],
     reflection: ['Riflessione', 'Reflection', 'Reflexión', 'Réflexion', 'Reflexion', 'Reflektion'],
     print: ['Stampa', 'Print', 'Imprimir', 'Imprimer', 'Drucken', 'Skriv ut'],
+    // Teacher-selected conversations shared with the council (#1027).
+    shareWithCouncil: ['Condividi con il consiglio di classe', 'Share with the class council', 'Compartir con el consejo de clase', 'Partager avec le conseil de classe', 'Mit der Klassenkonferenz teilen', 'Dela med klasskonferensen'],
+    shareHint: ['Di default nulla è condiviso. Scegli la chat intera o solo alcuni messaggi dello studente, con una scadenza propria.', 'Nothing is shared by default. Choose the whole chat or only some of the student’s messages, with its own expiry.', 'Por defecto no se comparte nada. Elige el chat completo o solo algunos mensajes del estudiante, con su propia caducidad.', 'Rien n’est partagé par défaut. Choisissez la conversation entière ou seulement certains messages de l’élève, avec sa propre expiration.', 'Standardmäßig wird nichts geteilt. Wählen Sie den ganzen Chat oder nur einzelne Nachrichten der Lernenden, mit eigenem Ablaufdatum.', 'Inget delas som standard. Välj hela chatten eller bara några av elevens meddelanden, med egen giltighetstid.'],
+    shareWholeChat: ['Chat intera', 'Whole chat', 'Chat completo', 'Conversation entière', 'Ganzer Chat', 'Hela chatten'],
+    shareSelected: ['Solo i messaggi selezionati', 'Selected messages only', 'Solo los mensajes seleccionados', 'Seulement les messages sélectionnés', 'Nur ausgewählte Nachrichten', 'Endast valda meddelanden'],
+    shareSelectHint: ['Seleziona solo messaggi dello studente: le risposte del counselor non entrano negli estratti.', 'Select the student’s messages only: counselor replies are not included in extracts.', 'Selecciona solo mensajes del estudiante: las respuestas del counselor no entran en los extractos.', 'Sélectionnez uniquement les messages de l’élève : les réponses du conseiller ne font pas partie des extraits.', 'Wählen Sie nur Nachrichten der Lernenden: Antworten des Counselors gehören nicht zu den Auszügen.', 'Välj endast elevens meddelanden: rådgivarens svar ingår inte i utdragen.'],
+    shareCreate: ['Condividi', 'Share', 'Compartir', 'Partager', 'Teilen', 'Dela'],
+    shareCreating: ['Condivisione…', 'Sharing…', 'Compartiendo…', 'Partage…', 'Wird geteilt…', 'Delar…'],
+    shareError: ['Condivisione non riuscita. Riprova.', 'Sharing failed. Try again.', 'No se pudo compartir. Inténtalo de nuevo.', 'Le partage a échoué. Réessayez.', 'Teilen fehlgeschlagen. Versuchen Sie es erneut.', 'Det gick inte att dela. Försök igen.'],
+    shareCreated: ['Condivisione creata.', 'Share created.', 'Recurso compartido creado.', 'Partage créé.', 'Freigabe erstellt.', 'Delning skapad.'],
+    shareList: ['Condivisioni di questa chat', 'Shares of this chat', 'Recursos compartidos de este chat', 'Partages de cette conversation', 'Freigaben dieses Chats', 'Delningar av denna chatt'],
+    shareNone: ['Nessuna condivisione per questa chat.', 'No shares of this chat yet.', 'Aún no hay recursos compartidos de este chat.', 'Aucun partage pour cette conversation.', 'Noch keine Freigaben dieses Chats.', 'Inga delningar av denna chatt än.'],
+    sharedUntil: ['Fino al', 'Until', 'Hasta el', 'Jusqu’au', 'Bis', 'Till'],
+    sharedExtract: ['Estratto', 'Extract', 'Extracto', 'Extrait', 'Auszug', 'Utdrag'],
+    shareRevoke: ['Revoca condivisione', 'Revoke share', 'Revocar recurso', 'Révoquer le partage', 'Freigabe widerrufen', 'Återkalla delning'],
+    shareRevokeConfirm: ['Revocare questa condivisione? Il consiglio non vedrà più questi messaggi.', 'Revoke this share? The council will no longer see these messages.', '¿Revocar este recurso? El consejo ya no verá estos mensajes.', 'Révoquer ce partage ? Le conseil ne verra plus ces messages.', 'Diese Freigabe widerrufen? Die Konferenz sieht diese Nachrichten dann nicht mehr.', 'Återkalla denna delning? Konferensen ser inte längre dessa meddelanden.'],
+    sharedConversations: ['Conversazioni condivise', 'Shared conversations', 'Conversaciones compartidas', 'Conversations partagées', 'Geteilte Gespräche', 'Delade samtal'],
+    sharedConversationsEmpty: ['Nessuna conversazione condivisa.', 'No shared conversations.', 'Ninguna conversación compartida.', 'Aucune conversation partagée.', 'Keine geteilten Gespräche.', 'Inga delade samtal.'],
+    studentSharedTitle: ['Condiviso con il consiglio di classe', 'Shared with the class council', 'Compartido con el consejo de clase', 'Partagé avec le conseil de classe', 'Mit der Klassenkonferenz geteilt', 'Delat med klasskonferensen'],
+    studentSharedEmpty: ['Nessuna conversazione condivisa con il consiglio di classe.', 'No conversations shared with the class council.', 'Ninguna conversación compartida con el consejo de clase.', 'Aucune conversation partagée avec le conseil de classe.', 'Keine Gespräche mit der Klassenkonferenz geteilt.', 'Inga samtal delade med klasskonferensen.'],
+    studentSharedClass: ['Classe', 'Class', 'Clase', 'Classe', 'Klasse', 'Klass'],
+    studentOne: ['Studente', 'Student', 'Estudiante', 'Élève', 'Lernende', 'Elev'],
 } as const satisfies Record<string, Localized>;
 
 export type ClassCouncilTextKey = keyof typeof texts;

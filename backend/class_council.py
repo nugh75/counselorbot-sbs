@@ -1,8 +1,11 @@
 """Class council overview (#422): what the class's teacher already sees, read-only.
 
-The overview never includes full conversations, private workspaces or goals the
-student did not share with the class.
+The overview includes a conversation only when the teacher shared it explicitly
+(#1027), with its own expiry and revocation. Private workspaces and goals the
+student did not share with the class stay out.
 """
+from datetime import UTC, datetime
+
 from sqlalchemy.orm import Session
 
 from . import models
@@ -162,6 +165,73 @@ def _goals(db: Session, group_id: int, usernames: list[str]) -> dict[str, list[d
     return by_student
 
 
+def share_state(share: models.ClassCouncilShare, now: datetime) -> str:
+    if share.revoked_at:
+        return "revoked"
+    return "expired" if share.expires_at <= now else "active"
+
+
+def share_messages(db: Session, share: models.ClassCouncilShare) -> list[dict]:
+    """The conversation the teacher shared, limited to this student's own logs."""
+    from .routes.survey import _session_conversation_messages
+
+    messages = _session_conversation_messages(db, share.session_id, share.student_username)
+    if share.message_indexes is None:
+        return messages
+    selected = {index for index in share.message_indexes if isinstance(index, int)}
+    return [
+        message for index, message in enumerate(messages)
+        if index in selected and message.get("role") == "student"
+    ]
+
+
+def serialize_share(share: models.ClassCouncilShare, now: datetime) -> dict:
+    return {
+        "id": share.id,
+        "result_id": share.result_id,
+        "session_id": share.session_id,
+        "whole_chat": share.message_indexes is None,
+        "message_indexes": share.message_indexes,
+        "created_at": _iso(share.created_at),
+        "expires_at": _iso(share.expires_at),
+        "revoked_at": _iso(share.revoked_at),
+        "state": share_state(share, now),
+    }
+
+
+def _shared_conversations(db: Session, group_id: int, usernames: list[str]) -> dict[str, list[dict]]:
+    now = datetime.now(UTC)
+    rows = (
+        db.query(models.ClassCouncilShare)
+        .filter(
+            models.ClassCouncilShare.group_id == group_id,
+            models.ClassCouncilShare.student_username.in_(usernames),
+            models.ClassCouncilShare.revoked_at.is_(None),
+            models.ClassCouncilShare.expires_at > now,
+        )
+        .order_by(models.ClassCouncilShare.created_at.asc(), models.ClassCouncilShare.id.asc())
+        .all()
+    ) if usernames else []
+    by_student: dict[str, list[dict]] = {username: [] for username in usernames}
+    result_ids = {row.result_id for row in rows}
+    results = {
+        row.id: row for row in db.query(models.QuestionnaireResult)
+        .filter(models.QuestionnaireResult.id.in_(result_ids))
+    } if result_ids else {}
+    for row in rows:
+        result = results.get(row.result_id)
+        by_student[row.student_username].append({
+            "id": row.id,
+            "result_id": row.result_id,
+            "questionnaire_type": result.questionnaire_type if result else None,
+            "shared_at": _iso(row.created_at),
+            "expires_at": _iso(row.expires_at),
+            "whole_chat": row.message_indexes is None,
+            "messages": share_messages(db, row),
+        })
+    return by_student
+
+
 def council_overview(db: Session, group: models.StudentGroup) -> dict:
     usernames = _members(db, group.id)
     names = dict(
@@ -173,6 +243,7 @@ def council_overview(db: Session, group: models.StudentGroup) -> dict:
     results = _results(db, usernames)
     assignments = _assignments(db, group.id, usernames)
     goals = _goals(db, group.id, usernames)
+    conversations = _shared_conversations(db, group.id, usernames)
     return {
         "group": {"id": group.id, "name": group.name},
         "students": [
@@ -183,6 +254,7 @@ def council_overview(db: Session, group: models.StudentGroup) -> dict:
                 "results": results[username],
                 "assignments": assignments[username],
                 "goals": goals[username],
+                "shared_conversations": conversations[username],
             }
             for username in sorted(usernames, key=lambda u: (names.get(u) or u).lower())
         ],
