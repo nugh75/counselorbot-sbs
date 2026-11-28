@@ -68,7 +68,9 @@ for(const lang of ['it','en','es','fr','de','sv'])for(const width of [390,1440])
  test(`teacher and admin bookmarks keep role-specific help: ${lang}/${width}`,async()=>{
   const f=await fixture({lang,width,role:'admin',features:true}),{page,l}=f;
   try{
-   await page.goto(`${origin}/guide?audience=teacher#guide-teacher-section-9`);await page.locator('#guide-task-build-plan').waitFor();
+   await page.goto(`${origin}/guide?audience=teacher#guide-teacher-section-9`);
+   // The legacy hash is rewritten to ?task=; wait for that before counting articles.
+   await page.waitForURL(/[?&]task=build-plan(&|$)/);await page.locator('#guide-task-build-plan').waitFor();
    const chooser=page.getByRole('navigation',{name:l('audience'),exact:true});
    assert.equal(await chooser.getByRole('link',{name:l('teacher'),exact:true}).getAttribute('aria-current'),'page');
    assert.equal(await page.locator('article').count(),1);

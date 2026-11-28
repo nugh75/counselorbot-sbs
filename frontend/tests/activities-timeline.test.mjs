@@ -13,6 +13,8 @@ after(async () => { await browser.close(); });
 async function fixture({ width = 1440, lang = 'it' } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 1050 } });
     await context.addInitScript(({ lang }) => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, { lang });
+    // Next dev only: the dev-tools indicator (nextjs-portal) can cover buttons at 390px.
+    await context.addInitScript(() => document.addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: 'nextjs-portal { display: none !important; }' }))));
     const page = await context.newPage(); page.setDefaultTimeout(12000);
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.route('**/api/**', async route => {

@@ -380,8 +380,9 @@ test('le spunte della Palestra salvano subito il taccuino che si legge nella cla
     assert.equal(await blocks.first().getByLabel('Email dello studente').count(), 1);
     const pending = page.getByRole('region', { name: 'Inviti in attesa' });
     assert.ok(await pending.getByText('attesa@example.org', { exact: true }).isVisible());
-    const tint = locator => locator.evaluate(node => getComputedStyle(node).backgroundColor);
-    assert.notEqual(await tint(practiceStudents), await tint(pending));
+    // Flat layout (#962): the two sections are marked by distinct role badges, not a tint.
+    assert.ok(await practiceStudents.locator('[data-role-badge="test"]').count() >= 1);
+    assert.ok(await pending.locator('[data-role-badge="teacher"]').count() >= 1);
     const notebook = practiceStudents.locator('summary').filter({ hasText: 'Giulia, 3ª liceo' });
     await notebook.click();
     assert.equal(await practiceStudents.getByRole('listitem').count(), 1);

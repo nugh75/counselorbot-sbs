@@ -86,7 +86,7 @@ for (const scenario of [{ width: 1440, teacher: true }, { width: 390, teacher: t
             if (scenario.teacher) {
                 await management.click();
                 await page.waitForURL(`${origin}/docente/classi`);
-                await page.getByRole('heading', { name: 'Gruppi e classi che gestisco', exact: true }).waitFor();
+                await page.getByRole('heading', { name: 'Gruppi e classi', exact: true, level: 1 }).waitFor();
                 await page.getByRole('button', { name: 'Nuovo gruppo o classe', exact: true }).click();
                 await page.getByPlaceholder('Nome (es. 3B, universitari, formazione adulti)').waitFor();
                 assert.equal(await page.locator('option').filter({ hasText: /^Adulti$/ }).count(), 1);
