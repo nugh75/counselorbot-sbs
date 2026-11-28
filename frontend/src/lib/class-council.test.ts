@@ -29,7 +29,7 @@ test('a shared submission reads as its text and the chosen portfolio preview', (
 });
 
 test('student search matches display name or username', () => {
-    const student = { username: 'alice', display_name: 'Alice Rossi', plans: [], results: [], assignments: [], goals: [] };
+    const student = { username: 'alice', display_name: 'Alice Rossi', plans: [], results: [], assignments: [], goals: [], shared_conversations: [] };
     assert.equal(matchesStudent(student, 'ross'), true);
     assert.equal(matchesStudent(student, 'ALI'), true);
     assert.equal(matchesStudent(student, 'bob'), false);

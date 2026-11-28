@@ -1330,6 +1330,28 @@ class ClassCouncilLink(Base):
     last_viewed_at = Column(UTCDateTime, nullable=True)
 
 
+class ClassCouncilShare(Base):
+    """One conversation (or selected messages of it) the teacher shares with the class council (#1027).
+
+    Message indexes are `None` for a whole chat and a list of positions in the
+    student's conversation for extracts. Independent expiry and revocation from
+    the council link; nothing is shared by default.
+    """
+
+    __tablename__ = "class_council_shares"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), index=True, nullable=False)
+    student_username = Column(String, index=True, nullable=False)
+    teacher_username = Column(String, nullable=False)
+    result_id = Column(Integer, ForeignKey("questionnaire_results.id", ondelete="CASCADE"), index=True, nullable=False)
+    session_id = Column(String, index=True, nullable=False)
+    message_indexes = Column(JSON, nullable=True)  # None = whole chat; list = selected student messages
+    expires_at = Column(UTCDateTime, nullable=False)
+    revoked_at = Column(UTCDateTime, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+
+
 class OrientationRecommendation(Base):
     """Consiglio orientativo del consiglio di classe: un documento per studente.
 

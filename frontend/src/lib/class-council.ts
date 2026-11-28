@@ -47,6 +47,21 @@ export interface CouncilGoal {
     review_date: string | null;
 }
 
+export interface CouncilMessage {
+    role: string;
+    text: string;
+}
+
+export interface CouncilSharedConversation {
+    id: number;
+    result_id: number;
+    questionnaire_type: string | null;
+    shared_at: string | null;
+    expires_at: string;
+    whole_chat: boolean;
+    messages: CouncilMessage[];
+}
+
 export interface CouncilStudent {
     username: string;
     display_name: string;
@@ -54,6 +69,7 @@ export interface CouncilStudent {
     results: CouncilResult[];
     assignments: CouncilAssignment[];
     goals: CouncilGoal[];
+    shared_conversations: CouncilSharedConversation[];
 }
 
 export interface CouncilOverview {
