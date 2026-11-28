@@ -4109,3 +4109,12 @@ valida ora la forma della risposta di `/api/me/ai-source` (`isAISource`) prima d
 mappare il badge di ruolo, evitando errori di runtime sull'intera pagina in caso
 di payload inattesi; il commento in `RoleBadge.tsx` è stato riscritto per non
 introdurre selettori Tailwind non validi in modalità dev.
+
+### Avvio su database esistenti: copertina delle classi
+
+All'avvio, la colonna `student_groups.image_url` (copertina della classe) viene
+aggiunta da una migrazione dedicata e idempotente
+(`backend/migrations/20261128_student_group_image_url.py`) eseguita prima di ogni
+altra migrazione. Le migrazioni successive leggono le classi tramite ORM: su un
+database creato prima delle copertine, la prima lettura non fallisce più per la
+colonna mancante.
