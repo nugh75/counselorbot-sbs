@@ -224,7 +224,7 @@ test('goals form a network with sub-goals, extra parents and inherited sharing',
         await page.getByRole('button', { name: `Stacca da ${A}`, exact: true }).waitFor();
         assert.match(message, /Ora visibile anche ai docenti di: Gruppo di prova/);
         await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
-        await page.getByText(/⧉ anche sotto: /).first().waitFor();
+        await page.getByText(/anche sotto: /).first().waitFor();
         const branchToggle = page.getByRole('button', { name: new RegExp(`^(Nascondi|Mostra) sottobiettivi di ${A}$`) });
         assert.equal(await branchToggle.getAttribute('aria-expanded'), 'true');
         assert.equal(await page.getByRole('button', { name: C, exact: true }).count(), 2);
