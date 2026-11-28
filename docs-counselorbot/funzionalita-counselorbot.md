@@ -262,6 +262,33 @@ le tre fasi restano le stesse: lettura del profilo, focus ed esempio, azione;
 la scelta personale del focus avviene nell’esperienza e può essere saltata.
 Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
 
+**Interessi RIASEC (O*NET Interest Profiler Short Form).** Lo strumento
+`RIASEC` usa la Short Form da 60 item dell’O*NET Interest Profiler (10 per area
+Realistico, Investigativo, Artistico, Sociale, Imprenditoriale, Convenzionale),
+con la scala di risposta originale a cinque punti (0–4: non mi piace per niente
+… mi piace molto). Il catalogo è DB-driven e il seed idempotente; gli item
+ufficiali inglesi e i crediti di licenza stanno in `backend/riasec.py`. Lo
+scoring è deterministico: somma dei dieci item per area (0–40) e codice Holland
+a tre lettere ordinato per punteggio decrescente, con i pari meriti risolti
+nell’ordine canonico R‑I‑A‑S‑E‑C. Lo studente vede l’esagono di Holland e le
+tre piste più forti come spunti da esplorare, senza codice e senza etichette
+di tipo; il codice a tre lettere compare solo nella vista docente dei risultati.
+La lingua tedesca riprende la traduzione pubblicata della Short Form tedesca
+(CC BY 4.0, Roemer, Lewis & Rounds 2023); italiano, spagnolo, francese e svedese
+sono **traduzioni CounselorBot da validare**. Lo strumento non ha chat guidata
+in questo lotto e non alimenta il vecchio Consiglio orientativo; i punteggi sono
+disponibili con le API standard degli strumenti per il futuro step «Mi
+riconosco?» di «Prepariamoci al futuro».
+
+Crediti richiesti dalla O*NET Tools Developer License: “This page includes
+information from the O*NET Career Exploration Tools by the U.S. Department of
+Labor, Employment and Training Administration (USDOL/ETA). Used under the O*NET
+Tools Developer License (https://www.onetcenter.org/license_tools.html). O*NET®
+is a trademark of USDOL/ETA. CounselorBot has modified all or some of this
+information. USDOL/ETA has not approved, endorsed, or tested these
+modifications.” Fonte: O*NET Interest Profiler Short Form (v1),
+https://www.onetcenter.org/IPSF.html.
+
 **Passo «Strategie e consigli».** Nei percorsi a fattori (QSA, QSAr, ZTPI,
 QPCS, QPCC, QAP) dopo la sintesi c'è il passo «Strategie e consigli» (sei
 lingue), prima di **Domande e Approfondimenti**. I passi sui fattori e le
