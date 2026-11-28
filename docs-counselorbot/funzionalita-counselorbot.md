@@ -2125,6 +2125,13 @@ le schede senza toglierle. La scheda aperta si scrive nell'URL (`?tab=`, assente
 Panoramica), così ricaricando il browser o copiando il link si torna alla stessa scheda;
 valori sconosciuti ricadono sulla Panoramica.
 
+**Assegnazioni della classe dalla Panoramica (F31, bug 4186bb6f).** La scheda Panoramica di
+`/docente/classi/[id]` ha una voce «Assegnazioni di questa classe» accanto alle altre
+scorciatoie: apre `/docente/assegnazioni?group=<nome classe>` con il filtro gruppo già
+impostato. La vecchia lista inline (`GroupAssignments`), rimossa con b49d1548, non torna. La
+voce compare solo nell'area docente: l'Hub amministrativo `/admin/classi/[id]` resta invariato,
+per non mandare l'amministratore fuori contesto. Testi nelle sei lingue.
+
 **Filetti di sezione più netti e ritorni come testo (#952, novembre 2026).** Il filetto
 sotto i titoli di sezione delle pagine usa il token della linea forte (`border-line-strong`):
 in tema chiaro passa dal grigio più tenue a quello leggibile, in tema scuro al valore
