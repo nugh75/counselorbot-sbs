@@ -47,5 +47,6 @@ da `origin/main` 65934eac. Scope: `frontend/tests/`, 3 piccoli fix in `src/`, do
   `forum-links-live`, `forum-options-live` (`FORUM_LIVE`/`FORUM_LINKS_LIVE=1`).
 
 ## Prossimi passi / rischi
-- PR non in bozza aperta dal Timoniere; merge al proprietario. `opencode.json`
+- PR non in bozza [#1050](https://github.com/nugh75/counselorbot-sbs/pull/1050)
+  (`Fixes #911`), aggiunta alla board 5; merge al proprietario. `opencode.json`
   modificato in locale: NON committato.
