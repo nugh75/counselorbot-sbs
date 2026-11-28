@@ -69,8 +69,12 @@ async function fixture({
             }
             if (failure) return route.fulfill({ status: failure, json: { detail: 'PRIVATE DETAIL' } });
             const id = Number(url.pathname.split('/').at(-1));
+            if (request.method() === 'POST') {
+                const created = { ...demo, ...body, id: 93, name: body.name };
+                state.rows.push(created);
+                return route.fulfill({ json: created });
+            }
             if (request.method() === 'PUT') state.rows = state.rows.map(row => row.id === id ? { ...row, ...body } : row);
-            if (request.method() === 'POST') state.rows.push({ ...demo, ...body, id: 93, name: body.name });
             return route.fulfill({ json: state.rows.find(row => row.id === id) || {} });
         }
 
@@ -123,41 +127,27 @@ async function fixture({
     return { context, page, state, hold };
 }
 
-test('class directory renders cards with direct links to the class hub, tabs and copy code', async () => {
+test('class directory renders cards with a direct link to the class hub', async () => {
     const f = await fixture();
     try {
-        const demoCard = f.page.locator('div[data-testid="group-card-91"]');
+        const demoCard = f.page.getByRole('link', { name: /Classe Demo/ }).first();
         await demoCard.waitFor();
-
-        // Direct Class Hub open CTA
-        const openLink = demoCard.getByRole('link', { name: /Apri classe|Open class/i });
-        assert.equal(await openLink.getAttribute('href'), '/docente/classi/91');
-
-        // Shortcut tabs
-        const studentsLink = demoCard.locator('a[href="/docente/classi/91?tab=students"]');
-        assert.equal(await studentsLink.count(), 1);
-
-        const toolsLink = demoCard.locator('a[href="/docente/classi/91?tab=tools"]');
-        assert.equal(await toolsLink.count(), 1);
-
-        const pathsLink = demoCard.locator('a[href="/docente/classi/91?tab=paths"]');
-        assert.equal(await pathsLink.count(), 1);
-
-        // Class code
-        assert.equal(await demoCard.getByText('GR-DEMO91').isVisible(), true);
+        assert.equal(await demoCard.getAttribute('href'), '/docente/classi/91');
+        assert.ok((await demoCard.innerText()).includes('GR-DEMO91'));
         assert.deepEqual(f.state.writes, []);
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });
 
+
 test('existing creation stays before the list, uses four-field payload, and redirects to the class hub', async () => {
     const f = await fixture();
     try {
         await f.page.getByRole('button', { name: 'Nuovo gruppo o classe', exact: true }).click();
-        const name = f.page.getByPlaceholder('Es. 3A Informatica, Gruppo Orientamento');
+        const name = f.page.getByPlaceholder('Nome (es. 3B, universitari, formazione adulti)');
         await name.fill('Nuovo gruppo demo');
 
-        const school = f.page.getByPlaceholder('Es. Liceo Da Vinci');
+        const school = f.page.getByPlaceholder('Scuola, università o ente (opzionale)');
         await school.fill('Ente Demo');
 
         const level = f.page.locator('select').first();
@@ -181,13 +171,13 @@ test('existing creation stays before the list, uses four-field payload, and redi
 test('class hub overview renders anagrafica, tracks dirty state and saves via PUT', async () => {
     const f = await fixture({ path: '/docente/classi/91' });
     try {
-        const descInput = f.page.getByLabel('Descrizione della classe', { exact: true });
+        const descInput = f.page.getByLabel('Descrizione del contesto di classe', { exact: true });
         await descInput.waitFor();
         assert.equal(await descInput.inputValue(), 'Contesto salvato');
 
         // Edit description -> triggers dirty state
         await descInput.fill('Nuova bozza contesto');
-        await f.page.getByText('Modifiche non salvate', { exact: true }).waitFor();
+        await f.page.getByText('Modifiche non salvate', { exact: true }).first().waitFor();
 
         // Reverting clears dirty state
         await descInput.fill('Contesto salvato');
@@ -196,7 +186,7 @@ test('class hub overview renders anagrafica, tracks dirty state and saves via PU
         // Edit again and save
         await descInput.fill('Nuovo contesto aggiornato');
         await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
-        await f.page.getByText('Anagrafica della classe salvata.', { exact: true }).waitFor();
+        await f.page.getByText('Dati della classe salvati con successo.', { exact: true }).waitFor();
 
         assert.deepEqual(f.state.writes, [{
             path: '/api/admin/groups/91',
@@ -217,17 +207,17 @@ test('class hub overview renders anagrafica, tracks dirty state and saves via PU
 test('failed context save displays error alert and retry sends existing payload', async () => {
     const f = await fixture({ path: '/docente/classi/91' });
     try {
-        const descInput = f.page.getByLabel('Descrizione della classe', { exact: true });
+        const descInput = f.page.getByLabel('Descrizione del contesto di classe', { exact: true });
         await descInput.waitFor();
         await descInput.fill('Nuovo contesto con errore');
 
         f.state.failure = 503;
         await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
-        await f.page.getByRole('alert').waitFor();
+        await f.page.getByRole('region', { name: 'Anagrafica e informazioni di classe' }).getByRole('alert').waitFor();
 
         f.state.failure = false;
         await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
-        await f.page.getByText('Anagrafica della classe salvata.', { exact: true }).waitFor();
+        await f.page.getByText('Dati della classe salvati con successo.', { exact: true }).waitFor();
 
         assert.equal(f.state.writes.length, 2);
         assert.deepEqual(f.state.errors, []);
@@ -237,12 +227,12 @@ test('failed context save displays error alert and retry sends existing payload'
 for (const failure of [401, 403]) test(`write ${failure} revokes editing instead of exposing private class`, async () => {
     const f = await fixture({ path: '/docente/classi/91' });
     try {
-        const descInput = f.page.getByLabel('Descrizione della classe', { exact: true });
+        const descInput = f.page.getByLabel('Descrizione del contesto di classe', { exact: true });
         await descInput.waitFor();
         f.state.failure = failure;
         await descInput.fill('Bozza da rifiutare');
         await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
-        await f.page.getByRole('alert').waitFor();
+        await f.page.getByRole('region', { name: 'Anagrafica e informazioni di classe' }).getByRole('alert').waitFor();
     } finally { await f.context.close(); }
 });
 
@@ -254,7 +244,7 @@ for (const [role, admin] of [['docenti', false], ['ricercatori', false], ['stude
                 await f.page.getByText('Pagina riservata a docenti, ricercatori e amministratori.', { exact: true }).waitFor();
                 assert.equal(f.state.reads.includes('/api/admin/groups'), false);
             } else {
-                await f.page.getByText('Classi e gruppi studenti').waitFor();
+                await f.page.getByText('Gruppi e classi che gestisco').waitFor();
             }
             assert.deepEqual(f.state.writes, []);
         } finally { await f.context.close(); }

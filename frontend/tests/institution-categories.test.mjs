@@ -95,7 +95,6 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`shared category e
         for (const width of [320, 390, 1440]) {
             await page.setViewportSize({ width, height: 900 });
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-            await page.locator('[data-institution-categories] img').evaluate(el => el.decode());
             if (lang === 'it') await page.screenshot({ path: `/tmp/institution-categories-${width}.png`, fullPage: true });
         }
         await page.evaluate(() => document.documentElement.classList.add('dark'));
@@ -141,7 +140,7 @@ for (const noNavigation of [false, true]) test(`unsaved form guards links, insti
         const name = page.getByLabel(`${l('name')} *`, { exact: true }); await name.fill('Bozza importante');
         await page.getByRole('combobox', { name: l('institution'), exact: true }).selectOption('2');
         assert.equal(await page.getByRole('combobox').inputValue(), '1');
-        await page.getByRole('link', { name: l('back'), exact: true }).click();
+        await page.locator('header a[href="/guide"]').first().click();
         await page.waitForTimeout(300);
         assert.ok(page.url().endsWith('/docente/orientamento'));
         await page.evaluate(() => history.back());

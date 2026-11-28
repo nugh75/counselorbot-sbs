@@ -131,8 +131,11 @@ try {
         await context.close();
         const student = await prepare(lang, width, true);
         await student.page.goto(`${origin}/profilo/piani-operativi`);
-        await student.page.getByRole('heading', {name: 'Strategie di apprendimento', exact: true}).waitFor();
+        await student.page.getByRole('heading', {name: /Strategie di apprendimento/}).waitFor();
         assert.equal(await student.page.getByText('Presentazione unica OC3', {exact: true}).count(), 1);
+        // Notes and meeting times live in the step details: open the two rows.
+        await student.page.locator('#class-step-5').getByRole('button', {name: /La mia storia/}).click();
+        await student.page.locator('#class-step-3').getByRole('button', {name: /Colloquio di ottobre/}).click();
         assert.equal(await student.page.getByText('Nota personale\nseconda riga', {exact: true}).count(), 1);
         const row = student.page.locator('#class-step-3');
         assert.equal(await row.locator('time').count(), 1);
@@ -142,9 +145,9 @@ try {
         await student.page.screenshot({path: `output/playwright/presentation-student-${lang}-${width}.png`, fullPage: true});
         await student.page.goto(`${origin}/profilo`);
         const hero = student.page.getByTestId('class-path-hero-card');
-        await hero.getByRole('heading', {name: 'Strategie di apprendimento', exact: true}).waitFor();
-        await hero.locator('time').first().waitFor();
-        assert.equal(await hero.locator('time').count(), 1);
+        // The home card is headed by the plan title and shows the next step («To do now»).
+        await hero.getByRole('heading', {name: 'Piano sintetico OC3', exact: true}).waitFor();
+        await hero.getByText('Strategie di apprendimento', {exact: true}).waitFor();
         assert.deepEqual(student.errors, []);
         await student.context.close();
         console.log(`presentation ${lang} ${width} OK`);

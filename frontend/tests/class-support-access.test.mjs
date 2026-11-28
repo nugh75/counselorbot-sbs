@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
-import { classSettingsText } from '../src/lib/i18n-class-settings.ts';
+import { guideTaskCopy } from '../src/lib/i18n-guide-tasks.ts';
 
 const origin = new URL(process.env.CLASS_SUPPORT_BASE_URL || 'http://127.0.0.1:3172').origin;
 let browser;
@@ -117,10 +117,15 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
     test(`The guide explains support availability and keeps screenshots readable in ${lang}`, async () => {
         const f = await fixture({ lang, groups: ['docenti'], restricted: false, keys: ['bussola', 'assistant'], width: 390 });
         try {
-            await f.page.goto(`${origin}/guide?audience=teacher`, { waitUntil: 'domcontentloaded' });
-            await f.page.getByText(classSettingsText(lang, 'supportGuide'), { exact: false }).waitFor();
-            await f.page.goto(`${origin}/guide?audience=student`, { waitUntil: 'domcontentloaded' });
-            await f.page.getByText(classSettingsText(lang, 'studentSupportGuide'), { exact: false }).waitFor();
+            // The task-based guide explains which tools a class enables and when support is available.
+            const tools = guideTaskCopy(lang, 'class-tools');
+            await f.page.goto(`${origin}/guide?audience=teacher&task=class-tools`, { waitUntil: 'domcontentloaded' });
+            await f.page.getByRole('heading', { name: tools.title, exact: true }).waitFor();
+            await f.page.getByText(tools.intro, { exact: false }).waitFor();
+            const orientation = guideTaskCopy(lang, 'orientation');
+            await f.page.goto(`${origin}/guide?audience=student&task=orientation`, { waitUntil: 'domcontentloaded' });
+            await f.page.getByRole('heading', { name: orientation.title, exact: true }).waitFor();
+            await f.page.getByText(orientation.intro, { exact: false }).waitFor();
             for (const image of await f.page.locator('figure img').all()) {
                 await image.scrollIntoViewIfNeeded();
                 await image.evaluate(img => img.decode());

@@ -143,7 +143,7 @@ async function openEditor(page) {
     await open('Partecipa a una discussione');
     // The completion rule sits in a disclosure: present, collapsed by default.
     await add.getByText('Come si completa il passo').waitFor();
-    await add.getByText(/Una discussione pubblicata di questa classe/).waitFor({ state: 'attached' });
+    await add.getByText(/Lo studente segna il passo/).waitFor({ state: 'attached' });
     await add.getByRole('button', { name: 'Chiudi' }).click();
 
     // Keyboard: the opener and the radios are reachable and operable.

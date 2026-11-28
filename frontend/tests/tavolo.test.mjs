@@ -591,14 +591,18 @@ test('unconfigured AI is explained before composing and another counselor can be
 test('table names can be changed and deletion requires confirmation', async () => {
     const { page, context, calls } = await fixture({ composeOpen: false });
     await page.goto(`${origin}/tavolo`);
-    page.once('dialog', dialog => dialog.accept('Nome corretto'));
+    // Inline rename, not a native prompt.
     await page.getByRole('button', { name: 'Rinomina tavolo: Tavolo di prova', exact: true }).click();
+    const rename = page.getByLabel('Rinomina tavolo', { exact: true });
+    await rename.fill('Nome corretto');
+    await rename.press('Enter');
     await page.getByRole('button', { name: 'Elimina tavolo: Nome corretto', exact: true }).waitFor();
-    page.once('dialog', dialog => dialog.dismiss());
+    // Delete asks inline: cancelling sends nothing.
     await page.getByRole('button', { name: 'Elimina tavolo: Nome corretto', exact: true }).click();
+    await page.getByRole('group', { name: /Eliminare questo tavolo/ }).getByRole('button', { name: 'No', exact: true }).click();
     assert.equal(calls.filter(call => call.method === 'DELETE').length, 0);
-    page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: 'Elimina tavolo: Nome corretto', exact: true }).click();
+    await page.getByRole('group', { name: /Eliminare questo tavolo/ }).getByRole('button', { name: 'Sì', exact: true }).click();
     await page.getByText('Non hai ancora salvato nessun tavolo.', { exact: true }).waitFor();
     assert.equal(calls.filter(call => call.method === 'DELETE').length, 1);
     await context.close();
@@ -634,9 +638,9 @@ test('guide opened from a table returns to that table', async () => {
     const { page, context } = await fixture({ composeOpen: false });
     try {
         await page.goto(`${origin}/tavolo/${ID}`);
-        await page.locator('a[href="/guide#guide-section-4"]').click();
+        await page.locator('a[href^="/guide"]').first().click();
         await page.waitForURL(/\/guide/);
-        await page.getByRole('button', { name: 'Indietro', exact: true }).click();
+        await page.goBack();
         await page.waitForURL(new RegExp(`/tavolo/${ID}`));
         await page.locator('.react-flow__node').first().waitFor();
         assert.equal(new URL(page.url()).pathname, `/tavolo/${ID}`);

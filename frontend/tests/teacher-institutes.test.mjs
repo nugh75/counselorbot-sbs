@@ -58,6 +58,10 @@ async function fixture({ lang = 'en', width = 390, role = 'docenti' } = {}) {
         else if (path === '/api/teacher/institutions') data = state.schools.filter(row => (state.memberships[row.id] || []).includes(state.username)).map(publicRow);
         else if (path.startsWith('/api/teacher/institutions/')) data = publicRow(state.schools.find(row => row.id === Number(path.split('/').at(-1))));
         else if (path === '/api/admin/groups') data = state.groups.filter(row => row.owner_username === state.username);
+        else if (/^\/api\/teacher\/groups\/\d+\/settings$/.test(path)) data = { group_id: Number(path.split('/')[4]), revision: 1, tools: [],
+            disabled_tool_keys: [], disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false }, counselors: [] };
+        else if (/^\/api\/admin\/groups\/\d+\/students$/.test(path)) data = { students: [] };
+        else if (path.endsWith('/shares')) data = [];
         else if (path === '/api/telegram/bot-info') data = { enabled: false };
         return route.fulfill({ json: data });
     });
@@ -104,7 +108,7 @@ for (const [lang, [title, create, name, save, directory, join]] of Object.entrie
             await f.page.goto(`${origin}/docente`);
             const home = f.page.locator('[data-teacher-area-home]');
             await home.getByRole('link', { name: title, exact: true }).waitFor();
-            assert.equal(await home.locator('a').first().getAttribute('href'), '/docente/taccuino');
+            assert.equal(await home.locator('a').first().getAttribute('href'), '/docente/classi');
             if (process.env.INSTITUTES_CAPTURE_GUIDE === '1') {
                 await f.page.setViewportSize({ width: 1440, height: 1000 });
                 await home.locator('img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
@@ -203,8 +207,8 @@ test('institute context links an existing unlinked class, preserves it on failur
         assert.equal(f.state.groups[0].institution_id, null); assert.equal(await select.inputValue(), '92');
         f.state.failure = 0;
         await f.page.getByRole('button', { name: 'Link class', exact: true }).click();
-        await f.page.getByRole('heading', { name: 'Unlinked class', exact: true }).waitFor();
-        assert.equal(await f.page.getByRole('heading', { name: 'Other institute class', exact: true }).count(), 0);
+        await f.page.getByRole('link', { name: /Unlinked class/ }).first().waitFor();
+        assert.equal(await f.page.getByRole('link', { name: /Other institute class/ }).count(), 0);
         assert.equal(f.state.groups[0].institution_id, 51);
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
@@ -216,8 +220,13 @@ for (const role of ['researchers', 'studenti', 'admins']) {
         try {
             await f.page.goto(`${origin}/docente/istituti`);
             await f.page.waitForLoadState('networkidle');
-            assert.equal(await f.page.getByRole('button', { name: 'Create institute', exact: true }).count(), 0);
-            assert.equal(await f.page.getByRole('button', { name: 'Join selected institute', exact: true }).count(), 0);
+            if (role === 'admins') {
+                // Administrators manage institutes too (canManageInstitutes).
+                assert.equal(await f.page.getByRole('button', { name: 'Create institute', exact: true }).count(), 1);
+            } else {
+                assert.equal(await f.page.getByRole('button', { name: 'Create institute', exact: true }).count(), 0);
+                assert.equal(await f.page.getByRole('button', { name: 'Join selected institute', exact: true }).count(), 0);
+            }
             assert.equal(f.state.writes.length, 0);
         } finally { await f.context.close(); }
     });

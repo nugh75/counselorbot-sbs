@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
+import { guideTaskCopy } from '../src/lib/i18n-guide-tasks.ts';
 
 const origin = new URL(process.env.TEACHER_ERRORS_BASE_URL || 'http://127.0.0.1:3124').origin;
 let browser;
@@ -214,18 +215,15 @@ for (const legacy of [false, true]) {
     });
 }
 
-for (const [lang, phrase, group] of [
-    ['it', 'rimandi volontari a Gruppi e classi', 'La mia crescita e altre informazioni'], ['en', 'optional links open Groups and classes', 'My development and other information'],
-    ['es', 'enlaces voluntarios a Grupos y clases', 'Mi desarrollo y otra información'], ['fr', 'des liens facultatifs ouvrent Groupes et classes', 'Mon développement et autres informations'],
-    ['de', 'freiwillige Links zu Gruppen und Klassen', 'Meine Entwicklung und weitere Angaben'], ['sv', 'frivilliga länkar till Grupper och klasser', 'Min utveckling och övrig information'],
-]) {
+for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
+    const copy = guideTaskCopy(lang, 'sharing');
     test(`${lang}: public teacher guide explains the voluntary links and draft protection`, async () => {
         const f = await fixture({ lang });
         try {
-            await f.page.goto(`${origin}/guide?audience=teacher`, { waitUntil: 'networkidle' });
-            const teacherGuide = await f.page.locator('#guide-teacher-section-1').innerText();
-            assert.ok(teacherGuide.includes(phrase));
-            assert.ok(teacherGuide.includes(group));
+            await f.page.goto(`${origin}/guide?audience=teacher&task=sharing`, { waitUntil: 'networkidle' });
+            await f.page.getByRole('heading', { name: copy.title, exact: true }).waitFor();
+            assert.ok((await f.page.getByTestId('guide-steps').innerText()).includes(copy.steps[2]), 'The guide explains personal drafts and sharing');
+            assert.ok((await f.page.getByTestId('guide-steps').innerText()).includes(copy.steps[0]), 'The guide explains who can see the data');
             assert.deepEqual(f.state.writes, []); assert.deepEqual(f.state.errors, []);
         } finally { await f.context.close(); }
     });

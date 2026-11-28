@@ -127,7 +127,7 @@ for (const [lang, names] of Object.entries(labels)) {
                 assert.equal(await link.evaluate(e => e === document.activeElement), true);
             }
             await page.keyboard.press('Tab');
-            const save = notebook.locator('button.bg-indigo-600'); // Classi now precedes Save as a dialog trigger.
+            const save = notebook.locator('button.bg-brand'); // Classi now precedes Save as a dialog trigger.
             assert.equal(await save.evaluate(e => e === document.activeElement), true);
             await page.keyboard.press('Enter');
             await save.filter({ hasText: /salvato|saved|guardado|enregistré|gespeichert|sparad/i }).waitFor();

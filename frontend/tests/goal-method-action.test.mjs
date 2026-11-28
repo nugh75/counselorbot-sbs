@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
 import { goalText } from '../src/lib/i18n-goals.ts';
+import { guideTaskCopy } from '../src/lib/i18n-guide-tasks.ts';
 
 // Browser UI + API boundary only; no backend or database is contacted.
 const origin = process.env.GOALS_BASE_URL || 'http://127.0.0.1:3112';
@@ -110,11 +111,11 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             assert.ok(actionSave.body.request_id);
             assert.equal(await practice.isEnabled(), true);
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-            await page.goto(`${origin}/guide?audience=student`);
-            const guide = page.locator('#guide-section-12');
-            await guide.waitFor({ state: 'attached' });
-            assert.ok((await guide.locator('p').first().innerText()).includes(l('putInPractice')), 'The localized guide explains practice');
-            for (const thumbnail of await guide.locator('figure img').all()) {
+            const guideCopy = guideTaskCopy(lang, 'goals');
+            await page.goto(`${origin}/guide?audience=student&task=goals`);
+            await page.getByRole('heading', { name: guideCopy.title, exact: true }).waitFor();
+            assert.ok((await page.getByTestId('guide-steps').innerText()).includes(guideCopy.steps[0]), 'The localized guide explains goals and practice');
+            for (const thumbnail of await page.locator('figure img').all()) {
                 await thumbnail.scrollIntoViewIfNeeded(); await thumbnail.evaluate(img => img.decode());
             }
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
