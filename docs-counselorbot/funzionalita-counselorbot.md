@@ -2530,9 +2530,18 @@ the password; after ten wrong attempts the link is locked for 15 minutes, and un
 and revoked links answer alike. The page shows the class and one collapsible sheet per student,
 with search and print: operational plans with steps done and deadlines, questionnaire results
 with scores and the report summary of the chat when one exists, assignments with the response
-the student shared and the teacher's feedback, and the goals shared with the class. Full
-conversations, private workspaces and unshared goals are never shown. Each view is logged
-(`class_council_view`) and the page is excluded from search engines.
+the student shared and the teacher's feedback, and the goals shared with the class. Each view
+is logged (`class_council_view`) and the page is excluded from search engines.
+
+**Conversations shared with the class council (#1027).** In the class result detail, the
+teacher who follows the student (owner or co-teacher, with the same class/student checks as
+the noticing) can share the **whole chat** or an **extract** made only of selected student
+messages. Nothing is shared by default, counselor replies never enter an extract, and no
+system prompt is ever read. Every share has its own validity of 7–90 days and its own
+revocation, independent of the council link. The council sees only active shares (not expired,
+not revoked) in a read-only «Shared conversations» section; each view remains logged with the
+rest of the council. The student sees in the personal area what is shared, for which class and
+until when, without prior consent. Private workspaces and unshared goals stay out.
 
 **Guidance recommendation (consiglio orientativo).** The **Guidance recommendation**
 (CounselorBot: «Consiglio orientativo») tab on `/docente/classi/{id}` lets the authorised
