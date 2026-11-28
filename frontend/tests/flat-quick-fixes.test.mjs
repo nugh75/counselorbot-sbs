@@ -28,6 +28,6 @@ test('404 and error pages point back to the personal area', () => {
 test('class practice students and overview shortcuts are flat', () => {
     assert.doesNotMatch(read('components/teacher/ClassPracticeStudents.tsx'), /bg-role-test-soft|<Card/);
     const overview = read('components/teacher/ClassOverviewTab.tsx');
-    assert.equal((overview.match(/<EntryLink\b[^>]*idPrefix="class-overview"/g) ?? []).length, 4);
+    assert.equal((overview.match(/<EntryLink\b[^>]*idPrefix="class-overview"/g) ?? []).length, 5);
     assert.doesNotMatch(overview, /group flex flex-col justify-between rounded-card/);
 });
