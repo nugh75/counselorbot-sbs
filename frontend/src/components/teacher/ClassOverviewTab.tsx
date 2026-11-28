@@ -293,8 +293,9 @@ export function ClassOverviewTab({
                 }),
             });
             if (!res.ok) {
-                const data = await res.json().catch(() => null) as { detail?: string } | null;
-                throw new Error(data?.detail || l('classSaveError'));
+                // Never surface a server detail on the class form: show the localized error only.
+                await res.json().catch(() => null);
+                throw new Error(l('classSaveError'));
             }
             setSaveStatus('saved');
             await onReload();
