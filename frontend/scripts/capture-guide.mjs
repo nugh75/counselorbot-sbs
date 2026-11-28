@@ -73,7 +73,7 @@ try {
         };
         const goal = { id: 1, title, motivation: instructions, criteria: responsePrompt, reflection: '', status: 'active', priority: 2, review_date: '2026-10-15', shared_group_id: null, revision: 1, catalog_id: null, catalog_snapshot: {}, links: [], parent_ids: [], method: [], origin: null, reviews: [], checks: [] };
         const assignment = { id: 1, author_name: 'Alex · Demo', group_name: groupName, source_kind: 'goal', recipient_username: null, recipient_count: 2, instructions, created_at: '2026-09-21T08:00:00Z', revoked_at: null, snapshot: { title, description: '', details: '' }, intent: 'requested', due_date: '2026-10-15', response_prompt: responsePrompt };
-        const catalog = [{ id: 1, author_username: 'teacher.demo', group_id: 91, status: 'published', version: 1, data: { title, description: instructions, criteria: responsePrompt, suggestions: '', area: '', audience: '', language: lang } }];
+        const catalog = [{ id: 1, author_username: 'teacher.demo', group_id: 91, status: 'published', version: 1, parent_ids: [], data: { title, description: instructions, criteria: responsePrompt, suggestions: '', area: '', audience: '', language: lang } }];
         const demoInstitution = { id: 1, name: groupName, slug: 'demo', kind: 'school' };
         const demoCategory = { id: 'demo-category', name: title, description: instructions, position: 0, is_active: true, updated_by: 'teacher.demo', updated_at: '2026-09-23T08:00:00Z' };
         const demoReferral = { id: 'demo-contact', institution_id: 1, category_ids: ['demo-category'], role: `${categoryText(lang, 'contacts')} · Demo`, person: '', needs: ['metodo-studio'], what_for: instructions, how_to_reach: '', email: '', hours: '', location: '', page_url: '' };
@@ -203,13 +203,6 @@ try {
                 await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
                 locator = null; // Include creation and header; avoid sticky-header overlap on an element crop.
             }
-            if (name === 'institution-categories') {
-                await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
-                await page.locator('[data-institution-categories] img').evaluate(element => element.decode());
-                await page.locator('summary').filter({ hasText: categoryText(lang, 'contacts') }).evaluate(el => { el.parentElement.open = true; });
-                await page.locator('summary').filter({ hasText: categoryText(lang, 'events') }).evaluate(el => { el.parentElement.open = true; });
-                await page.evaluate(() => window.scrollTo(0, 0));
-            }
             if (name === 'introduction') {
                 // Lazy illustrations below the fold, satisfaction questionnaire included.
                 for (const image of await page.locator('[data-testid="intro-screen"] img').all()) {
@@ -245,7 +238,8 @@ try {
             await page.evaluate(() => document.fonts.ready);
             await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             assert.deepEqual(errors, []);
-            assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
+            // The class overview always carries the destructive «delete class» callout, which is an alert by design.
+            if (name !== 'class-overview') assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
             if (name === 'orientation') await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
             await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(fullClassPage || ['introduction', 'activities', 'personal-area', 'teacher-area', 'teacher-groups', 'teacher-notebook', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             if (fullClassPage) await page.setViewportSize({ width: 1440, height: 1000 });
@@ -265,6 +259,28 @@ try {
             await capture('teacher-class-picker', popup);
             await page.keyboard.press('Escape');
         }
+        async function captureAssignments() {
+            await go('/docente/catalogo-obiettivi');
+            const catalogSection = page.getByRole('region', { name: goalText(lang, 'catalog'), exact: true });
+            await catalogSection.getByRole('heading', { name: title, exact: true }).waitFor();
+            await capture('teacher-catalog', catalogSection);
+            // #143: assignment creation lives on /docente/assegnazioni, not on the catalog pages.
+            await go('/docente/assegnazioni');
+            await page.getByRole('button', { name: assignmentText(lang, 'newAssignment'), exact: true }).click();
+            const dialog = page.getByRole('dialog', { name: assignmentText(lang, 'newAssignment'), exact: true });
+            await dialog.getByLabel(assignmentText(lang, 'group'), { exact: true }).selectOption({ label: groupName });
+            await dialog.getByLabel(assignmentText(lang, 'goal'), { exact: true }).selectOption({ label: title });
+            await dialog.getByLabel(assignmentText(lang, 'instructions'), { exact: true }).fill(instructions);
+            await dialog.getByLabel(learningText(lang, 'intent')).selectOption('requested');
+            await dialog.getByLabel(learningText(lang, 'dueDate'), { exact: true }).fill('2026-10-15');
+            await dialog.getByLabel(learningText(lang, 'responsePrompt'), { exact: true }).fill(responsePrompt);
+            await capture('teacher-assignment', dialog);
+            await page.keyboard.press('Escape');
+            await go('/docente/assegnazioni');
+            await page.locator('#assignment-1').getByRole('button', { name: learningText(lang, 'submissions'), exact: true }).click();
+            await page.locator('#assignment-1').getByRole('textbox').waitFor();
+            await capture('teacher-feedback', page.locator('#assignment-1'));
+        }
         async function captureClassSettings() {
             classSettingsCapture = true;
             authenticated = true; teacher = false;
@@ -276,7 +292,7 @@ try {
             await capture('tool-selection', page.locator('#tools-assessment'));
             teacher = true;
             await go('/docente/classi');
-            await page.getByRole('heading', { name: groupName, exact: true }).waitFor();
+            await page.getByRole('link', { name: groupName, exact: true }).waitFor();
             await capture('teacher-groups');
             await go('/docente/classi/91');
             await page.locator('#class-tab-overview[aria-selected="true"]').waitFor();
@@ -321,9 +337,8 @@ try {
             }
             if (process.env.GUIDE_SCREENS !== 'teacher-area') {
                 await go('/docente/classi');
-                const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
-                await groupCard.waitFor();
-                await capture('teacher-groups', groupCard.locator('..').locator('..'));
+                await page.getByRole('link', { name: groupName, exact: true }).waitFor();
+                await capture('teacher-groups');
             }
             await context.close();
             continue;
@@ -356,8 +371,7 @@ try {
             authenticated = true;
             await go('/profilo');
             const catalog = page.locator('#tools-assessment');
-            await catalog.locator('article').first().waitFor();
-            for (const image of await catalog.locator('img').all()) await image.evaluate(element => element.decode());
+            await catalog.locator('a[href^="/strumenti/"]').first().waitFor();
             await capture('tool-selection', catalog);
             await context.close();
             continue;
@@ -383,6 +397,8 @@ try {
             await capture('teacher-class-paths', editor);
             teacher = false;
             await go('/profilo/piani-operativi');
+            // #911: compact step rows open their details on demand, meeting included.
+            await page.locator('#class-step-3').getByRole('button').first().click();
             await page.locator('[data-testid="meeting-details"]').first().waitFor();
             await capture('class-paths', page.locator('main#contenuto'));
             await context.close();
@@ -398,6 +414,12 @@ try {
             await page.locator('#class-tab-forum').click();
             await page.locator('#class-panel-forum').waitFor();
             await capture('teacher-forum', page.locator('section').first());
+            await context.close();
+            continue;
+        }
+        if (process.env.GUIDE_SCREENS === 'assignments') {
+            authenticated = true; teacher = true;
+            await captureAssignments();
             await context.close();
             continue;
         }
@@ -434,29 +456,13 @@ try {
         await captureNotebook();
         await capturePicker();
         await go('/docente/classi');
-        const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
-        await capture('teacher-groups', groupCard.locator('..').locator('..'));
+        await page.getByRole('link', { name: groupName, exact: true }).waitFor();
+        await capture('teacher-groups');
         await go('/docente/classi/91');
         await page.locator('#class-tab-forum').click();
         await page.locator('#class-panel-forum').waitFor();
         await capture('teacher-forum', page.locator('section').first());
-        await go('/docente/catalogo-obiettivi');
-        const catalogSection = page.getByRole('region', { name: goalText(lang, 'catalog'), exact: true });
-        await catalogSection.getByRole('heading', { name: title, exact: true }).waitFor();
-        await capture('teacher-catalog', catalogSection);
-        await catalogSection.getByRole('button', { name: assignmentText(lang, 'assign'), exact: true }).click();
-        const dialog = page.getByRole('dialog');
-        await dialog.getByLabel(assignmentText(lang, 'group'), { exact: true }).selectOption('91');
-        await dialog.getByLabel(assignmentText(lang, 'instructions'), { exact: true }).fill(instructions);
-        await dialog.getByLabel(learningText(lang, 'intent')).selectOption('requested');
-        await dialog.getByLabel(learningText(lang, 'dueDate'), { exact: true }).fill('2026-10-15');
-        await dialog.getByLabel(learningText(lang, 'responsePrompt'), { exact: true }).fill(responsePrompt);
-        await capture('teacher-assignment', dialog);
-        await page.keyboard.press('Escape');
-        await go('/docente/assegnazioni');
-        await page.locator('#assignment-1').getByRole('button', { name: learningText(lang, 'submissions'), exact: true }).click();
-        await page.locator('#assignment-1').getByRole('textbox').waitFor();
-        await capture('teacher-feedback', page.locator('#assignment-1'));
+        await captureAssignments();
         await captureClassSettings();
         await context.close();
     }
