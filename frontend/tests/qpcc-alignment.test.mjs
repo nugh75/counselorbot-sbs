@@ -68,7 +68,8 @@ for(const lang of ['it','en','es','fr','de','sv']) {
                 await f.page.evaluate(() => window.scrollTo(0,0));
                 await f.page.screenshot({path:`${process.env.QPCC_SCREENSHOTS}/qpcc-input-${lang}-390.png`,fullPage:true});
             }
-            const submit=f.page.locator('button[type="submit"]');await submit.click();
+            console.log('BTNS', JSON.stringify(await f.page.locator('button').evaluateAll(buttons => buttons.map(b => `${b.type}:${(b.innerText||b.getAttribute('aria-label')||'').trim()}`))));
+            const submit=f.page.locator('button[type="submit"]:visible').first();await submit.click();
             await f.page.locator('input[name="scores.A1"]').waitFor({state:'detached'});
             await f.page.getByText(schema.find(f=>f.code==='C2').labels[lang],{exact:true}).first().waitFor();
             assert.ok(await f.page.getByText(schema.find(f=>f.code==='M2').labels[lang],{exact:true}).count());

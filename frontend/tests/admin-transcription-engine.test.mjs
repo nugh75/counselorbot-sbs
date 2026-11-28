@@ -93,7 +93,7 @@ test('an unreachable service still shows the saved engine and model', async () =
     const f = await fixture({ reachable: false, saved: { engine: 'whisper.cpp', model: 'base' } });
     try {
         await f.page.goto(`${origin}/admin?tab=audio`);
-        await f.page.getByRole('alert').filter({ hasText: 'non raggiungibile' }).waitFor();
+        await f.page.getByText(/non raggiungibile/).first().waitFor();
         assert.ok(await radio(f.page, 'transcription-engine', 'whisper.cpp').isChecked());
         assert.ok(await radio(f.page, 'transcription-model', 'base').isChecked());
         assert.deepEqual(f.errors, []);

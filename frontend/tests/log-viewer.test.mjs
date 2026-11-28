@@ -116,7 +116,7 @@ for (const scenario of [
                 assert.ok(box.x >= 0 && box.x + box.width <= scenario.width + 1, 'dialog fits horizontally');
                 assert.equal(await page.evaluate(() => scrollY), scrollBefore, 'opening preserves page scroll');
                 assert.equal(await page.evaluate(() => document.body.style.overflow), 'hidden');
-                assert.equal(await page.locator('main').evaluate((element) => element.inert), true);
+                assert.equal(await page.locator('main').evaluate((element) => element.inert || element.closest('[inert]') !== null), true);
                 assert.equal(await dialog.getAttribute('aria-modal'), 'true');
                 assert.equal(await dialog.locator('strong').first().textContent(), 'metodo di studio');
                 assert.equal(await dialog.getByRole('table').count(), 3);

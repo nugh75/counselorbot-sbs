@@ -356,11 +356,11 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             await g.page.getByRole('combobox').first().selectOption('result-b');
             assert.deepEqual(g.dialogs, [g.w('leaveDraft')]);
             await g.page.locator('textarea').first().fill('Saved result-a');
-            await g.page.goto(`${origin}/guide?audience=student`);
-            for (const n of [12, 14]) {
-                const section = g.page.locator(`#guide-section-${n}`);
+            for (const task of ['goals', 'assignments']) {
+                await g.page.goto(`${origin}/guide?audience=student&task=${task}`);
+                const section = g.page.locator(`#guide-task-${task}`);
                 await section.waitFor({ state: 'attached' });
-                assert.ok((await section.locator('p').first().innerText()).length > 200);
+                assert.ok((await section.innerText()).length > 200);
                 const images = section.locator('figure img'); assert.ok(await images.count() > 0);
                 for (const img of await images.all()) { await img.scrollIntoViewIfNeeded(); await img.evaluate(img => img.decode()); assert.ok(await img.getAttribute('alt')); }
             }

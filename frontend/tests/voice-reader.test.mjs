@@ -67,9 +67,15 @@ async function fixture({ width = 1440, guest = false, admin = false, live = fals
 }
 
 async function openVoiceReader(page, name = 'Lettore audio') {
+    const entry = page.getByRole('button', { name, exact: true });
+    if (await entry.count()) { const opener = entry.first(); await opener.click(); return opener; }
     const menu = page.getByRole('button', { name: /^(Menu|Menü|Menú|Meny)$/i });
-    await menu.click();
+    const opener = await menu.count()
+        ? menu.first()
+        : page.getByRole('button', { name: /Preferenze|Preferences|Preferencias|Préférences|Einstellungen|Inställningar|Account/i }).first();
+    await opener.click();
     await page.getByRole('button', { name, exact: true }).click();
+    return opener;
 }
 
 for (const width of [390, 1440]) {
@@ -77,8 +83,8 @@ for (const width of [390, 1440]) {
         const f = await fixture({ width, guest: true, dark: width === 390 });
         try {
             const { page, requests } = f;
-            await page.goto(`${origin}/guide`);
-            await openVoiceReader(page);
+            await page.goto(`${origin}/guide/dati-riservatezza`);
+            const opener = await openVoiceReader(page);
             const panel = page.getByRole('complementary', { name: 'Lettore audio' });
             await panel.getByLabel('Voce', { exact: true }).selectOption('it-IT-DiegoNeural');
             await panel.getByRole('button', { name: 'Ascolta pagina' }).click();
@@ -97,7 +103,7 @@ for (const width of [390, 1440]) {
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.keyboard.press('Escape');
             assert.equal(await page.evaluate(() => window.__audios.at(-1).src), '');
-            assert.equal(await page.getByRole('button', { name: 'Menu', exact: true }).evaluate(el => el === document.activeElement), true);
+            assert.equal(await opener.evaluate(el => el === document.activeElement), true);
             await page.reload();
             await openVoiceReader(page);
             assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), 'it-IT-DiegoNeural');
@@ -220,7 +226,7 @@ for (const width of [390, 1440]) {
         const f = await fixture({ width, touch: width === 390 });
         try {
             const { page } = f;
-            await page.goto(`${origin}/guide`);
+            await page.goto(`${origin}/guide/dati-riservatezza`);
             const mainBefore = await page.locator('main').boundingBox();
             await openVoiceReader(page);
             const panel = page.getByRole('complementary');
@@ -282,7 +288,7 @@ test('page reading follows the selected counselor and separates personal voice c
     const f = await fixture({ guest: true });
     try {
         const { page, requests } = f;
-        await page.goto(`${origin}/guide`);
+        await page.goto(`${origin}/guide/dati-riservatezza`);
         await page.evaluate(() => {
             localStorage.setItem('cb_voice_it', 'piper:it_IT-riccardo-x_low');
             localStorage.setItem('counselorbot_selected_counselor', '1');
@@ -339,7 +345,7 @@ test('imported pronunciation rules can be edited, previewed, disabled and persis
     const f = await fixture({ admin: true, width: 390 });
     try {
         const { page } = f;
-        await page.goto(`${origin}/guide`);
+        await page.goto(`${origin}/guide/dati-riservatezza`);
         await openVoiceReader(page);
         const panel = page.getByRole('complementary');
         await panel.locator('summary').filter({ hasText: 'Correzione della pronuncia (80)' }).click();

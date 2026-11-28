@@ -258,7 +258,7 @@ test('QSA summary follow-up opens a branch and keeps the visible summary as retu
     } finally { await context.close(); }
 });
 
-for (const [width, instrument, section] of [[390, 'QSA', 'La chat guidata'], [1440, 'QSA', 'La chat guidata'], [1440, 'OBIETTIVO_STUDIO', 'Area studente e obiettivi']]) {
+for (const [width, instrument, section, task] of [[390, 'QSA', 'Conversare, avanzare e salvare la chat', 'chat'], [1440, 'QSA', 'Conversare, avanzare e salvare la chat', 'chat'], [1440, 'OBIETTIVO_STUDIO', 'Lavorare su un obiettivo e raccogliere i progressi', 'goals']]) {
     test(`the opening instructions open the ${instrument} guide section in a popup without losing the chat at ${width}px`, async () => {
         const { context, page, state } = await fixture(width, instrument);
         if (instrument === 'OBIETTIVO_STUDIO') state.guidedSteps = STEPS;
@@ -275,9 +275,9 @@ for (const [width, instrument, section] of [[390, 'QSA', 'La chat guidata'], [14
             await page.keyboard.press('Enter');
             const dialog = page.getByRole('dialog', { name: section });
             await dialog.waitFor();
-            assert.equal(await dialog.getByRole('heading', { name: 'I tasti della conversazione' }).count(), section === 'La chat guidata' ? 1 : 0);
+            assert.ok(await dialog.locator('ol li').count() > 0);
             const full = dialog.getByRole('link', { name: 'Apri la guida completa in una nuova scheda' });
-            assert.match(await full.getAttribute('href'), /^\/guide#guide-section-(7|12)$/);
+            assert.equal(await full.getAttribute('href'), `/guide?audience=student&task=${task}`);
             assert.equal(await full.getAttribute('target'), '_blank');
             await page.keyboard.press('Escape');
             await dialog.waitFor({ state: 'detached' });

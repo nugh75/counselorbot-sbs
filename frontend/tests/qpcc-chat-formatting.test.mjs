@@ -42,7 +42,7 @@ async function fixture(width) {
         }
         return json([]);
     });
-    await page.goto(`${origin}/profilo/piani-operativi/1/3/approfondimento`,{waitUntil:'domcontentloaded'});
+    await page.goto(`${origin}/?frozen=format`,{waitUntil:'domcontentloaded'});
     return {page,context,state};
 }
 

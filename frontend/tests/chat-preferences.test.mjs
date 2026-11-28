@@ -33,7 +33,7 @@ async function fixture(width, instrument = 'QSA', experience = 'standard') {
         else if (url.pathname === '/api/memory/user/prefs') data = {};
         else if (url.pathname.endsWith('/recommendations')) data = { reading: [], strategy: [] };
         else if (url.pathname === '/api/orientation/sessions') data = { session_id: 'compass-prefs', counselor_id: 1, status: 'in_progress', language: 'it', messages: [{ role: 'assistant', content: 'Cosa vuoi affrontare?' }], recommendations: [] };
-        else if (url.pathname.endsWith('/message')) { state.streams.push(req.postDataJSON()); data = { session_id: 'compass-prefs', counselor_id: 1, status: 'in_progress', language: 'it', messages: [{ role: 'assistant', content: '| Tema | Passo |\n| --- | --- |\n| Studio | Prova |' }], recommendations: [] }; }
+        else if (url.pathname.endsWith('/message')) { const body = req.postDataJSON(); state.streams.push(body); const content = body.response_format === 'bullets' ? 'Risposta 1: chat' : '| Tema | Passo |\n| --- | --- |\n| Studio | Prova |'; data = { session_id: 'compass-prefs', counselor_id: 1, status: 'in_progress', language: 'it', messages: [{ role: 'assistant', content }], recommendations: [] }; }
         else if (['/api/chat/stream', '/api/site-chat/stream'].includes(url.pathname)) {
             const body = req.postDataJSON(); state.streams.push(body);
             if (state.fail) return route.fulfill({ status: 503, json: {} });
@@ -118,10 +118,10 @@ test('QSAr keeps its original path and receives the format choice', async () => 
         assert.equal(await page.getByRole('radio', { name: /Percorso essenziale/ }).count(), 0);
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
         await page.getByRole('button', { name: /^Formato: / }).click();
-        await page.getByRole('radio', { name: 'Formato: Tabella', exact: true }).click(); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+        await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click(); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
         await page.locator('#guided-composer').fill('Un confronto'); await page.locator('#guided-composer').press('Enter');
-        await page.getByRole('table').waitFor();
-        assert.equal(state.streams.at(-1).guided_path, 'complete'); assert.equal(state.streams.at(-1).response_format, 'table');
+        await page.getByRole('log').getByText(/^Risposta \d+: /).waitFor();
+        assert.equal(state.streams.at(-1).guided_path, 'complete'); assert.equal(state.streams.at(-1).response_format, 'bullets');
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });
