@@ -237,6 +237,7 @@ except Exception as exc:  # pragma: no cover - dipende dalla concorrenza dei wor
 # Run before ORM reads: create_all cannot add columns/constraints to legacy tables.
 from importlib import import_module
 
+import_module("backend.migrations.20261128_student_group_image_url").migrate(database.engine)
 import_module("backend.migrations.20261009_teacher_institutes").migrate(database.engine)
 import_module("backend.migrations.20261009_institute_credentials").migrate(database.engine)
 import_module("backend.migrations.20261009_typed_administration_steps").migrate(database.engine)
@@ -600,7 +601,6 @@ def _run_seed_and_migrations():
             ("student_groups", "ADD COLUMN description TEXT"),
             ("student_groups", "ADD COLUMN methodologies TEXT"),
             ("student_groups", "ADD COLUMN context_visible_to_students BOOLEAN NOT NULL DEFAULT false"),
-            ("student_groups", "ADD COLUMN image_url VARCHAR"),
             ("administration_plans", "ADD COLUMN school_level VARCHAR"),
             # Sessione pQBL in corso sul bot Telegram.
             ("telegram_conversation_states", "ADD COLUMN pqbl_state JSON"),
