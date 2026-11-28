@@ -21,6 +21,7 @@ import { isToolAllowed } from '@/lib/user-access';
 import { useI18n } from '@/lib/i18n-context';
 import { instrumentStartHref } from '@/lib/home-entry';
 import { STRATEGIC_COMPETENCES_URLS, STRATEGIC_COMPETENCES_CODE, STRATEGIC_COMPETENCES_PASSWORD } from '@/lib/questionnaire-sources';
+import { RIASEC_CREDIT_EN, riasecText } from '@/lib/i18n-riasec';
 
 const STATIC_AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'IDEA'];
 const QUESTIONNAIRE_SELECTION_HREF = '/profilo';
@@ -195,6 +196,13 @@ export default function InstrumentDetailsPage() {
                         </div>
                     </div>
                 </Callout>
+            )}
+
+            {id === 'RIASEC' && (
+                <section className="border-t border-line pt-6" aria-label={riasecText(lang, 'credit.heading')}>
+                    <h2 className="text-sm font-semibold text-ink-muted">{riasecText(lang, 'credit.heading')}</h2>
+                    <p className="mt-2 max-w-3xl text-xs leading-relaxed text-ink-muted">{RIASEC_CREDIT_EN}</p>
+                </section>
             )}
 
             <section className="border-t border-line pt-6">
