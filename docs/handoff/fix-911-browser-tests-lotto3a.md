@@ -45,4 +45,4 @@ Scope: `frontend/tests/` + 2 fix reali in `src/` + questo handoff. Nessun sudo n
 
 ## Prossimi passi / rischi
 - Lotto 3b (admin/chat/residui) al Timoniere: nessun compito sbloccato avviato.
-- PR aperta non in bozza su `main`; merge al proprietario.
+- PR #1049 aperta non in bozza su `main`; merge al proprietario.
