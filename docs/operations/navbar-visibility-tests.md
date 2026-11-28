@@ -245,10 +245,16 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
   ancora il menu a tre punti tolto da P4; il colore delle card scure in
   `design-usability` e i 3 casi `/?view=questionnaires` dell'onboarding
   falliscono come su `main`.
-- Schermate della guida: rigenerate su una build locale isolata (`next build`
-  + `next start` su 127.0.0.1:3149, API intercettate) perché il dev, con la
-  macchina sotto carico, scadeva a ogni compilazione. 26 schermate a pagina
-  intera per lingua mostrano la barra P4; `capture-guide.mjs` si ferma poi su
-  «Assegna» nel catalogo obiettivi (passo obsoleto, bug nel Diario): catalogo,
-  assegnazione, riscontro e schermate delle impostazioni di classe restano
-  quelle di prima, senza barra o con la barra precedente.
+- Schermate della guida (28 novembre 2026): rigenerate su una build locale
+  isolata (`next build --webpack` + `next start` su 127.0.0.1:3245,
+  `BACKEND_ORIGIN=http://127.0.0.1:9`, API sintetiche intercettate) con
+  `GUIDE_BASE_URL=http://127.0.0.1:3245 node --experimental-strip-types
+  scripts/capture-guide.mjs`, poi `GUIDE_SCREENS=student-instruments` e
+  `GUIDE_SCREENS=class-paths`. `capture-guide.mjs` è stato riallineato al
+  flusso attuale come i test di #911 (assegnazione creata da
+  `/docente/assegnazioni`, fixture del catalogo con `parent_ids`, righe dei
+  passi del piano aperte su richiesta, gruppi resi come `EntryLink`). **35
+  schermate per lingua** in it/en/es/fr/de/sv — catalogo obiettivi,
+  assegnazione, riscontro e impostazioni di classe comprese — mostrano la
+  barra attuale. `capture-quick-guide.mjs` non è stato rigenerato: opera a
+  390 px, dove la barra non compare.
