@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
+import { guideTaskCopy } from '../src/lib/i18n-guide-tasks.ts';
 
 const origin = new URL(process.env.CLASS_SETTINGS_BASE_URL || 'http://127.0.0.1:3107').origin;
 let browser;
@@ -82,12 +83,12 @@ test('Tools tab has accessible toggles and saves only on explicit Save', async (
         await qsa.focus(); await f.page.keyboard.press('Space');
         assert.equal(await qsa.isChecked(), false);
         assert.equal(await f.page.getByRole('checkbox', { name: /OFF/ }).isDisabled(), true);
-        // Five tools, the two F3 forum options and the students' own APIs option (#217).
-        assert.equal(await f.page.getByRole('checkbox').count(), 8);
+        // Five tools, the two F3 forum options, the students' own APIs option (#217) and three response toggles.
+        assert.equal(await f.page.getByRole('checkbox').count(), 11);
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true, response_format: null, response_length: null, response_reasoning: null, allow_student_response_format: true, allow_student_response_length: true, allow_student_response_reasoning: true }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('checkbox', { name: 'QSA', exact: true }).isChecked(), false);
@@ -198,8 +199,9 @@ for (const [lang, tab, save] of [
         const box = await button.boundingBox(); assert.ok(box.y + box.height <= 850);
         assert.deepEqual(f.state.errors, []);
         await f.page.getByRole('checkbox', { name: 'QSA', exact: true }).check();
-        await f.page.goto(`${origin}/guide?audience=teacher`, { waitUntil: 'networkidle' });
-        await f.page.getByRole('heading', { name: tab, exact: true }).waitFor();
+        const guide = guideTaskCopy(lang, 'class-tools');
+        await f.page.goto(`${origin}/guide?audience=teacher&task=class-tools`, { waitUntil: 'networkidle' });
+        await f.page.getByRole('heading', { name: guide.title, exact: true }).waitFor();
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });
@@ -208,18 +210,13 @@ test('class list offers Open class', async () => {
     const f = await fixture();
     try {
         await f.page.goto(`${origin}/docente/classi`, { waitUntil: 'networkidle' });
-        // Tools & counselors has its own link, separate from Open class and Paths.
-        const tools = f.page.getByRole('link', { name: 'Tools & counselors', exact: true });
-        assert.equal(await tools.getAttribute('href'), '/docente/classi/88?tab=tools');
-        const boxes = await Promise.all(['Open class', 'Tools & counselors'].map(name => f.page.getByRole('link', { name, exact: true }).boundingBox()));
-        assert.ok(boxes[1].x >= boxes[0].x + boxes[0].width + 8);
-        await tools.click();
-        assert.equal(await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).getAttribute('aria-selected'), 'true');
-        await f.page.goto(`${origin}/docente/classi`, { waitUntil: 'networkidle' });
-        const link = f.page.getByRole('link', { name: 'Open class', exact: true });
+        // The class card opens the hub; tabs are reachable directly with ?tab=.
+        const link = f.page.getByRole('link', { name: 'Synthetic class', exact: true });
         assert.equal(await link.getAttribute('href'), '/docente/classi/88');
         await link.click();
         await f.page.getByRole('tab', { name: 'Overview', exact: true }).waitFor();
+        await f.page.goto(`${origin}/docente/classi/88?tab=tools`, { waitUntil: 'networkidle' });
+        assert.equal(await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).getAttribute('aria-selected'), 'true');
     } finally { await f.context.close(); }
 });
 
@@ -247,7 +244,7 @@ test('Counselors: toggles, filters and one optional class default saved together
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true, response_format: null, response_length: null, response_reasoning: null, allow_student_response_format: true, allow_student_response_length: true, allow_student_response_reasoning: true }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('radio', { name: 'Class default: Clio' }).isChecked(), true);

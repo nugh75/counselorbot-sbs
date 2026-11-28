@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { classPickerText } from '../src/lib/i18n-class-picker.ts';
 import { classGroupTexts } from '../src/components/teacher/class-group-texts.ts';
 import { notebookLinkText } from '../src/lib/teacher-notebook-links.ts';
+import { guideTaskCopy } from '../src/lib/i18n-guide-tasks.ts';
 
 const origin = new URL(process.env.TEACHER_PICKER_BASE_URL || 'http://127.0.0.1:3134').origin;
 let browser;
@@ -325,13 +326,14 @@ for (const legacy of [false, true]) test(`${legacy ? 'legacy history' : 'navigat
     } finally { release?.(); await f.context.close(); }
 });
 
-for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`${lang}: public guide shows and enlarges the anonymous popup screenshot`, async () => {
+for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`${lang}: public guide shows and enlarges the class setup screenshot`, async () => {
     const f = await fixture({ lang, width: 320 });
     try {
-        await f.page.goto(`${origin}/guide?audience=teacher`, { waitUntil: 'networkidle' });
-        const section = f.page.locator('#guide-teacher-section-1');
-        assert.equal(await section.locator('figure').count(), 3); // Home, dedicated notebook, Classi popup.
-        const figure = section.locator('figure').filter({ has: f.page.getByRole('img', { name: classPickerText(lang, 'title'), exact: true }) });
+        const copy = guideTaskCopy(lang, 'class-setup');
+        await f.page.goto(`${origin}/guide?audience=teacher&task=class-setup`, { waitUntil: 'networkidle' });
+        await f.page.getByRole('heading', { name: copy.title, exact: true }).waitFor();
+        const figure = f.page.locator('figure').filter({ has: f.page.getByRole('img', { name: copy.title, exact: true }) });
+        assert.equal(await figure.count(), 1);
         await figure.scrollIntoViewIfNeeded(); await figure.locator('img').evaluate(e => e.decode());
         assert.ok(await figure.locator('img').evaluate(e => e.naturalWidth > 0));
         await figure.getByRole('button').click();

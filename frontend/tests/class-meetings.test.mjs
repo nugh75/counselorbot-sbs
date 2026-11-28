@@ -101,7 +101,10 @@ async function open(viewport, user) {
     const add = page.locator('[data-testid="add-step"]');
     await add.getByRole('button', { name: '+ Aggiungi passo' }).click();
     await add.getByRole('radio', { name: 'Partecipa a un incontro' }).check();
-    const meetings = add.locator('[data-testid="class-meetings"]');
+    // #989: meetings are managed in the shared dialog opened from the step panel.
+    await add.getByRole('button', { name: 'Gestisci incontri' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Gestisci incontri' });
+    const meetings = dialog.locator('[data-testid="class-meetings"]');
     await meetings.getByText('Debriefing', { exact: true }).waitFor();
     await meetings.getByRole('button', { name: 'Nuovo incontro' }).click();
     await meetings.getByRole('textbox', { name: 'Argomento' }).fill('Restituzione');
@@ -121,13 +124,17 @@ async function open(viewport, user) {
     await meetings.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
     await page.locator('[data-testid="path-step-card"]').first().getByText(/^Incontro · Restituzione · /).waitFor();
 
-    // Move the online debriefing, then cancel it.
+    // Move the online debriefing, then cancel it (the dialog reopened for another step).
     await add.getByRole('button', { name: '+ Aggiungi passo' }).click();
     await add.getByRole('radio', { name: 'Partecipa a un incontro' }).check();
-    const debrief = meetings.locator('li').filter({ hasText: 'Debriefing' });
+    await add.getByRole('button', { name: 'Gestisci incontri' }).click();
+    const dialog2 = page.getByRole('dialog', { name: 'Gestisci incontri' });
+    const meetings2 = dialog2.locator('[data-testid="class-meetings"]');
+    await meetings2.getByText('Debriefing', { exact: true }).waitFor();
+    const debrief = meetings2.locator('li').filter({ hasText: 'Debriefing' });
     await debrief.getByRole('button', { name: 'Modifica' }).click();
-    await meetings.getByLabel('Data e ora').fill('2026-11-06T09:00');
-    await meetings.getByRole('button', { name: 'Salva incontro' }).click();
+    await meetings2.getByLabel('Data e ora').fill('2026-11-06T09:00');
+    await meetings2.getByRole('button', { name: 'Salva incontro' }).click();
     await debrief.getByRole('button', { name: 'Annulla incontro' }).click();
     await debrief.getByRole('button', { name: /Conferma|Sì/ }).click();
     await debrief.getByText('Annullato').waitFor();
@@ -141,12 +148,14 @@ async function open(viewport, user) {
     // Student: link in the path, attendance from the start, timeline list.
     const { page, errors } = await open({ width: 1280, height: 950 }, 'alice');
     await page.goto(`${origin}/profilo/piani-operativi`, { waitUntil: 'domcontentloaded' });
+    // #989: the next step shows «Vedi dettagli», which opens the meeting details.
+    await page.getByTestId('class-path-do-now').getByRole('button', { name: 'Vedi i dettagli' }).click();
     const details = page.locator('[data-testid="meeting-details"]').first();
     await details.getByRole('link', { name: 'Apri il link dell’incontro' }).waitFor();
     assert.equal(await details.getByRole('link').getAttribute('href'), 'https://meet.example.invalid/3b');
     await details.getByRole('button', { name: 'Ho partecipato' }).click();
     await details.getByRole('button', { name: 'Annulla la presenza' }).waitFor();
-    await page.getByText('Completato', { exact: true }).first().waitFor();
+    await page.getByText('Completata', { exact: true }).first().waitFor();
 
     await page.goto(`${origin}/profilo/timeline`, { waitUntil: 'domcontentloaded' });
     const timeline = page.getByRole('region', { name: 'Incontri delle tue classi o gruppi' });

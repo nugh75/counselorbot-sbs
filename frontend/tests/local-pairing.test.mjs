@@ -211,6 +211,7 @@ test('the class overview offers pairing only with the local provider', async () 
         '/admin/groups/88/shares': async route => route.fulfill({ json: [] }),
         '/admin/users-summary': async route => route.fulfill({ json: { users: [] } }),
         '/teacher/institutions': async route => route.fulfill({ json: [] }),
+        '/teacher/goal-catalog/targeted': async route => route.fulfill({ json: [] }),
         '/local-auth/devices': async route => route.fulfill({ json: devices }),
     };
     const local = await openPage(browser, { path: '/docente/classi/88', identity: TEACHER, handlers: base });
@@ -250,6 +251,7 @@ test('the pairing link warns when the tunnel is not configured', async () => {
             '/admin/groups/88/shares': async route => route.fulfill({ json: [] }),
             '/admin/users-summary': async route => route.fulfill({ json: { users: [] } }),
             '/teacher/institutions': async route => route.fulfill({ json: [] }),
+            '/teacher/goal-catalog/targeted': async route => route.fulfill({ json: [] }),
             '/local-auth/devices': async route => route.fulfill({ json: { classes: [] } }),
             'POST /local-auth/classes/88/pairing-code': async route => {
                 assert.equal(route.request().postDataJSON().requires_approval, true);

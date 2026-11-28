@@ -14,7 +14,7 @@ export type PersonalSources = {
 };
 export const encode = (connection: string | null, chatgpt: string | null) => connection ? `api:${connection}` : chatgpt ? `chatgpt:${chatgpt}` : '';
 export const decode = (source: string) => ({ connection_id: source.startsWith('api:') ? source.slice(4) : null, chatgpt_model: source.startsWith('chatgpt:') ? source.slice(8) : null });
-export const fromServer = (items: ServerBinding[]): Binding[] => items.map(b => ({ counselor_id: b.counselor_id, source: encode(b.connection_id, b.chatgpt_model), reasoning: b.reasoning ?? '' }));
+export const fromServer = (items?: ServerBinding[] | null): Binding[] => (items ?? []).map(b => ({ counselor_id: b.counselor_id, source: encode(b.connection_id, b.chatgpt_model), reasoning: b.reasoning ?? '' }));
 // Levels offered for a source; a ChatGPT model that lists its own levels offers only those.
 const API_LEVELS = ['none', 'low', 'medium', 'high'];
 export const levelsFor = (data: PersonalSources | null, source: string) => {

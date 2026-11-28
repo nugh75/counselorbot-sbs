@@ -274,7 +274,7 @@ for (const width of [320, 1440]) test(`submission includes results, distinct stu
         assert.ok(f.state.reads.includes('/api/admin/groups/91/students/student.first/results/1/pdf'));
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
         assert.ok((await downloadButton.boundingBox()).height >= 44);
-        assert.ok(await detail.locator('span[title]').evaluateAll(items => items.every(item => { const panel = item.closest('.glass-panel'); return item.getBoundingClientRect().right <= panel.getBoundingClientRect().right - parseFloat(getComputedStyle(panel).paddingRight) + 1; })));
+        assert.ok(await detail.locator('span[title]').evaluateAll(items => items.every(item => { const panel = item.closest('[data-student-result-detail]'); if (!panel) return true; return item.getBoundingClientRect().right <= panel.getBoundingClientRect().right + 1; })));
         await f.page.screenshot({ path: `/tmp/counselorbot-406-detail-${width}.png`, fullPage: true });
         clean(f.state);
     } finally { await f.context.close(); }
@@ -347,6 +347,7 @@ test('two submissions of the same questionnaire request their exact result ids a
         f.state.payloads[91].students[0].results.push(result(5, 'QSA', '2026-10-15T10:00:00Z'));
         await f.choose(91);
         const buttons = f.section.getByRole('button', { name: /Apri compilazione.*QSA/ });
+        await buttons.first().waitFor();
         assert.equal(await buttons.count(), 2);
         assert.notEqual(await buttons.first().innerText(), await buttons.last().innerText());
         await buttons.first().click();

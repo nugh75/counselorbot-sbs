@@ -278,8 +278,8 @@ test('returning to the Student area refreshes a started plan chat', async () => 
         await card.getByRole('link', {name: 'Inizia'}).waitFor();
         f.setPaths([{...path, steps: [{...step, attempt_state: 'in_progress'}]}]);
         await f.page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
-        await card.getByRole('link', {name: 'Riprendi'}).waitFor();
-        assert.equal(await card.getByRole('link', {name: 'Rifai'}).getAttribute('href'), '/profilo/piani-operativi/1/106/approfondimento?attempt=new');
+        // The home card shows the next step only: the primary resume link refreshes.
+        assert.equal(await card.getByRole('link', {name: 'Continua'}).getAttribute('href'), '/profilo/piani-operativi/1/106/approfondimento');
         assert.deepEqual(f.errors, []);
     } finally {await f.context.close();}
 });
@@ -291,11 +291,16 @@ test('forum completion is explicitly checked and can be cleared', async () => {
     const f = await createFixture({paths: [path]});
     try {
         await f.page.goto(`${origin}/profilo/piani-operativi`, {waitUntil: 'domcontentloaded'});
-        const checkbox = f.page.getByRole('checkbox', {name: 'Intervento concluso'});
+        const doNow = f.page.getByTestId('class-path-do-now');
+        const checkbox = doNow.getByRole('checkbox', {name: 'Intervento concluso'});
         await checkbox.click();
-        await checkbox.waitFor({state: 'visible'});
-        await f.page.waitForFunction(() => [...document.querySelectorAll('input[type=checkbox]')].some(input => input.checked));
-        await checkbox.click();
+        // Once the only step is done the «To do now» block closes: clearing happens in the step row.
+        await doNow.waitFor({state: 'detached'});
+        const row = f.page.locator('#class-step-105');
+        await row.getByRole('button', {name: /Discussione/}).click();
+        const rowCheckbox = row.getByRole('checkbox', {name: 'Intervento concluso'});
+        assert.equal(await rowCheckbox.isChecked(), true);
+        await rowCheckbox.click();
         await f.page.waitForFunction(() => ![...document.querySelectorAll('input[type=checkbox]')].some(input => input.checked));
         assert.deepEqual(f.doneCalls.map(call => call.method), ['POST', 'DELETE']);
         assert.deepEqual(f.errors, []);
@@ -312,9 +317,12 @@ test('a local questionnaire draft offers resume and a separate new attempt', asy
     try {
         await f.page.goto(`${origin}/profilo/piani-operativi`, {waitUntil: 'domcontentloaded'});
         const card = f.page.getByTestId('class-path-hero-card');
-        await card.getByRole('link', {name: 'Riprendi'}).waitFor();
-        assert.equal(await card.getByRole('link', {name: 'Riprendi'}).getAttribute('href'), `/profilo/piani-operativi/1/106?attempt=${attempt}`);
-        assert.equal(await card.getByRole('link', {name: 'Rifai'}).getAttribute('href'), '/profilo/piani-operativi/1/106?attempt=new');
+        const doNow = f.page.getByTestId('class-path-do-now');
+        await doNow.getByRole('link', {name: 'Continua'}).waitFor();
+        assert.equal(await doNow.getByRole('link', {name: 'Continua'}).getAttribute('href'), `/profilo/piani-operativi/1/106?attempt=${attempt}`);
+        // The repeat action lives in the step details, opened from its row.
+        await f.page.locator('#class-step-106').getByRole('button', {name: /Questionario/}).click();
+        assert.equal(await card.getByRole('link', {name: 'Ricomincia da capo'}).getAttribute('href'), '/profilo/piani-operativi/1/106?attempt=new');
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });
@@ -331,7 +339,9 @@ test('completed assignment opens a blank new attempt without withdrawing the sha
     await f.page.route('**/api/user/assignments/9/work', route => route.fulfill({json: work}));
     try {
         await f.page.goto(`${origin}/profilo/piani-operativi`, {waitUntil: 'domcontentloaded'});
-        const link = f.page.getByRole('link', {name: 'Rifai'});
+        // A finished plan starts folded: open its header to read the step action.
+        await f.page.getByRole('button', {name: 'Inizio anno', exact: true}).click();
+        const link = f.page.getByRole('link', {name: 'Ricomincia da capo'});
         assert.equal(await link.getAttribute('href'), '/profilo/assegnazioni?attempt=new#assignment-9');
         await link.click();
         await f.page.getByText('Consegna attuale', {exact: true}).waitFor();
@@ -473,13 +483,12 @@ test('Student area with a class plan: heading, open plan, then the instrument ca
         assert.ok((await heroCard.innerText()).toLowerCase().includes('3b liceo'));
         // The only plan is open and shows the current step and its progress.
         await heroCard.getByRole('heading', { name: 'Inizio anno', exact: true }).waitFor();
-        assert.ok((await heroCard.innerText()).includes('1 di 3 completati'));
+        assert.ok((await heroCard.innerText()).includes('1 su 3 attività completate'));
 
-        assert.equal(await heroCard.getByRole('link', { name: 'Riapri' }).getAttribute('href'), '/bussola');
         assert.equal(await heroCard.getByRole('link', { name: 'Inizia' }).first().getAttribute('href'), '/?start=QSA&from=plan&path_id=1&path_step_id=102');
         const currentStep = heroCard.getByText('Compilazione QSA');
         await currentStep.waitFor({ state: 'visible' });
-        const currentBadge = heroCard.getByText('Prossimo passo');
+        const currentBadge = heroCard.getByText('Da fare adesso');
         await currentBadge.waitFor({ state: 'visible' });
 
         // The rest of the page is never folded: no catalog toggle, catalog visible.
@@ -523,7 +532,7 @@ test('Student area with several paths: the priority plan starts open', async () 
     // samplePath1 has due date 2026-10-15; samplePath2 has due date 2026-11-10.
     const f = await createFixture({ paths: [samplePath2, samplePath1], lang: 'it' });
     try {
-        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo/piani-operativi`, { waitUntil: 'domcontentloaded' });
 
         const list = f.page.locator('[data-testid="class-path-hero-list"]');
         const cards = list.locator('[data-testid="class-path-hero-card"]');
@@ -534,21 +543,18 @@ test('Student area with several paths: the priority plan starts open', async () 
         const second = list.getByRole('button', { name: 'Percorso Autunno', exact: true });
         assert.equal(await first.getAttribute('aria-expanded'), 'true');
         assert.equal(await second.getAttribute('aria-expanded'), 'false');
-        await cards.nth(0).getByText('Compilazione QSA').waitFor({ state: 'visible' });
+        await cards.nth(0).getByText('Compilazione QSA').first().waitFor({ state: 'visible' });
         assert.equal(await cards.nth(1).getByText('Obiettivi di studio').count(), 0);
         // A folded plan still shows its progress.
-        assert.ok((await cards.nth(1).innerText()).includes('0 di 1 completati'));
+        assert.ok((await cards.nth(1).innerText()).includes('0 su 1 attività completate'));
 
         await second.click();
         assert.equal(await second.getAttribute('aria-expanded'), 'true');
-        await cards.nth(1).getByText('Obiettivi di studio').waitFor({ state: 'visible' });
+        await cards.nth(1).getByText('Obiettivi di studio').first().waitFor({ state: 'visible' });
         await first.click();
         assert.equal(await first.getAttribute('aria-expanded'), 'false');
-        await cards.nth(0).getByText('Compilazione QSA').waitFor({ state: 'hidden' });
+        await cards.nth(0).getByText('Compilazione QSA').first().waitFor({ state: 'hidden' });
 
-        const allPathsLink = list.getByRole('link', { name: /Vedi tutti i piani operativi/i });
-        assert.equal(await allPathsLink.getAttribute('href'), '/profilo/piani-operativi');
-        assert.ok((await allPathsLink.innerText()).includes('(2)'));
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 
         assert.deepEqual(f.errors, []);
@@ -560,13 +566,15 @@ test('Student area with several paths: the priority plan starts open', async () 
 test('Self-marking on hero card calls API and updates step state', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });
     try {
-        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo/piani-operativi`, { waitUntil: 'domcontentloaded' });
 
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
         await heroCard.waitFor({ state: 'visible' });
 
-        // Step 103 (timeline) has can_self_mark = true and state not_done
-        const markDoneBtn = heroCard.getByRole('button', { name: 'Segna come completato' });
+        // Step 103 (timeline) has can_self_mark = true and state not_done: open its row.
+        const row = f.page.locator('#class-step-103');
+        await row.getByRole('button', { name: /Linea del tempo/ }).click();
+        const markDoneBtn = row.getByRole('button', { name: 'Segna come completato' });
         await markDoneBtn.waitFor({ state: 'visible' });
 
         // Click mark done
@@ -613,7 +621,7 @@ for (const { name, paths, width, initialStorage } of [
 test('Student area (/profilo) on a phone: every plan listed and folded except the first', async () => {
     const f = await createFixture({ paths: [samplePath2, samplePath1], lang: 'it', width: 390 });
     try {
-        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo/piani-operativi`, { waitUntil: 'domcontentloaded' });
         const cards = f.page.locator('[data-testid="class-path-hero-list"] [data-testid="class-path-hero-card"]');
         await cards.first().waitFor({ state: 'visible' });
         assert.equal(await cards.count(), 2);

@@ -95,7 +95,10 @@ async function open(viewport, user) {
     const add = page.locator('[data-testid="add-step"]');
     await add.getByRole('button', { name: '+ Aggiungi passo' }).click();
     await add.getByRole('radio', { name: 'Partecipa a un incontro' }).check();
-    const meetings = add.locator('[data-testid="class-meetings"]');
+    // #989: meetings are managed in the shared dialog opened from the step panel.
+    await add.getByRole('button', { name: 'Gestisci incontri' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Gestisci incontri' });
+    const meetings = dialog.locator('[data-testid="class-meetings"]');
     await meetings.getByRole('button', { name: 'Nuovo incontro' }).click();
     await meetings.getByRole('textbox', { name: 'Argomento' }).fill('Colloquio di orientamento');
     await meetings.getByRole('radio', { name: 'Individuale, a fasce prenotabili' }).check();
@@ -115,7 +118,12 @@ async function open(viewport, user) {
     assert.deepEqual([created.body.host_kind, created.body.host_name, created.body.host_role], ['expert', 'Dott.ssa Rossi', 'Psicologa']);
     const slots = meetings.locator('[data-testid="meeting-slots"]');
     await slots.getByText('Nessuna fascia: aggiungine una.').waitFor();
-    for (const value of ['2026-11-05T10:00', '2026-11-05T10:20']) {
+    const future = minutes => {
+        const d = new Date(Date.now() + 24 * 3600000 + minutes * 60000);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+    for (const value of [future(0), future(20)]) {
         await slots.getByLabel('Data e ora').fill(value);
         await slots.getByRole('button', { name: 'Aggiungi fascia' }).click();
         await slots.getByLabel('Data e ora').and(page.locator('[value=""]')).waitFor();

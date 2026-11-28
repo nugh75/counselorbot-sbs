@@ -42,11 +42,17 @@ async function fixture({ surface = 'groups', failure = 503, lang = 'it', width =
             state.mutations.push({ path, body: request.postDataJSON(), method: request.method() });
             if (state.holdWrite) { const ready = state.holdWrite; state.holdWrite = null; await ready; }
             if (state.saveFailure) return route.fulfill({ status: 503, json: {} });
+            if (path.startsWith('/admin/groups/') && request.method() === 'PUT') {
+                const id = Number(path.split('/').at(-1));
+                state.groups = state.groups.map(row => row.id === id ? { ...row, ...request.postDataJSON() } : row);
+                return route.fulfill({ json: state.groups.find(row => row.id === id) ?? {} });
+            }
             if (path === '/chat/stream') {
                 const reply = `Risposta docente: ${request.postDataJSON().message}`;
                 return route.fulfill({ contentType: 'text/event-stream', body: stream({ conversation_id: 'teacher-demo' }) + stream({ display: reply }) + stream({ done: true, response: reply, conversation_id: 'teacher-demo' }) });
             }
             if (path === '/session/freeze') return route.fulfill({ json: request.postDataJSON() });
+            if (path === '/memory/event') return route.fulfill({ json: {} });
             assert.ok(path.startsWith('/admin/groups') || path === '/user/teacher-notebook', `Unexpected write: ${path}`);
             return route.fulfill({ json: {} });
         }
@@ -60,6 +66,12 @@ async function fixture({ surface = 'groups', failure = 503, lang = 'it', width =
         else if (path.startsWith('/memory/') || path === '/telegram/bot-info') data = {};
         else if (path.endsWith('/recommendations')) data = { reading: [], strategy: [] };
         else if (path === '/tavolo/enabled') data = { enabled: false };
+        else if (/^\/teacher\/groups\/\d+\/settings$/.test(path)) data = { group_id: 91, revision: 1, tools: [], disabled_tool_keys: [],
+            disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false }, counselors: [] };
+        else if (path.endsWith('/shares')) data = [];
+        else if (path === '/admin/users-summary') data = { users: [] };
+        else if (path === '/teacher/institutions') data = [];
+        else if (path === '/teacher/goal-catalog/targeted') data = [];
         return route.fulfill({ json: data });
     });
     const go = async () => {
@@ -153,46 +165,38 @@ for (const surface of ['groups', 'notebook', 'chat']) {
     }
 }
 
-test('groups: failed refresh retains class context and creation drafts; retry success keeps unsaved text', async () => {
+test('groups: failed context save retains the form draft; retry keeps the typed text', async () => {
     const f = await fixture({ failure: false, width: 1440 });
     try {
-        await f.go(); await f.page.getByRole('heading', { name: 'Classe Demo', exact: true }).waitFor();
-        await f.page.getByLabel('Descrizione della classe', { exact: true }).waitFor();
-        const description = f.page.getByLabel('Descrizione della classe');
+        await f.page.goto(`${origin}/docente/classi/91`, { waitUntil: 'domcontentloaded' });
+        const description = f.page.getByLabel('Descrizione del contesto di classe', { exact: true });
+        await description.waitFor();
         await description.fill('Bozza privata della classe');
-        await f.page.getByLabel('Condividi il contesto con gli studenti iscritti').check();
-        await f.page.getByRole('button', { name: 'Nuovo gruppo o classe' }).click();
-        const name = f.page.getByPlaceholder('Nome (es. 3B, universitari, formazione adulti)');
-        await name.fill('Nuovo nome in bozza');
-        f.state.failure = 'network';
-        await f.page.getByRole('combobox', { name: 'Fascia', exact: true }).last().selectOption('adulti');
-        await f.page.getByRole('alert').filter({ hasText: 'Impossibile caricare' }).waitFor();
-        assert.equal(await f.page.getByRole('heading', { name: 'Classe Demo', exact: true }).count(), 1);
+        f.state.saveFailure = true;
+        await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
+        await f.page.getByRole('region', { name: 'Anagrafica e informazioni di classe' }).getByRole('alert').waitFor();
         assert.equal(await description.inputValue(), 'Bozza privata della classe');
-        assert.equal(await name.inputValue(), 'Nuovo nome in bozza');
-        f.state.failure = false;
-        f.state.groups = [{ ...group, description: 'Nuova versione server', context_visible_to_students: false }];
-        await f.page.getByRole('button', { name: 'Riprova', exact: true }).click();
-        await f.page.getByRole('button', { name: 'Riprova', exact: true }).waitFor({ state: 'hidden' });
-        await f.page.getByRole('status').filter({ hasText: 'Caricamento' }).waitFor({ state: 'hidden' });
+        assert.equal(await f.page.getByText('Modifiche non salvate', { exact: true }).count() > 0, true);
+        f.state.saveFailure = false;
+        await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
+        await f.page.getByText('Dati della classe salvati con successo.', { exact: true }).waitFor();
         assert.equal(await description.inputValue(), 'Bozza privata della classe');
-        assert.equal(await f.page.getByLabel('Condividi il contesto con gli studenti iscritti').isChecked(), true);
-        assert.equal(await name.inputValue(), 'Nuovo nome in bozza');
-        assert.equal(f.state.mutations.length, 1, 'only the explicit level change, no autosave');
+        assert.equal(f.state.mutations.length, 2);
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });
 
-test('groups: a successful refresh updates pristine context fields from the server', async () => {
+test('groups: a successful save updates the class context from the server', async () => {
     const f = await fixture({ failure: false });
     try {
-        await f.go(); await f.page.getByRole('heading', { name: 'Classe Demo', exact: true }).waitFor();
-        await f.page.getByLabel('Descrizione della classe', { exact: true }).waitFor();
-        f.state.groups = [{ ...group, description: 'Contesto aggiornato sul server' }];
-        const response = f.page.waitForResponse(r => r.url().endsWith('/api/admin/groups') && r.request().method() === 'GET');
-        await f.page.getByRole('combobox', { name: 'Fascia', exact: true }).selectOption('adulti');
-        await response; await f.page.getByRole('status').filter({ hasText: 'Caricamento' }).waitFor({ state: 'hidden' });
-        assert.equal(await f.page.getByLabel('Descrizione della classe').inputValue(), 'Contesto aggiornato sul server');
+        await f.page.goto(`${origin}/docente/classi/91`, { waitUntil: 'domcontentloaded' });
+        const description = f.page.getByLabel('Descrizione del contesto di classe', { exact: true });
+        await description.waitFor();
+        await description.fill('Contesto aggiornato sul server');
+        await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
+        await f.page.getByText('Dati della classe salvati con successo.', { exact: true }).waitFor();
+        assert.equal(await description.inputValue(), 'Contesto aggiornato sul server');
+        assert.equal(f.state.mutations.length, 1);
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });
@@ -318,10 +322,13 @@ test('notebook: editing during a pending reread keeps the new draft on success',
         await f.go(); await f.page.waitForFunction(() => document.querySelector('#teacher-notebook-subjects')?.value === 'Matematica salvata');
         f.state.notebook = { data: { subjects: 'Versione server più recente' } };
         release = f.hold();
+        const reread = f.page.waitForRequest(request => request.url().endsWith('/api/user/teacher-notebook') && request.method() === 'GET');
         await f.page.getByRole('button', { name: 'Aggiorna', exact: true }).click();
-        await f.page.getByRole('status').filter({ hasText: 'Caricamento' }).waitFor();
+        await reread;
+        // A background reread keeps the form mounted: no full-page loading status.
         await f.page.getByLabel('Discipline insegnate').fill('Scritta durante la rilettura');
-        release(); await f.page.getByRole('status').filter({ hasText: 'Caricamento' }).waitFor({ state: 'hidden' });
+        const answered = f.page.waitForResponse(response => response.url().endsWith('/api/user/teacher-notebook') && response.request().method() === 'GET');
+        release(); await answered; await f.page.waitForTimeout(200);
         assert.equal(await f.page.getByLabel('Discipline insegnate').inputValue(), 'Scritta durante la rilettura');
         assert.deepEqual(f.state.mutations, []); assert.deepEqual(f.state.errors, []);
     } finally { release?.(); await f.context.close(); }

@@ -155,8 +155,16 @@ for (const width of [1440, 390]) {
             try {
                 await learner.page.goto(`${origin}/profilo/assegnazioni`);
                 await learner.page.getByRole('heading', { name: 'Obiettivo comune', exact: true }).first().waitFor();
-                await learner.page.getByText('Film per riflettere', { exact: false }).first().waitFor();
-                await learner.page.getByText('Ripasso distribuito', { exact: false }).first().waitFor();
+                // F27: attachments live in the detail opened with «Dettagli», one card at a time.
+                const seen = new Set();
+                for (const card of await learner.page.locator('article').filter({ hasText: 'Obiettivo comune' }).all()) {
+                    const details = card.getByRole('button', { name: 'Dettagli', exact: true });
+                    if (await details.count()) await details.click();
+                    const text = await card.innerText();
+                    if (text.includes('Film per riflettere')) seen.add('film');
+                    if (text.includes('Ripasso distribuito')) seen.add('strategy');
+                }
+                assert.deepEqual([...seen].sort(), ['film', 'strategy']);
                 assert.deepEqual(learner.errors, []);
             } finally { await learner.context.close(); }
             await page.reload();
@@ -167,7 +175,9 @@ for (const width of [1440, 390]) {
             await film.getByRole('button', { name: 'Revoca assegnazione' }).click();
             await film.getByRole('button', { name: 'Sì', exact: true }).click();
             await film.getByText('Revocata', { exact: true }).waitFor();
-            assert.deepEqual((await received(username)).map(row => row.source_kind), ['strategy']);
+            const remaining = await received(username);
+            assert.deepEqual(remaining.map(row => row.source_kind), ['goal']);
+            assert.deepEqual(remaining.flatMap(row => row.attachments.map(item => item.kind)), ['strategy']);
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });
@@ -232,6 +242,8 @@ for (const width of [1440, 390]) {
                 await studentCard.getByRole('button', { name: 'Salva nella Linea del tempo' }).click();
                 await studentCard.getByRole('alert').filter({ hasText: 'I dati sono cambiati altrove.' }).waitFor();
                 assert.equal(await studentCard.getByLabel('Come è andata? Riflessione personale').inputValue(), `Privata ${marker}`);
+                // The reload discards the typed reflection, so it asks first.
+                learner.page.once('dialog', dialog => dialog.accept());
                 await studentCard.getByRole('button', { name: 'Ricarica e sostituisci la bozza' }).click();
                 await studentCard.getByLabel('Come è andata? Riflessione personale').filter({ visible: true }).waitFor();
                 await learner.page.waitForFunction(id => document.querySelector(`#assignment-${id} textarea`)?.value === 'Modifica da un’altra scheda', assignment.id);
@@ -269,8 +281,9 @@ for (const width of [1440, 390]) {
             await studentCard.screenshot({ path: `/tmp/assignment-learning-${width}.png` });
             await learner.page.goto(`${origin}/profilo/assegnazioni#assignment-${assignment.id}`);
             await studentCard.getByRole('button', { name: 'Ritira la restituzione' }).waitFor();
-            learner.page.once('dialog', dialog => dialog.accept());
+            // Lotto 5B: the confirmation is inline, not a native dialog.
             await studentCard.getByRole('button', { name: 'Ritira la restituzione' }).click();
+            await studentCard.getByRole('button', { name: 'Sì', exact: true }).click();
             await studentCard.getByRole('heading', { name: 'Restituzione condivisa con il docente' }).waitFor({ state: 'detached' });
             await teacherCard.getByRole('button', { name: 'Ricarica e sostituisci la bozza' }).click();
             await teacherCard.getByText('Nessuna restituzione condivisa. Il lavoro personale non è visibile qui.').waitFor();
@@ -279,9 +292,10 @@ for (const width of [1440, 390]) {
     });
 }
 
-// F31: la scheda gruppo/classe di /docente/classi elenca in linea le
-// assegnazioni di quel gruppo e apre /docente/assegnazioni?group= filtrata.
-test('group card lists its assignments inline in /docente/classi', async () => {
+// F30: /docente/assegnazioni accetta ?group=Nome, filtra la lista e apre il
+// dettaglio indicato da #assignment-N. La vecchia scheda classe non elenca più
+// le assegnazioni in linea (blocco rimosso con b49d1548).
+test('assignments page filters by class from a group link and opens the detail', async () => {
     const { page, context, errors } = await pageFor('teacher', 1440);
     const marker = `Inline ${Date.now().toString(36)}`;
     const requestId = `inline-${Date.now().toString(36)}`;
@@ -296,38 +310,19 @@ test('group card lists its assignments inline in /docente/classi', async () => {
         assert.ok(group, 'Class 3B is an assignment target');
         const entry = (await call('/teacher/goal-catalog')).find(row => row.status === 'published' && row.data?.title === 'Pianificare lo studio');
         assert.ok(entry, 'published goal entry is available');
-        await call('/teacher/assignments', { group_id: group.id, source_kind: 'goal', source_id: entry.id, instructions: marker, request_id: requestId, due_date: '2026-10-12' });
+        const created = await call('/teacher/assignments', { group_id: group.id, source_kind: 'goal', source_id: entry.id, instructions: marker, request_id: requestId, due_date: '2026-10-12' });
 
-        await page.goto(`${origin}/docente/classi`);
-        const blockFor = name => page.locator('details').filter({ hasText: 'Assegnazioni della classe' })
-            .filter({ has: page.locator(`a[href="/docente/assegnazioni?group=${encodeURIComponent(name)}"]`) });
-        const block = blockFor('Classe 3B');
-        await block.locator('summary').click();
-        const item = block.locator('a[href*="#assignment-"]').first();
-        await item.waitFor();
-        // Le assegnazioni degli altri gruppi restano fuori dal blocco della classe.
-        assert.equal(await block.getByText('Film per riflettere').count(), 0);
-        const href = await item.getAttribute('href');
-        assert.match(href, /^\/docente\/assegnazioni\?group=Classe%203B#assignment-\d+$/);
-        assert.equal(await block.getByRole('link', { name: 'Gestisci o assegna' }).getAttribute('href'), '/docente/assegnazioni?group=Classe%203B');
-
-        // Un gruppo senza assegnazioni mostra lo stato vuoto.
-        const emptyName = `Classe vuota ${Date.now().toString(36)}`;
-        await call('/admin/groups', { name: emptyName, school: null, school_level: null, institution_id: null });
-        await page.reload();
-        const emptyBlock = blockFor(emptyName);
-        await emptyBlock.locator('summary').click();
-        await emptyBlock.getByText('Nessuna assegnazione per questa classe o gruppo.', { exact: true }).waitFor();
-
-        // Il reload ha riavuto i <details>: si riapre il blocco della classe
-        // (il fetch riparte allo stato fresco del componente).
-        await block.locator('summary').click();
-        // Il link porta alla pagina assegnazioni già filtrata per il gruppo,
-        // con il dettaglio dell'assegnazione (e le sue indicazioni) a vista.
-        await item.click();
-        await page.waitForURL(/docente\/assegnazioni\?group=Classe/);
+        await page.goto(`${origin}/docente/assegnazioni?group=${encodeURIComponent('Classe 3B')}#assignment-${created.id}`);
         await page.getByText(marker, { exact: false }).waitFor();
         assert.equal(await page.getByText('Film per riflettere').count(), 0);
+        assert.equal(await page.getByLabel('Gruppo', { exact: true }).inputValue(), 'Classe 3B');
+
+        // A group without assignments still applies the filter and shows the empty state.
+        const emptyName = `Classe vuota ${Date.now().toString(36)}`;
+        await call('/admin/groups', { name: emptyName, school: null, school_level: null, institution_id: null });
+        await page.goto(`${origin}/docente/assegnazioni?group=${encodeURIComponent(emptyName)}`);
+        await page.getByText('Nessuna assegnazione corrisponde ai filtri: allargali o azzerali.', { exact: false }).waitFor();
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
 });
+

@@ -118,11 +118,12 @@ async function prepare(page) {
     assert.ok(tools.includes('Tavolo') && !tools.some(name => /Savickas|QSA/i.test(name)), tools.join(', '));
     await editor.getByRole('combobox', { name: /^Strumento/ }).selectOption('tavolo');
     await addStep('Fa una chat guidata', 'Analizza un questionario');
-    // A results chat without an earlier questionnaire cannot be saved.
+    // A results chat from a plan questionnaire without an earlier questionnaire cannot be saved.
+    await editor.getByRole('combobox', { name: /^Origine dei risultati/ }).selectOption('plan');
     assert.equal(await editor.getByRole('button', { name: 'Salva modello' }).isDisabled(), true);
     await addStep('Compila un questionario');
     await editor.getByRole('button', { name: 'Sposta su #3' }).click();
-    await editor.getByRole('combobox', { name: /^Sui risultati del passo/ }).selectOption('2');
+    await editor.getByRole('combobox', { name: /^Scegli il passo questionario/ }).selectOption('2');
     await editor.getByRole('button', { name: 'Salva modello' }).click();
     await page.getByText('Modello salvato.').waitFor();
     await page.getByText('Inizio anno').waitFor();
@@ -134,8 +135,8 @@ async function prepare(page) {
     await page.getByText('Applicato: trovi la bozza nella classe o nel gruppo.').waitFor();
     await page.getByRole('button', { name: 'Apri' }).click();
     const cards = page.locator('[data-testid="path-step-card"]');
-    await cards.nth(1).getByText('Da preparare · Somministrazione del questionario · QSA IT').waitFor();
-    await cards.nth(2).getByText(/Da preparare · .*Com’è andata\?/).waitFor();
+    await cards.nth(1).getByText('Da preparare · Somministrazione del questionario · QSA IT').first().waitFor();
+    await cards.nth(2).getByText(/Da preparare · .*Com’è andata/).first().waitFor();
     assert.equal(await page.getByText('Verrà creato quando pubblichi il piano operativo; fino ad allora gli studenti non vedono nulla.').count(), 2);
     await page.getByRole('button', { name: 'Salva come modello' }).click();
     await page.getByText('Salvato tra i tuoi modelli.').waitFor();
