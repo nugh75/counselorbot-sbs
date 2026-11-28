@@ -203,6 +203,14 @@ try {
                 await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
                 locator = null; // Include creation and header; avoid sticky-header overlap on an element crop.
             }
+            if (name === 'institution-categories') {
+                await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+                // The illustration is inline SVG now: decode any image that remains, then open contacts and appointments.
+                for (const image of await page.locator('[data-institution-categories] img').all()) await image.evaluate(element => element.decode());
+                await page.locator('summary').filter({ hasText: categoryText(lang, 'contacts') }).evaluate(el => { el.parentElement.open = true; });
+                await page.locator('summary').filter({ hasText: categoryText(lang, 'events') }).evaluate(el => { el.parentElement.open = true; });
+                await page.evaluate(() => window.scrollTo(0, 0));
+            }
             if (name === 'introduction') {
                 // Lazy illustrations below the fold, satisfaction questionnaire included.
                 for (const image of await page.locator('[data-testid="intro-screen"] img').all()) {

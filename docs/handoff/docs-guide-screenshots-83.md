@@ -10,7 +10,8 @@ Docker, segreto o dato di produzione. Server Next FERMATO a fine lavoro.
   - il catalogo obiettivi non ha più «Assegna»: l'assegnazione si crea da
     `/docente/assegnazioni` (dialog «Nuova assegnazione», gruppo + obiettivo);
   - fixture del catalogo con `parent_ids` (evita il crash della pagina);
-  - rimosso il vecchio passo su `img`/`summary` delle categorie di orientamento;
+  - sezioni «Contatti» e «Appuntamenti» delle categorie di orientamento aperte
+    prima della cattura (decode immagini tollerante all'illustrazione SVG);
   - gruppi cercati come `EntryLink` (link, non heading);
   - righe compatte del piano studente aperte prima di attendere il meeting;
   - eccezione all'assert «nessun alert» sulla panoramica classe (callout
@@ -24,7 +25,9 @@ Docker, segreto o dato di produzione. Server Next FERMATO a fine lavoro.
   `127.0.0.1:3245` con `BACKEND_ORIGIN=http://127.0.0.1:9`, API sintetiche.
 - `GUIDE_BASE_URL=http://127.0.0.1:3245 node --experimental-strip-types
   scripts/capture-guide.mjs` (216 schermate, 36 per lingua), poi
-  `GUIDE_SCREENS=student-instruments` e `GUIDE_SCREENS=class-paths`: tutto verde.
+  `GUIDE_SCREENS=student-instruments`, `GUIDE_SCREENS=class-paths` e
+  `GUIDE_SCREENS=institution-categories` per le sei lingue: tutto verde,
+  «Contatti» e «Appuntamenti» aperti e verificati sull'immagine it.
 - `git diff --stat`: 210 PNG cambiati, 35 per lingua; invariati solo quick-guide
   e le due immagini degli istituti generate dai test.
 - Ispezionate catalogo, assegnazione, riscontro, panoramica/strumenti classe e
