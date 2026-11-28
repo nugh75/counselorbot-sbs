@@ -1757,7 +1757,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         {renderStepNavigation()}
     </nav> : null;
 
-    const renderConversationOptions = (openPanel: (panel?: 'path' | 'scores' | 'resources') => void) => (
+    const renderConversationOptions = (openPanel: (panel?: 'path' | 'scores' | 'resources' | 'idea') => void) => (
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
             {close => <div className="divide-y divide-line">
                 {/* Sezioni del menù (#682): Azioni · Mostra · Risposte · Guida. */}
@@ -1781,6 +1781,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     {desktop && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel(); }}>
                         <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panel')}
                         {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
+                    </button>}
+                    {!desktop && isIdea && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('idea'); }}>
+                        <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{t('idea.workspace.title')}
                     </button>}
                     {!desktop && !isIdea && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('path'); }}>
                         <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.path')}
